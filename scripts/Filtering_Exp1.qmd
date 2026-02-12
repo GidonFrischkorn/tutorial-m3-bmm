@@ -1,0 +1,1274 @@
+---
+title: "Filtering Exp 1"
+author: "Chenyu Li"
+format: html
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+
+# 1 Initial setting
+
+## 1.1 Clear workspace and set default colors
+
+```{r reset, include=FALSE}
+# Clear all plots and variables from workspace
+graphics.off()
+rm(list=ls(all.names=TRUE))
+
+# Set numerical precision and color schemes
+options(digits = 3)
+options(ggplot2.discrete.colour= c("#615F63","#FF7F6F","#2F7FC1","#FFBE7A","#8FC0A9","#8A1C56"))
+options(ggplot2.discrete.fill= c("#615F63","#FF7F6F","#2F7FC1","#FFBE7A","#8FC0A9","#8A1C56"))
+```
+
+## 1.2 Import functions and packages
+
+```{r}
+# Install and load required packages
+packages = c(
+  # CRAN packages for data analysis and visualization
+  "tidyverse", "brms", "ggpubr", "tidybayes", "emmeans", "bayestestR",
+  # Github packages for specialized functions
+  "chenyu-psy/smartr@v0.2.2", 
+  "venpopov/bmm"
+)
+process_packages(packages, quietly = TRUE)
+
+# Source all local R functions from the functions directory
+load_functions("./functions")
+
+# Set default ggplot theme
+theme_set(theme_bw())
+
+# Define position dodge constants for plotting
+dodge1 = position_dodge(.1)
+dodge2 = position_dodge(.2)
+
+# Define task name and directory paths
+task <- "Exp1"
+model_path <- str_glue("./models/models_{task}/")
+sample_path <- str_glue("./samples/sample_{task}/")
+figure_path <- str_glue("./figures/figures_{task}/")
+
+# Create directories if they don't exist
+dir.create(file.path(model_path), showWarnings = FALSE)
+dir.create(file.path(sample_path), showWarnings = FALSE)
+dir.create(file.path(figure_path), showWarnings = FALSE)
+```
+
+# 2 Data processing
+
+## 2.1 Import data
+
+```{r}
+# Load main experimental data
+Raw_data <- str_glue("./data/Data_{task}.csv") %>% 
+  read_csv() %>% 
+  distinct()  # Remove any duplicate entries
+
+# Load survey data (contains information about participant behavior)
+Survey_data <- str_glue("./data/Survey_{task}.csv") %>% 
+  read_csv()
+```
+
+## 2.2 Exclude participants based on survey responses
+
+```{r}
+# Identify participants who were distracted or used aids
+excluding_aid_dist <- Survey_data %>% 
+  filter(str_detect(aid, "Yes") | str_detect(attention, "No")) %>% 
+  pull(participant)
+
+message(str_glue("Excluded {length(excluding_aid_dist)} participants due to distraction or using aids."))
+```
+
+## 2.3 Analyze correlation between tasks
+
+```{r}
+# Calculate accuracy in the memory task for each participant
+Acc_memory_task <- Raw_data %>% 
+  filter(screenID == "retrieval", !participant %in% excluding_aid_dist) %>% 
+  summarise(
+    memory_acc = mean(acc, na.rm = TRUE),
+    .by = c(participant)
+  )
+
+# Calculate accuracy in the judgment task for each participant
+Acc_judge_task <- Raw_data %>% 
+  filter(screenID == "memory", !participant %in% excluding_aid_dist) %>% 
+  summarise(
+    judge_acc = mean(acc, na.rm = TRUE),
+    .by = c(participant)
+  )
+
+# Join the two datasets to analyze correlation
+Acc_combine <- Acc_memory_task %>% 
+  left_join(Acc_judge_task)
+
+# Report correlation between tasks
+message(paste0(
+  "The correlation between the memory task and the size-judgement task is ",
+  round(cor(Acc_combine["memory_acc"], Acc_combine["judge_acc"]), 2)))
+```
+
+## 2.4 Exclude low-performing participants
+
+```{r}
+# Identify participants with low accuracy in the size judgment task
+excluding_lowAcc <- Raw_data %>% 
+  filter(!participant %in% excluding_aid_dist) %>% 
+  filter(screenID == "memory") %>% 
+  mutate(
+    # Handle NULL responses
+    response = ifelse(response == "NULL", NA, response),
+    # Calculate accuracy
+    acc = case_when(
+      is.na(response) ~ NA,
+      acc ~ 1,
+      TRUE ~ 0)
+    ) %>% 
+  summarise(
+    pResp = sum(!is.na(response), na.rm = TRUE)/n(),  # Response rate
+    pAcc = mean(acc, na.rm = TRUE),                   # Accuracy rate
+    .by = participant
+  ) %>% 
+  filter((pResp < 0.5 | pAcc < 0.7)) %>%              # Exclusion criteria
+  pull(participant)
+
+message(str_glue("Excluded {length(excluding_lowAcc)} participants due to a low accuracy in the size judgement task"))
+
+```
+
+## 2.5 Clean data and remove trials with missing images
+
+```{r}
+# Process judgment data, identifying trials with missing images
+Data_judge <- Raw_data %>% 
+  # Apply exclusion criteria
+  filter(!participant %in% c(excluding_aid_dist, excluding_lowAcc)) %>% 
+  filter(screenID == "memory") %>% 
+  mutate(
+    # Mark trials with missing images
+    markNA = ifelse(is.na(leftImage) | is.na(rightImage), 1, 0),
+    # Identify target and distractor images
+    target = ifelse(cue == "left", leftImage, rightImage),
+    distractor = ifelse(cue == "left", rightImage, leftImage),
+    # Convert RT to seconds
+    RT = rt/1000
+  ) %>% 
+  # Count missing images per trial
+  mutate(
+    markNA = sum(markNA),
+    .by = c("participant", "blockID", "trialID")
+  ) %>% 
+  # Rename accuracy column for clarity
+  rename(judgeAcc = acc) %>% 
+  # Select relevant columns
+  select(
+    participant, blockID, trialID, condition, congruency, target, distractor, judgeAcc, RT, markNA
+  )
+
+# Extract trials with missing images for reporting
+Filtered_trials <- Data_judge %>% 
+  filter(markNA > 0)
+
+# Remove trials with missing images from the main dataset
+Data_judge <- Data_judge %>% 
+  filter(markNA == 0) %>% 
+  select(-markNA)
+
+message(str_glue("Excluded {n_distinct(Filtered_trials[,c('blockID','trialID')])} trials from {n_distinct(Filtered_trials$participant)} participants due to missing images"))
+```
+
+## 2.6 Process retrieval task data
+
+```{r}
+# Prepare retrieval data and merge with judgment data
+Data_Ret <- Raw_data %>% 
+  filter(screenID == "retrieval") %>% 
+  select(participant, blockID, trialID, condition, congruency, correctObject, response) %>% 
+  rename(target = correctObject) %>% 
+  right_join(Data_judge) %>% 
+  # Calculate response categories
+  mutate(
+    Correct = ifelse(target == response, 1, 0),                  # Correct responses
+    ColorDist = ifelse(distractor == response, 1, 0),            # Color distractor responses
+    noRes = ifelse(response == "NULL", 1, 0)                     # No response
+  ) %>% 
+  # Calculate additional response categories
+  mutate(
+    Other = ifelse(Correct == 0 & response %in% target, 1, 0),    # Other response with target
+    OtherDist = ifelse(ColorDist == 0 & response %in% distractor, 1, 0), # Other response with distractor
+    NPL = 1 - Correct - Other - ColorDist - OtherDist - noRes,    # Non-presented lures
+    .by = c(participant, blockID, trialID)
+  )
+```
+
+## 2.7 Calculate response options for each condition
+
+```{r}
+# Create table of available options for each response type by condition
+Table_nOptions <- data.frame(
+  condition = c("control", "pre", "retro")) %>% 
+  mutate(
+    nCorrect = 1,                                           # Always 1 correct answer
+    nOther = 2,                                             # Always 2 other options
+    nColorDist = ifelse(condition == "control", 0, 1),      # Color distractor options
+    nOtherDist = ifelse(condition == "control", 0, 2),      # Other distractor options
+    nNPL = ifelse(condition == "control", 9, 6)             # Non-presented lure options
+  )
+
+# Format option counts for later use
+Columns_nOptions <- Table_nOptions %>% 
+  pivot_longer(cols = starts_with("n"), names_to = "response", values_to = "nOpt") %>% 
+  mutate(response = substring(response, 2))
+```
+
+# 3 Data Visualization
+
+## 3.1 Visualize judgment task performance
+
+```{r}
+# Plot accuracy in the judgment task
+Plot_juadg_Acc <- Data_judge %>% 
+  # Aggregate data for plotting
+  agg_plot(y = judgeAcc, within = c("condition"), group = participant) %>%
+  # Add condition labels
+  labelCondition() %>% 
+  ggplot(aes(x = condition, y = mean, fill = condition)) +
+  # Add error bars and points
+  geom_errorbar(aes(ymin = mean-ci, ymax = mean+ci), width = .05) +
+  geom_point(
+    shape = 23,
+    size = 3
+  ) +
+  ylim(0.5, 1) +
+  # Add labels
+  labs(
+    y = "Proportion of correct", 
+    x = "Condition", 
+    color = "Congruency",
+    title = "Accuracy",
+    tag = "A"
+  ) +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 10.5)
+  )
+
+# Plot reaction time in the judgment task
+Plot_judge_RT <- Data_judge %>% 
+  # Only include correct responses
+  filter(judgeAcc == 1) %>%
+  # Aggregate data for plotting
+  agg_plot(y = RT, within = c("condition"), group = participant) %>%
+  # Add condition labels
+  labelCondition() %>% 
+  ggplot(aes(x = condition, y = mean, fill = condition)) +
+  # Add error bars and points
+  geom_errorbar(aes(ymin = mean-ci, ymax = mean+ci), width = .05) +
+  geom_point(
+    shape = 23,
+    size = 3
+  ) +
+  ylim(1.2, 1.6) +
+  # Add labels
+  labs(
+    y = "Reaction time (s)", 
+    x = "Condition", 
+    color = "Congruency",
+    title = "Reaction time",
+    tag = "B"
+  ) +
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 10.5)
+  )
+
+# Combine accuracy and RT plots
+(Plot_juadgement <- ggarrange(
+  Plot_juadg_Acc, Plot_judge_RT,
+  ncol = 2, nrow = 1, widths = c(1, 1),
+  common.legend = FALSE)
+)
+
+# Save the combined plot
+ggsave(
+  filename = str_glue("{figure_path}Plot_{task}_judgement.pdf"),
+  plot = Plot_juadgement,
+  width = 6, height = 4
+)
+```
+
+## 3.2 Visualize memory task performance
+
+```{r}
+
+Table_Res_NPL <- Data_Ret %>% 
+  filter(!str_detect(condition, "control")) %>% 
+  agg_plot(y = NPL, within = c("condition"), group = participant) %>% 
+  mutate(
+    same = mean/6,
+    other = mean/6*2
+  ) %>% 
+  select(condition, same, other) %>%
+  pivot_longer(cols = c("same", "other"), names_to = "distractor", values_to = "value") %>% 
+  labelCondition() %>% 
+  mutate(distractor = relabel(distractor, labels = c(
+        "same" = "Color distractor",
+        "other" = "Other distractors"
+      )))
+
+
+(
+  Plot_Resp_correct <- Data_Ret %>% 
+    agg_plot(y = Correct, within = c("condition"), group = participant) %>%
+    labelCondition() %>%
+    ggplot(aes(x = condition, y = mean, fill=condition)) +
+    geom_errorbar(aes(ymin = mean-ci, ymax = mean+ci), width = .05)+
+    geom_point(
+      shape = 23,
+      size = 3
+    )+
+    ylim(0.5,1)+
+    labs(
+      title = "Correct",
+      tag = "A",
+      y = "Proportion of correct", 
+      x = "Condition")+
+  theme(
+    legend.position = "none",
+    axis.text = element_text(size = 10.5)
+  )
+)
+
+(
+  Plot_Resp_dist <- Data_Ret %>%
+    select(participant, blockID, trialID, condition, congruency, ColorDist, OtherDist) %>%
+    filter(condition != "control") %>%
+    pivot_longer(
+      cols = c("OtherDist", "ColorDist"), 
+      names_to = "distractor") %>%
+    mutate(distractor = relabel(distractor, labels = c(
+      "ColorDist" = "Color distractor", 
+      "OtherDist" = "Other distractors"
+    ))) %>% 
+    agg_plot(y = value, within = c("condition"), between="distractor", group = participant) %>%
+    labelCondition() %>%
+    ggplot(aes(x = condition, y = mean, fill = condition))+
+    geom_errorbar(aes(ymin = mean-ci, ymax = mean+ci), width = .05)+
+    geom_point(
+      shape = 23,
+      size = 3
+    )+
+    geom_line(
+      data = Table_Res_NPL,
+      mapping = aes(
+        x = condition,
+        y = value,
+        group = 1
+      ),
+      linetype = "dashed",
+      linewidth = 1
+    )+
+    geom_point(
+      data = Table_Res_NPL,
+      mapping = aes(
+        x = condition,
+        y = value
+      ),
+      shape = 23,
+      size = 3,
+    )+
+    scale_y_continuous(
+      limits = c(0,0.12),
+      breaks = c(0,0.03,0.06,0.09,0.12))+
+    scale_fill_manual(values = c("#FF7F6F","#2F7FC1"))+
+    labs(
+      title = "Distractor",
+      tag = "B",
+      y = "Proportion of response", 
+      x = "Condition")+
+    facet_wrap(~distractor)+
+    theme(
+      legend.position = "none",
+      axis.text = element_text(size = 10.5),
+      strip.text = element_text(size = 10.5),
+      strip.background = element_rect(fill = "#bababa")
+    )
+)
+
+Plot_response <- ggarrange(
+  Plot_Resp_correct,NA, Plot_Resp_dist,
+  ncol = 3, nrow = 1, widths = c(1.5,0.3, 2),
+  common.legend = FALSE
+)
+
+ggsave(
+  filename = str_glue("{figure_path}Plot_{task}_response.pdf"),
+  plot = Plot_response,
+  width = 10, height = 4)
+
+```
+
+
+
+# 4 Model fitting
+
+## 4.1 Size judgement task
+
+### 4.1.1 Accuracy
+
+```{r}
+
+mData_judge_correct <- Data_judge %>% 
+  summarise(
+    score = sum(judgeAcc),
+    nRet = n(),
+    .by = c(participant, condition)
+    ) %>% 
+  mutate(
+    condition = factor(condition)
+  )
+
+# 
+contrasts(mData_judge_correct$condition) = bayestestR::contr.equalprior(n = 3)
+
+smart_runFun(
+  fun = brm,
+  args = list(
+    formula = score | trials(nRet) ~ 1 + condition + (1 + condition || participant),
+    data = mData_judge_correct,
+    family = binomial(),
+    prior = c(prior(normal(0,1), class = "b"), 
+              prior(student_t(3, 0, 2), class = "sd", lb = 0)),
+    chains = 8,
+    iter = 10000,
+    warmup = 2500,
+    cores = 8,
+    control = list(adapt_delta = 0.95, max_treedepth = 15),
+    save_pars = save_pars(all = TRUE),
+    file = str_glue("{model_path}Model_{task}_judge_Correct")
+  ),
+  name = str_glue("Model_{task}_judge_Correct"),
+)
+
+Model_judge_Correct <- readRDS(str_glue("{model_path}Model_{task}_judge_Correct.rds"))
+
+smart_runFun(
+  fun = unupdate,
+  args = list(model = Model_judge_Correct),
+  name = str_glue("Prior_{task}_judge_Correct"),
+  export = "Prior_judge_Correct"
+)
+
+# The set-size effect
+pairwise_comparisons(Model_judge_Correct, Prior_judge_Correct, specs = "~ condition")
+
+# Parameter       |       BF
+# --------------------------
+# control - pre   | 1.46e+03
+# control - retro | 2.75e+03
+# pre - retro     |    0.071
+
+
+
+```
+
+### 4.1.2 Reaction time
+
+```{r}
+mData_judge_RT <- Data_judge %>% 
+  filter(judgeAcc==1) %>% 
+  mutate(condition = factor(condition))
+
+contrasts(mData_judge_RT$condition) = bayestestR::contr.equalprior(n = 3)
+
+smart_runFun(
+  fun = brm,
+  args = list(
+    formula = RT ~ 1 + condition + (1 + condition || participant),
+    data = mData_judge_RT,
+    family = lognormal(),
+    prior = c(prior(cauchy(0, sqrt(2)/4), class = "b"), 
+              prior(student_t(3, 0, 2), class = "sd", lb = 0)),
+    chains = 8,
+    iter = 10000,
+    warmup = 2500,
+    cores = 8,
+    control = list(adapt_delta = 0.95, max_treedepth = 15),
+    save_pars = save_pars(all = TRUE),
+    file = str_glue("{model_path}Model_{task}_judge_RT")
+  ),
+  name = str_glue("Model_{task}_judge_RT"),
+)
+
+
+Model_judge_RT <- readRDS(str_glue("{model_path}Model_{task}_judge_RT.rds"))
+
+smart_runFun(
+  fun = unupdate,
+  args = list(model = Model_judge_RT),
+  name = str_glue("Prior_{task}_judge_RT"),
+  export = "Prior_judge_RT"
+)
+
+
+# The set-size effect
+pairwise_comparisons(Model_judge_RT, Prior_judge_RT, specs = "~ condition")
+
+# Parameter       |    BF
+# -----------------------
+# control - pre   |  2.17
+# control - retro |  6.10
+# pre - retro     | 0.020
+
+
+```
+
+## 4.2 Memory task
+
+### 4.2.1 Data
+
+```{r}
+
+mData_Ret <- Data_Ret %>% 
+  select(participant,condition,Correct,ColorDist,OtherDist,NPL) %>% 
+  pivot_longer(
+    cols = c(Correct,ColorDist, OtherDist, NPL),
+    names_to = "response",values_to = "value") %>% 
+  summarise(
+    Resp = sum(value, na.rm = TRUE),
+    nResp = sum(!is.na(value)),
+    .by = c(participant, condition, response)
+  ) %>% 
+  mutate(
+    response = factor(response),
+    condition = factor(condition)
+  )
+
+mArgs_Ret = list(
+    formula = Resp | trials(nResp) ~ 1 + condition + (1 + condition || participant),
+    family = binomial(),
+    prior = c(prior(normal(0,1), class = "b"), 
+              prior(student_t(3, 0, 2), class = "sd", lb = 0)),
+    chains = 8,
+    iter = 10000,
+    warmup = 2500,
+    cores = 8,
+    control = list(adapt_delta = 0.95, max_treedepth = 15),
+    save_pars = save_pars(all = TRUE),
+    sample_prior = "yes"
+  )
+
+```
+
+
+### 4.2.2 Response: Correct
+
+```{r}
+
+mData_Ret_correct <- mData_Ret %>% 
+  filter(response == "Correct")
+
+contrasts(mData_Ret_correct$condition) = bayestestR::contr.equalprior(n = 3)
+
+smart_runFun(
+  fun = brm,
+  args = mArgs_Ret %>% 
+    list_assign(
+      data = mData_Ret_correct,
+      file = str_glue("{model_path}Model_{task}_memory_Correct")
+    ),
+  name = str_glue("Model_{task}_memory_Correct"),
+)
+
+Model_memory_Correct <- readRDS(str_glue("{model_path}Model_{task}_memory_Correct.rds"))
+
+smart_runFun(
+  fun = unupdate,
+  args = list(model = Model_memory_Correct),
+  name = str_glue("Prior_{task}_memory_Correct"),
+  export = "Prior_memory_Correct"
+)
+
+
+pairwise_comparisons(Model_memory_Correct, Prior_memory_Correct, specs = "~ condition")
+
+# Parameter       |       BF
+# --------------------------
+# control - pre   | 6.68e+09
+# control - retro | 2.81e+08
+# pre - retro     |    0.061
+
+
+```
+
+### 4.2.3 Response: Distractor
+
+```{r}
+
+mData_Ret_dist <- mData_Ret %>% 
+  filter(response=="ColorDist",condition!="control") %>% 
+  droplevels()
+
+contrasts(mData_Ret_dist$condition) = bayestestR::contr.equalprior(n = 2)
+
+smart_runFun(
+  fun = brm,
+  args = mArgs_Ret %>% 
+    list_assign(
+      data = mData_Ret_dist,
+      file = str_glue("{model_path}Model_{task}_memory_ColorDist")
+    ),
+  name = str_glue("Model_{task}_memory_ColorDist"),
+)
+
+mData_Ret_otherDist <- mData_Ret %>% 
+  filter(response=="OtherDist",condition!="control") %>% 
+  droplevels()
+
+contrasts(mData_Ret_otherDist$condition) = bayestestR::contr.equalprior(n = 2)
+
+smart_runFun(
+  fun = brm,
+   args = mArgs_Ret %>% 
+    list_assign(
+      data = mData_Ret_otherDist,
+      file = str_glue("{model_path}Model_{task}_memory_otherDist")
+    ),
+  name = str_glue("Model_{task}_memory_OtherDist"),
+)
+
+
+Model_memory_ColorDist <- readRDS(str_glue("{model_path}Model_{task}_memory_ColorDist.rds"))
+Model_memory_OtherDist <- readRDS(str_glue("{model_path}Model_{task}_memory_OtherDist.rds"))
+
+smart_runFun(
+  fun = unupdate,
+  args = list(model = Model_memory_ColorDist),
+  name = str_glue("Prior_{task}_memory_ColorDist"),
+  export = "Prior_memory_ColorDist"
+)
+
+smart_runFun(
+  fun = unupdate,
+  args = list(model = Model_memory_OtherDist),
+  name = str_glue("Prior_{task}_memory_OtherDist"),
+  export = "Prior_memory_OtherDist"
+)
+
+
+pairwise_comparisons( Model_memory_ColorDist, Prior_memory_ColorDist, specs = "~ condition")
+
+# Parameter   |    BF
+# -------------------
+# pre - retro | 0.282
+
+
+pairwise_comparisons( Model_memory_OtherDist, Prior_memory_OtherDist, specs = "~ condition")
+
+# Parameter   |    BF
+# -------------------
+# pre - retro | 0.087
+
+```
+
+### 4.2.4 ColorDist vs. NPL
+
+```{r}
+
+mData_Ret_dist_NPL <- mData_Ret %>% 
+  filter(
+    response %in% c("ColorDist", "NPL"),
+    condition != "control"
+  ) %>% 
+  droplevels()
+
+contrasts(mData_Ret_dist_NPL$condition) = bayestestR::contr.equalprior(n = 2)
+contrasts(mData_Ret_dist_NPL$response) = bayestestR::contr.equalprior(n = 2)
+
+smart_runFun(
+  fun = brm,
+  args = mArgs_Ret %>% 
+    list_modify(
+      formula = Resp | trials(nResp) ~ 0 + condition:response + (0 + condition:response || participant),
+    ) %>% 
+    list_assign(
+      data = mData_Ret_dist_NPL,
+      file = str_glue("{model_path}Model_{task}_ColorDist_NPL")
+    ),
+  name = str_glue("Model_{task}_ColorDist_NPL")
+)
+
+Model_Ret_dist_NPL <- readRDS(str_glue("{model_path}Model_{task}_ColorDist_NPL.rds"))
+
+Hyp_Ret_dist_NPL <- Model_Ret_dist_NPL %>% 
+  hypothesis(c(
+    precue = "inv_logit(conditionpre:responsedist) = inv_logit(conditionpre:responseNPL)/6",
+    retrocue = "inv_logit(conditionretro:responsedist) = inv_logit(conditionretro:responseNPL)/6"
+  ))
+
+Hyp_Ret_dist_NPL$hypothesis %>% mutate(Evid.Ratio = 1/Evid.Ratio)
+
+#   Hypothesis Estimate Est.Error CI.Lower CI.Upper Evid.Ratio Post.Prob Star
+# 1     precue   0.0867   0.00878   0.0698   0.1044   3.37e+16  2.97e-17    *
+# 2   retrocue   0.0764   0.00672   0.0632   0.0896   2.28e+17  4.39e-18    *
+
+```
+
+
+### 4.2.5 OtherDist vs. NPL
+
+```{r}
+
+mData_Ret_otherDist_NPL <- mData_Ret %>% 
+  filter(
+    response %in% c("OtherDist", "NPL"),
+    condition != "control"
+  ) %>% 
+  droplevels()
+
+contrasts(mData_Ret_otherDist_NPL$condition) = bayestestR::contr.equalprior(n = 2)
+contrasts(mData_Ret_otherDist_NPL$response) = bayestestR::contr.equalprior(n = 2)
+
+smart_runFun(
+  fun = brm,
+  args = mArgs_Ret %>% 
+    list_modify(
+      formula = Resp | trials(nResp) ~ 0 + condition:response + (0 + condition:response || participant),
+    ) %>% 
+    list_assign(
+      data = mData_Ret_otherDist_NPL,
+      file = str_glue("{model_path}Model_{task}_OtherDist_NPL")
+    ),
+  name = str_glue("Model_{task}_OtherDist_NPL")
+)
+
+Model_Ret_otherDist_NPL <- readRDS(str_glue("{model_path}Model_{task}_OtherDist_NPL.rds"))
+
+Hyp_Ret_otherDist_NPL <- Model_Ret_otherDist_NPL %>% 
+  hypothesis(c(
+    precue = "inv_logit(conditionpre:responseotherDist) = inv_logit(conditionpre:responseNPL)/6",
+    retrocue = "inv_logit(conditionretro:responseotherDist) = inv_logit(conditionretro:responseNPL)/6"
+  ))
+
+Hyp_Ret_otherDist_NPL$hypothesis %>% mutate(Evid.Ratio = 1/Evid.Ratio)
+
+#   Hypothesis Estimate Est.Error CI.Lower CI.Upper Evid.Ratio Post.Prob Star
+# 1     precue   0.0744   0.00888   0.0578   0.0925   4.96e+17  2.02e-18    *
+# 2   retrocue   0.0744   0.00921   0.0570   0.0933   1.87e+14  5.34e-15    *
+
+```
+
+## 4.3 Memory measurement models
+
+### 4.3.1 Data Preparation
+
+```{r}
+
+mData_M3 <- Data_Ret %>% 
+  agg_multinomial(
+    responses = c("Correct", "Other", "ColorDist", "OtherDist", "NPL"),
+    group = c("participant", "condition"),
+    DV_name = NULL
+  ) %>% 
+  left_join(Table_nOptions) %>% 
+  mutate(condition = factor(condition, levels = c("control","pre","retro")))
+
+contrasts(mData_M3$condition) = bayestestR::contr.equalprior(n = 3)
+
+write_rds(mData_M3, str_glue("./data/Data_{task}_M3.rds"))
+
+```
+
+
+### 4.3.2 formulas and priors
+
+```{r}
+
+M3_form = bmf(
+  Correct ~ a + c + b,
+  Other ~ a + b,
+  ColorDist ~ ra*a + rc*c + b,
+  OtherDist ~ ra*a + b,
+  NPL ~ b,
+  a ~ 0 + condition + (0 + condition || participant),
+  c ~ 0 + condition + (0 + condition || participant),
+  ra ~ 0 + condition + (0 + condition || participant),
+  rc ~ 0 + condition + (0 + condition || participant)
+)
+
+M3_model <- m3(
+    resp_cats = c("Correct","Other","ColorDist", "OtherDist","NPL"),
+    num_options = c("nCorrect","nOther","nColorDist", "nOtherDist", "nNPL"),
+    choice_rule = "softmax",
+    links = list(
+      a = "identity",
+      c = "identity",
+      ra = "logit",
+      rc = "logit"),
+    default_priors = list(
+      a = list(main = "normal(3,1)", effect = "normal(3,1)"),
+      c = list(main = "normal(3,1)", effect = "normal(3,1)"),
+      ra = list(main = "logistic(0,1)", effect = "logistic(0,1)"),
+      rc = list(main = "logistic(0,1)", effect = "logistic(0,1)"))
+    )
+
+M3_prior <- c(
+      prior(constant(10), class="b", nlpar = "ra", coef = "conditioncontrol"),
+      prior(constant(10), class="b", nlpar = "rc", coef = "conditioncontrol")
+    )
+
+```
+
+### 4.3.3 Model fitting
+
+```{r}
+
+smart_runFun(
+  fun = bmm,
+  args = list(
+    formula = M3_form,
+    model = M3_model,
+    data = mData_M3,
+    prior = M3_prior,
+    sample_prior = "yes",
+    iter = 10000,
+    warmup = 2500,
+    chains = 8,
+    cores = 8,
+    control = list(adapt_delta = 0.95, max_treedepth = 15),
+    save_pars = save_pars(all = TRUE),
+    file = str_glue("{model_path}Model_{task}_M3")
+  ),
+  name = str_glue("Model_{task}_M3"),
+)
+
+```
+
+
+### 4.3.4 Bayes Factor
+
+```{r}
+
+Model_M3 <- read_rds(str_glue("{model_path}Model_{task}_M3.rds"))
+Model_M3_simple <- read_rds(str_glue("{model_path}Model_{task}_M3_simple.rds"))
+
+brms::bayes_factor(Model_M3, Model_M3_simple)
+
+Hyp_M3 <- hypothesis(Model_M3, c(
+  a_pre_rertro = "a_conditionpre = a_conditionretro",
+  a_pre_control = "a_conditionpre = a_conditioncontrol",
+  a_retro_control = "a_conditionretro = a_conditioncontrol",
+
+  c_pre_rertro = "c_conditionpre = c_conditionretro",
+  c_pre_control = "c_conditionpre = c_conditioncontrol",
+  c_retro_control = "c_conditionretro = c_conditioncontrol",
+  
+  ra_pre_rertro = "inv_logit(ra_conditionpre) = inv_logit(ra_conditionretro)",
+  rc_pre_rertro = "inv_logit(rc_conditionpre) = inv_logit(rc_conditionretro)"
+))
+
+# Hypothesis Tests for class b:
+#        Hypothesis Estimate Est.Error CI.Lower CI.Upper Evid.Ratio Post.Prob Star
+# 1    a_pre_rertro     0.32      0.34    -0.33     1.00       2.67      0.73     
+# 2   a_pre_control    -0.05      0.33    -0.68     0.61       4.40      0.81     
+# 3 a_retro_control    -0.37      0.29    -0.94     0.20       2.07      0.67     
+
+# 4    c_pre_rertro     0.05      0.22    -0.39     0.49       6.26      0.86     
+# 5   c_pre_control    -0.37      0.21    -0.79     0.05       1.45      0.59     
+# 6 c_retro_control    -0.42      0.21    -0.84    -0.01       0.89      0.47    *
+
+# 7   ra_pre_rertro     0.04      0.04    -0.05     0.12       6.31      0.86     
+# 8   rc_pre_rertro     0.03      0.07    -0.11     0.18       5.21      0.84     
+
+```
+
+### 4.3.5 Posterior
+
+```{r}
+
+Model_M3 <- read_rds(str_glue("{model_path}Model_{task}_M3.rds"))
+
+Post_M3 <- Model_M3 %>% 
+  gather_draws(`b_.*`, ndraws=8000, regex = TRUE) %>% 
+  separate_wider_delim(.variable, "_", names = c(NA, "par","condition"), cols_remove = TRUE) %>%  
+  mutate(
+    condition = str_remove(condition,"condition")) %>% 
+  rename(value = .value) %>% 
+  mutate(value = ifelse(str_detect(par,"r"),inv_logit_scaled(value), value)) %>% 
+  filter(!(condition=="control" & str_detect(par,"r")))
+
+Post_M3 %>% write_csv(str_glue('./figures/figures_Data/Post_{task}.csv'))
+
+
+```
+
+### 4.3.6 Prediction
+
+```{r}
+
+Model_M3 <- read_rds(str_glue("{model_path}Model_{task}_M3.rds"))
+inv_logit <- brms::inv_logit_scaled
+
+Table_Res_filtered <- mData_M3 %>% 
+  select(participant, condition, Correct, Other, ColorDist, OtherDist, NPL, nRet) %>% 
+  pivot_longer(
+    cols = c(Correct, Other, ColorDist, OtherDist, NPL), 
+    names_to = ".category", values_to = ".epred") %>% 
+  mutate(.epred = .epred/nRet,
+         .category = relabel(.category, labels = c(
+           "Correct" = "Correct",
+           "ColorDist" = "Color distractor",
+           "NPL" = "NPL",
+           "Other" = "Others",
+           "OtherDist" = "Other distractors"
+         ))) %>% 
+  labelCondition()
+
+Pred_M3 <- Model_M3 %>% 
+  epred_draws(
+    newdata = Model_M3$data,
+    ndraws = 10000
+  ) %>% 
+  ungroup() %>% 
+  mutate(.epred = .epred/nTrials) %>% 
+  select(participant, condition, .draw, .category, .epred) %>% 
+  summarise(.epred = mean(.epred),
+            .by = c(.draw, condition, .category)) %>% 
+  filter(
+    .epred > quantile(.epred, 0.005),
+    .epred < quantile(.epred, 0.995),
+    .by = c(condition, .category)
+  ) %>% 
+  filter(!(condition=="control" & .category %in% c("ColorDist","OtherDist"))) %>% 
+  mutate(.category = relabel(.category, labels = c(
+           "Correct" = "Correct",
+           "ColorDist" = "Color distractor",
+           "NPL" = "NPL",
+           "Other" = "Others",
+           "OtherDist" = "Other distractors"
+         ))) %>% 
+  labelCondition()
+
+```
+
+
+```{r}
+
+(
+  Plot_M3_recovery<- Table_Res_filtered %>% 
+    agg_plot(y = .epred, within = c(".category","condition"), group = participant) %>% 
+    ggplot(aes(x = condition, y = mean)) +
+    geom_point(position = dodge1)+
+    gghalves::geom_half_violin(
+      mapping = aes(x = condition, y = .epred, fill = condition),
+      data = filter(Pred_M3),
+      side = "r", nudge = 0.1)+
+    geom_errorbar(aes(ymin = mean-ci, ymax = mean+ci), width = 0, position = dodge1)+
+    ylim(0,1)+
+    labs(y = "Proportion of response", x = "Condition")+
+    facet_wrap(~ .category, scales = "free")+
+    theme(
+      legend.position = "none",
+      axis.text = element_text(size = 10.5),
+      strip.text = element_text(size=10.5),
+      strip.background = element_rect(fill = "#bababa"),
+      panel.spacing.x = unit(3, "lines"),
+      panel.spacing.y = unit(1, "lines") )
+  )
+
+scale_inidividual_facet_y_axes(
+  Plot_M3_recovery,
+  ylims = list(
+    c(0.4,1), c(0, 0.30), c(0, 0.08), 
+    c(0, 0.30), c(0, 0.30)
+  )
+)
+
+ggsave(
+  filename = str_glue("{figure_path}Plot_{task}_M3_predict.pdf"),
+  plot = Plot_M3_recovery, width = 10, height =6
+)
+
+```
+
+## 4.4 M3 from OberLewan 2019
+
+### 4.4.1 Data Preparation
+
+```{r}
+
+mData_M3 <- Data_Ret %>% 
+  filter(condition!="control") %>% 
+  agg_multinomial(
+    responses = c("Correct", "Other", "ColorDist", "OtherDist", "NPL"),
+    group = c("participant","condition"),
+    DV_name = NULL
+  ) %>% 
+  mutate(i = ifelse(condition=="pre",1,0)) %>% 
+  select(-condition)
+
+
+```
+
+### 4.4.2 formulas and priors
+
+```{r}
+
+genM3Form <- function(choice=NULL, f = "both", r = "both") {
+  
+  if (f == "both") {
+    fa = "pow(f,i)"
+    fc = "pow(f,i)"
+  } else if(f == "a") {
+    fa = "pow(f,i)"
+    fc = NULL
+  } else if(f == "c") {
+    fa = NULL
+    fc = "pow(f,i)"
+  } else {
+    fa = NULL
+    fc = NULL
+  }
+  
+  if (r == "both") {
+    ra = "r"
+    rc = "r"
+  } else if(r == "a") {
+    ra = "r"
+    rc = NULL
+  } else if(r == "c") {
+    ra = NULL
+    rc = "r"
+  } else {
+    ra = NULL
+    rc = NULL
+  }
+  
+  
+  dis_a = paste(c(fa,ra,"a"),collapse = '*')
+  dis_c = paste(c(fc,rc,"c"),collapse = "*")
+  form_dist = str_glue("ColorDist ~ {dis_a} + {dis_c} + b") %>% as.formula()
+  form_otherDist = str_glue("OtherDist ~ {dis_a} + b") %>% as.formula()
+  
+  if (f!="None") {
+    f_form = f ~ 1 + (1 || participant)
+  } else {
+    f_form = NULL
+  }
+  
+  if (r!="None") {
+    r_form = r ~ 1 + (1 || participant)
+  } else {
+    r_form = NULL
+  }
+  
+    M3_form = bmf(
+      Correct ~ a + c + b,
+      Other ~ a + b,
+      form_dist,
+      form_otherDist,
+      NPL ~ b,
+      a ~ 1 + (1 || participant),
+      c ~ 1 + (1 || participant))+
+      f_form +
+      r_form
+  
+  return(M3_form)
+  
+}
+
+```
+
+### 4.4.3 priors
+
+```{r}
+
+genM3Model <- function(choice="softmax", f = "both", r = "both") {
+  
+  if (choice=="softmax") {
+    M3_list = list(
+      a = "identity",
+      c = "identity")
+    
+    M3_default_priors <- list(
+        a = list(main = "normal(3,1)", effect = "normal(3,1)"),
+        c = list(main = "normal(3,1)", effect = "normal(3,1)"))
+    
+  } else if (choice=="simple") {
+    
+    M3_list = list(
+      a = "log",
+      c = "log")
+    
+    M3_default_priors <- list(
+      a = list(main = "normal(1.5,0.5)", effect = "normal(1.5,0.5)"),
+      c = list(main = "normal(1.5,0.5)", effect = "normal(1.5,0.5)"))
+    
+  } else {
+    
+    stop("The choice argument supports only `softmax` or `simple`.")
+  }
+  
+  
+  if (f!="None") {
+    M3_list["f"] = "logit"
+    M3_default_priors <- M3_default_priors %>% list_assign(f = list(main = "logistic(0,1)", effect = "logistic(0,1)"))
+  }
+  
+  if (r!="None") {
+    M3_list["r"] = "logit"
+    M3_default_priors <- M3_default_priors %>% list_assign(r = list(main = "logistic(0,1)", effect = "logistic(0,1)"))
+  }
+  
+  M3_model <- m3(
+    resp_cats = c("Correct","Other","ColorDist", "OtherDist","NPL"),
+    num_options = c(1,2,1,2,6),
+    choice_rule = choice,
+    links = M3_list,
+    default_priors = M3_default_priors
+    )
+  
+  return(M3_model)
+}
+
+```
+
+
+### 4.4.4 Model fitting
+
+```{r}
+
+MC_list <- list(
+  choice = c("softmax"),
+  r = c("both", "a", "c", "None"),
+  f = c("both", "a", "c", "None")
+)
+
+
+smartr::parallel_model_comparison(
+  fun = bmm,
+  pars = MC_list,
+  form_fun = genM3Form,
+  model_fun = genM3Model,
+  args = list(
+    data = mData_M3,
+    sample_prior = "yes",
+    iter = 10000,
+    warmup = 2500,
+    chains = 16,
+    cores = 4,
+    control = list(adapt_delta = 0.95, max_treedepth = 15),
+    save_pars = save_pars(all = TRUE)
+  ),
+  model_name = "Model_M3_OL2019",
+  model_path = model_path,
+  sample_path = sample_path,
+  maxCore = 8
+)
+
+smart_runFun(
+  fun = bmm,
+  args = list(
+    data = mData_M3,
+    sample_prior = "yes",
+    formula = genM3Form(choice = "softmax", f = "a", r = "both"),
+    model = genM3Model(choice = "softmax", f = "a", r = "both"),
+    iter = 10000,
+    warmup = 2500,
+    chains = 16,
+    cores = 8,
+    control = list(adapt_delta = 0.95, max_treedepth = 15),
+    save_pars = save_pars(all = TRUE),
+    file = str_glue("{model_path}Model_M3_OL2019_choicesoftmax_rboth_fa.rds")
+  ),
+  name = str_glue("Model_M3_OL2019_choicesoftmax_rboth_fa")
+)
+
+
+```
+
+
+### 4.4.5 Visualization
+
+```{r}
+
+ Table_compete <- compare_logml(
+   pars = MC_list,
+   sample_path = sample_path,
+   sample_prefix = "Sample_M3_OL2019"
+ ) %>% 
+  mutate(
+    logml = max(logml) - logml,
+    logml = round(logml,2),
+    f = relabel(f, labels = c(
+        "both" = "a & c",
+        "a" = "a",
+        "c" = "c",
+        "None" = "0"
+      )),
+    r = relabel(r, labels = c(
+        "both" = "r & f",
+        "a" = "r",
+        "c" = "f",
+        "None" = "0"
+      ))
+    )
+
+
+Plot_logml_heatmap <- Table_compete %>% 
+  ggplot(aes(x = f, y = r, fill = logml))+
+  geom_tile()+
+  geom_text(aes(label = logml))+
+  scale_fill_gradient(
+    low = "white", high = "#2F7FC1", 
+    trans = scales::exp_trans(base = log(2.7)),
+    breaks = c(0, 20, 50, 100, 1000)
+    )+
+  labs(
+    x = "Parameter f",
+    y = "Parameter r",
+    fill = "log(BF)"
+  )+
+  theme(
+    axis.text = element_text(size = 11),
+    axis.title = element_text(size = 12),
+    strip.text = element_text(size = 12)
+  )
+
+
+ggsave(
+  plot = Plot_logml_heatmap,
+  path = figure_path,
+  filename = "Plot_M3_OL2019_MC_heatmap_logml.pdf",
+  width = 5.5,
+  height = 4.5
+)
+
+  
+```
+
+### 4.4.6 Posterior
+
+```{r}
+
+Model_M3<- read_rds(str_glue("{model_path}Model_{task}_M3_OL2019_choicesoftmax_rboth_fa.rds"))
+
+Post_M3 <- Model_M3 %>% 
+  gather_draws(`b_.*`, ndraws=8000, regex = TRUE) %>% 
+  separate_wider_delim(.variable, "_", names = c(NA, "par", NA), cols_remove = TRUE) %>%
+  filter(par!="b") %>% 
+  rename(value = .value) %>% 
+  mutate(value = ifelse(str_detect(par,"r|f"),inv_logit_scaled(value), value))
+
+Post_M3 %>% write_csv(str_glue('./figures/figures_Data/Post_{task}_filtering.csv'))
+
+```
+
+
+
+
+
