@@ -33,7 +33,7 @@ iter   <- 2000
 ## 0.1) Read trial-level data --------------------------------------------------
 
 # Raw data: space-delimited, no header. Column names from the original JAGS
-# analysis script (Oberauer_2019_MMM_Analyses.R).
+# analysis script (https://osf.io/qy5sd/files/geb6v).
 # Key columns: setsize (2/4/6/8), rcat (1=correct, 2=other, 3=NPL),
 # rsizeList (list items in recognition set, *includes* the correct item),
 # rsizeNPL (not-presented lures in recognition set).
