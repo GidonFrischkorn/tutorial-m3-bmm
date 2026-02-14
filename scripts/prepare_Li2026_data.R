@@ -24,8 +24,8 @@
 #' Response categories for the M3 complex span model:
 #'   corr    = correct target selected
 #'   other   = a different target from the same trial selected
-#'   dist_c  = the distractor paired with the tested target selected
-#'   dist_o  = a distractor from a different pair in the same trial selected
+#'   distc  = the distractor paired with the tested target selected
+#'   disto  = a distractor from a different pair in the same trial selected
 #'   npl     = a not-presented lure selected
 
 ###############################################################################!
@@ -149,16 +149,16 @@ data_retrieval <- data_retrieval %>%
     rcat = case_when(
       response == "NULL"                                   ~ "noRes",
       response == correctObject                            ~ "corr",
-      response == distractor                               ~ "dist_c",
+      response == distractor                               ~ "distc",
       map2_lgl(response, all_targets, ~ .x %in% .y)       ~ "other",
-      map2_lgl(response, all_distractors, ~ .x %in% .y)   ~ "dist_o",
+      map2_lgl(response, all_distractors, ~ .x %in% .y)   ~ "disto",
       TRUE                                                 ~ "npl"
     )
   )
 
 # Verify: control condition should have no distractor responses
 n_ctrl_dist <- data_retrieval %>%
-  filter(condition == "control", rcat %in% c("dist_c", "dist_o")) %>%
+  filter(condition == "control", rcat %in% c("distc", "disto")) %>%
   nrow()
 stopifnot(n_ctrl_dist == 0)
 
@@ -184,7 +184,7 @@ data_agg <- data_retrieval %>%
   pivot_wider(names_from = rcat, values_from = n, values_fill = 0)
 
 # Ensure all 5 response columns exist (even if all zeros)
-for (col in c("corr", "other", "dist_c", "dist_o", "npl")) {
+for (col in c("corr", "other", "distc", "disto", "npl")) {
   if (!col %in% names(data_agg)) data_agg[[col]] <- 0L
 }
 
@@ -200,15 +200,15 @@ for (col in c("corr", "other", "dist_c", "dist_o", "npl")) {
 # For the tested item:
 #   n_corr   = 1 (the tested target)
 #   n_other  = 2 (the other 2 targets from the same trial)
-#   n_dist_c = 0 (control) or 1 (pre/retro: distractor paired with tested target)
-#   n_dist_o = 0 (control) or 2 (pre/retro: distractors from other pairs)
+#   n_distc = 0 (control) or 1 (pre/retro: distractor paired with tested target)
+#   n_disto = 0 (control) or 2 (pre/retro: distractors from other pairs)
 #   n_npl    = 9 (control) or 6 (pre/retro: remaining images)
 response_options <- tibble(
   condition = c("control", "pre", "retro"),
   n_corr   = c(1, 1, 1),
   n_other  = c(2, 2, 2),
-  n_dist_c = c(0, 1, 1),
-  n_dist_o = c(0, 2, 2),
+  n_distc = c(0, 1, 1),
+  n_disto = c(0, 2, 2),
   n_npl    = c(9, 6, 6)
 )
 
@@ -222,8 +222,8 @@ data_agg <- data_agg %>%
 # Select and order columns for the final output
 data_agg <- data_agg %>%
   select(participant, condition,
-         corr, other, dist_c, dist_o, npl,
-         n_corr, n_other, n_dist_c, n_dist_o, n_npl)
+         corr, other, distc, disto, npl,
+         n_corr, n_other, n_distc, n_disto, n_npl)
 
 ###############################################################################!
 # 7) Summary and Save ----------------------------------------------------------
