@@ -1,0 +1,391 @@
+---
+title: "Fitting the Memory Measurement Model (M3) with the bmm R Package: A Tutorial"
+author:
+  - name: Gidon T. Frischkorn
+    orcid: 0000-0002-9555-0261
+    affiliations:
+      - name: University of Zurich
+        department: Department of Psychology
+  - name: Isabel Courage
+    affiliations:
+      - name: University of Zurich
+        department: Department of Psychology
+  - name: Chenyu Li
+    affiliations:
+      - name: University of Zurich
+        department: Department of Psychology
+      - name: University of Chicago
+        department: Department of Psychology
+date: today
+format:
+  pdf:
+    documentclass: apa7
+    classoption: [man, 12pt]
+    papersize: letter
+    margin-left: 1in
+    margin-right: 1in
+    margin-top: 1in
+    margin-bottom: 1in
+    number-sections: false
+    colorlinks: true
+    fig-pos: "H"
+    keep-tex: true
+  docx:
+    reference-doc: default
+bibliography: references.bib
+csl: apa.csl
+abstract: |
+  TODO: Draft abstract covering (a) the M3 framework and what it measures,
+  (b) the bmm package as a new accessible implementation, (c) the three
+  tutorials (simple span, complex span, custom model with parameter recovery),
+  and (d) what readers will be able to do after completing the tutorials.
+keywords:
+  - working memory
+  - measurement model
+  - multinomial model
+  - Bayesian estimation
+  - R package
+execute:
+  echo: true
+  eval: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+pacman::p_load(here, bmm, brms, tidyverse, tidybayes, patchwork)
+source(here("functions", "clean_plot.R"))
+```
+
+<!-- ====================================================================== -->
+# Introduction
+<!-- ====================================================================== -->
+
+<!-- < 500 words per AMPPS guidelines. No extensive literature review. -->
+
+<!-- Key points:
+- WM researchers use categorical response tasks yielding response frequencies
+- M3 framework (Oberauer & Lewandowsky, 2019) separates item memory (a) from
+  context-specific binding (c) via competitive retrieval
+- Previously required custom JAGS code — error-prone, barrier to adoption
+- bmm R package provides standardized implementation: specify, fit, evaluate
+  with minimal code; flexibly adapt to new designs
+- This tutorial: three worked examples covering ss, cs, and custom versions
+-->
+
+
+<!-- ====================================================================== -->
+# The M3 Model Framework
+<!-- ====================================================================== -->
+
+<!-- ~1,000–1,500 words. Teach the model, not the theory. -->
+
+## What M3 Models
+
+<!-- Categorical response data from memory tasks — response frequencies across
+categories (correct, other-list intrusions, NPL, etc.) -->
+
+## Activation Sources and Competitive Retrieval
+
+<!-- Core mechanism: activation sources feed into competitive retrieval via a
+choice rule (Luce's axiom). Response probability for a category depends on its
+total activation relative to all categories.
+
+Activation parameters:
+  b = baseline (fixed for scaling)
+  a = general item memory
+  c = context-specific binding
+  Additional parameters for custom models
+-->
+
+## Choice Rules
+
+<!-- Simple (linear normalization) vs softmax (exponential normalization,
+equivalent to n-AFC SDT). Brief explanation of when to prefer each; note that
+recent evidence favors softmax. -->
+
+## Model Versions
+
+<!-- Three versions: ss (simple span, 3 categories), cs (complex span,
+5 categories), custom (user-defined) -->
+
+## The bmm Implementation
+
+<!-- Brief overview: m3() creates the model, bmf() specifies predictor formulas,
+bmm() fits via brms/Stan. Contrast with the old JAGS workflow.
+
+Brief mention of relationship to MPT models (1–2 sentences). -->
+
+
+<!-- ====================================================================== -->
+# Tutorial 1: Simple Span M3
+<!-- ====================================================================== -->
+
+<!-- ~2,000–2,500 words. Full worked example with Oberauer (2019) data.
+Companion script: scripts/tutorial1_simple_span.R -->
+
+## Data
+
+<!-- Oberauer (2019), Experiment 1 & 2. Simple span task with 3 response
+categories: correct, other (intrusion from a different list position), NPL.
+Data available at: https://osf.io/vekpd/ -->
+
+```{r}
+#| label: t1-data-load
+data_agg <- read_csv(here("data", "Oberauer_2019_SimpleSpan_agg.csv"),
+                     show_col_types = FALSE)
+```
+
+## Model Specification
+
+<!-- m3(version = "ss") with softmax choice rule.
+bmf() with condition effects on a and c. -->
+
+```{r}
+#| label: t1-model-spec
+m3_model_ss <- m3(
+  resp_cats   = c("corr", "other", "npl"),
+  num_options = c("n_corr", "n_other", "n_npl"),
+  version     = "ss",
+  choice_rule = "softmax"
+)
+```
+
+## Model Fitting
+
+```{r}
+#| label: t1-fit
+#| eval: false
+```
+
+## Convergence and Model Evaluation
+
+<!-- Rhat, ESS, posterior predictive checks -->
+
+```{r}
+#| label: fig-t1-pp-check
+#| fig-cap: "Posterior predictive check for the simple span M3 model (softmax choice rule). Points show observed response proportions; error bars show ±1 SE."
+# TODO: include pre-generated figure or generate inline
+```
+
+## Parameter Estimates
+
+```{r}
+#| label: fig-t1-param-estimates
+#| fig-cap: "Posterior parameter estimates for the simple span M3 model (softmax choice rule)."
+# TODO: include pre-generated figure or generate inline
+```
+
+## Choice Rule Comparison
+
+<!-- Fit with both simple and softmax, compare results. Explain the difference
+and why softmax is recommended as default. -->
+
+## Hypothesis Testing
+
+<!-- brms::hypothesis() with sample_prior = "yes" for Bayes Factors. -->
+
+
+<!-- ====================================================================== -->
+# Tutorial 2: Complex Span M3
+<!-- ====================================================================== -->
+
+<!-- ~1,500–2,000 words. Builds on Tutorial 1 workflow.
+Data: Li, Frischkorn, & Oberauer (accepted, JEP:LMC).
+Companion script: scripts/tutorial2_complex_span.R
+Data preparation: scripts/prepare_Li2026_data.R -->
+
+## What Makes Complex Span Different
+
+<!-- Distractor categories, the f parameter.
+5 response categories: corr, distc, other, disto, npl.
+IMPORTANT: cs version assigns activation formulas by position — resp_cats
+must follow the order corr, distc, other, disto, npl. -->
+
+## Data
+
+```{r}
+#| label: t2-data-load
+data_agg <- read_csv(here("data", "Li_2026_ComplexSpan_Exp1_agg.csv"),
+                     show_col_types = FALSE)
+```
+
+## Model Specification
+
+<!-- m3(version = "cs") with softmax choice rule.
+Handling non-identified f in control condition (constant prior). -->
+
+```{r}
+#| label: t2-model-spec
+m3_model_cs <- m3(
+  resp_cats   = c("corr", "distc", "other", "disto", "npl"),
+  num_options = c("n_corr", "n_distc", "n_other", "n_disto", "n_npl"),
+  version     = "cs",
+  choice_rule = "softmax"
+)
+```
+
+## Model Fitting and Evaluation
+
+```{r}
+#| label: fig-t2-pp-check
+#| fig-cap: "Posterior predictive check for the complex span M3 model."
+# TODO: include pre-generated figure
+```
+
+## Parameter Estimates
+
+```{r}
+#| label: fig-t2-param-estimates
+#| fig-cap: "Posterior parameter estimates for the complex span M3 model. Left panels show item memory (a) and context binding (c) across conditions. Right panel shows distractor filtering (f) for pre-cue and retro-cue conditions."
+# TODO: include pre-generated figure
+```
+
+## Interpreting the f Parameter
+
+<!-- f = 0 → perfect filtering; f = 1 → no filtering.
+Compare pre-cue vs retro-cue. -->
+
+## Hypothesis Tests
+
+<!-- brms::hypothesis() for condition comparisons. -->
+
+## Comparison with the Published Model
+
+<!-- Published analysis used separate ra/rc parameters (different attenuation
+for item vs binding activation). The cs model constrains ra = rc = f.
+When this constraint is too restrictive → custom model needed (Tutorial 3). -->
+
+
+<!-- ====================================================================== -->
+# Tutorial 3: Custom M3 — Parameter Recovery
+<!-- ====================================================================== -->
+
+<!-- ~2,500–3,000 words. Centerpiece for flexibility.
+Inline code follows: scripts/tutorial3_parameter_recovery_simple.R
+Design grid results from: scripts/tutorial3_parameter_recovery.R -->
+
+## Why Custom Models
+
+<!-- When standard ss/cs don't fit the experimental design. The custom version
+allows specifying M3 models of arbitrary complexity with user-defined
+activation formulas, as long as the model is identified. -->
+
+## Defining a Custom M3 Model
+
+<!-- Memory updating model (Oberauer & Lewandowsky, 2019) with 5 response
+categories and 5 estimated parameters.
+
+Activation formulas:
+  correct  = b + (1 + e*te) * (a + c)
+  other    = b + (1 + e*te) * a
+  oldinpos = b + exp(-r*tr) * d * (1 + e*te) * (a + c)
+  otherold = b + exp(-r*tr) * d * (1 + e*te) * a
+  npl      = b
+-->
+
+```{r}
+#| label: t3-model-spec
+m3_model_custom <- m3(
+  resp_cats = c("correct", "other", "oldinpos", "otherold", "npl"),
+  num_options = c(
+    "n_correct" = 1, "n_other" = 4, "n_oldinpos" = 1,
+    "n_otherold" = 4, "n_npl" = 5
+  ),
+  version     = "custom",
+  choice_rule = "softmax",
+  links = list(
+    a = "identity", c = "identity",
+    d = "logit", e = "log", r = "log"
+  )
+)
+```
+
+```{r}
+#| label: t3-activation-formulas
+m3_act_funs <- bmf(
+  correct  ~ (1 + e * te) * (a + c) + b,
+  other    ~ (1 + e * te) * a + b,
+  oldinpos ~ exp(-r * tr) * d * (1 + e * te) * (a + c) + b,
+  otherold ~ exp(-r * tr) * d * (1 + e * te) * a + b,
+  npl      ~ b
+)
+```
+
+## Choosing Generating Parameter Values
+
+<!-- Group-level means and between-person SDs on the link scale.
+Explain link-to-native scale conversion. -->
+
+## Simulating Data with rm3()
+
+<!-- Demonstrate rm3() for a single participant and condition first,
+then show the full simulation loop. -->
+
+```{r}
+#| label: t3-rm3-demo
+# Simulate for one participant, one condition
+demo_data <- rm3(
+  n = 1, size = 50, pars = pars_p1,
+  m3_model = m3_model_custom, act_funs = m3_act_funs,
+  te = 0.25, tr = 0.25
+)
+```
+
+## Model Fitting
+
+<!-- Fit the same model to simulated data. -->
+
+## Recovery Evaluation
+
+### Group-Level Recovery
+
+```{r}
+#| label: fig-t3-group-recovery
+#| fig-cap: "Group-level parameter recovery across the simulation design grid. Points show recovered estimates; error bars show 95% credible intervals. Dashed line indicates perfect recovery."
+# TODO: include pre-generated figure (tutorial3_group_recovery.pdf)
+```
+
+### Individual-Level Recovery
+
+```{r}
+#| label: fig-t3-indiv-scatter
+#| fig-cap: "Individual-level parameter recovery for the single simulation cell (N = 50, 50 trials per condition). Each point represents one participant. Dashed line indicates perfect recovery."
+# TODO: include pre-generated figure (tutorial3_simple_indiv_scatter.pdf)
+```
+
+## Practical Guidance
+
+<!-- How sample size and trials per condition affect recovery quality.
+Note on Monte Carlo noise: single replication demonstrates the workflow;
+proper simulation studies should replicate each cell.
+Reference Göttmann et al. and SimDesign. -->
+
+
+<!-- ====================================================================== -->
+# Summary and Additional Resources
+<!-- ====================================================================== -->
+
+<!-- ~300–500 words. Per AMPPS format — brief summary, no traditional Discussion. -->
+
+<!-- Recap: three model versions, basic workflow, choice rules, custom flexibility.
+Practical recommendations: which version to choose, when custom, importance
+of parameter recovery. -->
+
+## Additional Resources
+
+<!-- - bmm documentation: https://venpopov.github.io/bmm/articles/bmm_m3.html
+     - Full tutorial scripts: [repository link]
+     - Parameter recovery methodology: Göttmann et al. (n.d.)
+     - M3 framework paper: Oberauer & Lewandowsky (2019)
+     - bmm mixture model tutorial: Popov et al. (2025) -->
+
+
+<!-- ====================================================================== -->
+# References {.unnumbered}
+<!-- ====================================================================== -->
+
+::: {#refs}
+:::
