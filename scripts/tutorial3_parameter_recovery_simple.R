@@ -623,5 +623,5 @@ ggsave(here("figures", "tutorial3_simple_indiv_scatter.pdf"),
 # many times (e.g., 100–500 replications) to account for Monte Carlo noise.
 # See:
 #   - SimDesign package (Sigal & Chalmers, 2016) for structured simulations
-#   - Göttmann, Frischkorn, Oberauer, Schaefer, & Schubert (n.d.) for a full
+#   - Göttmann, Frischkorn, Oberauer, Schaefer, & Schubert (2025) for a full
 #     treatment of M3 parameter recovery methodology

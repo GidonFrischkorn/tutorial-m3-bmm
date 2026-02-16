@@ -1,0 +1,11 @@
+\begin{longtable}[]{@{}ll@{}}
+\toprule\noalign{}
+Category & Activation \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Correct & \(b + a + c\) \\
+Other studied item & \(b + a\) \\
+Not-presented lure & \(b\) \\
+\end{longtable}

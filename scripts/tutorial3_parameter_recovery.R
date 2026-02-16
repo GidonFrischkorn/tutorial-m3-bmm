@@ -580,4 +580,4 @@ ggsave(here("figures", "tutorial3_recovery_heatmap.pdf"),
 #   - SimDesign package (Sigal & Chalmers, 2016) for structured simulation
 #   - furrr package for parallel execution across replications
 #   - For a full treatment of M3 parameter recovery methodology, see:
-#     Göttmann, Frischkorn, Oberauer, Schaefer, & Schubert (n.d.)
+#     Göttmann, Frischkorn, Oberauer, Schaefer, & Schubert (2025)

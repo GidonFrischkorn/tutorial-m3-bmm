@@ -16,24 +16,11 @@ author:
         department: Department of Psychology
       - name: University of Chicago
         department: Department of Psychology
-date: today
 format:
-  pdf:
-    documentclass: apa7
-    classoption: [man, 12pt]
-    papersize: letter
-    margin-left: 1in
-    margin-right: 1in
-    margin-top: 1in
-    margin-bottom: 1in
-    number-sections: false
-    colorlinks: true
-    fig-pos: "H"
+  apaquarto-pdf:
     keep-tex: true
-  docx:
-    reference-doc: default
+  apaquarto-docx: default
 bibliography: references.bib
-csl: apa.csl
 abstract: |
   TODO: Draft abstract covering (a) the M3 framework and what it measures,
   (b) the bmm package as a new accessible implementation, (c) the three
@@ -59,78 +46,98 @@ pacman::p_load(here, bmm, brms, tidyverse, tidybayes, patchwork)
 source(here("functions", "clean_plot.R"))
 ```
 
-<!-- ====================================================================== -->
 # Introduction
-<!-- ====================================================================== -->
 
-<!-- < 500 words per AMPPS guidelines. No extensive literature review. -->
+Observed performance in memory and decision tasks is often summarized by overall accuracy. Yet, accuracy collapses across qualitatively distinct response categories that may arise from different latent processes. A long modeling tradition argues that specific error types are diagnostically informative because different cognitive processes imply different conditional response probabilities over observable outcomes. Multinomial processing tree (MPT) models formalize this logic by treating categorical responses—including distinct error classes—as consequences of latent states such as successful retrieval, guessing, or source confusion [@batchelder1999theoretical; @erdfelder2009multinomial]. Similarly, process-dissociation approaches demonstrate that patterns of correct and incorrect responses across task constraints can separate the contributions of multiple processes within a single task [@jacoby1991process; @yonelinas2012process]. Across these perspectives, the central insight is that the full multinomial response distribution — not accuracy alone — provides critical information about the latent cognitive mechanisms generating observed behavior.
 
-<!-- Key points:
-- WM researchers use categorical response tasks yielding response frequencies
-- M3 framework (Oberauer & Lewandowsky, 2019) separates item memory (a) from
-  context-specific binding (c) via competitive retrieval
-- Previously required custom JAGS code — error-prone, barrier to adoption
-- bmm R package provides standardized implementation: specify, fit, evaluate
-  with minimal code; flexibly adapt to new designs
-- This tutorial: three worked examples covering ss, cs, and custom versions
--->
+Working memory research frequently relies on tasks that inherently yield response frequencies across discrete outcome categories, such as correct responses, feature confusions, location errors, or intrusions [@oberauer2018benchmarks]. These data are naturally multinomial: each trial produces one of several mutually exclusive response types. Theoretical claims can often be evaluated by how experimental manipulations and individual differences redistribute probability mass across these categories. A multinomial measurement perspective therefore treats the response profile as the observable consequence of latent memory states and retrieval processes.
 
+The recently proposed memory measurement model [M3; @oberauer2019simple] framework provides one such decomposition. Its core architecture assumes that multiple activation sources contribute to each response category and that selection among categories follows a competitive retrieval rule [@luce1959individual]. Although M3 was introduced for working memory tasks — decomposing performance into item activation and context-specific binding strength — this architecture is domain-general: whenever a task yields categorical responses that can be traced to distinct latent activation sources driving competitive selection, the framework applies.
 
-<!-- ====================================================================== -->
-# The M3 Model Framework
-<!-- ====================================================================== -->
+However, because activation formulas vary across tasks and response categories, each new application requires translating its specific model into custom statistical code. Accordingly, fitting M3 so far required custom JAGS or Stan code, increasing the risk of implementation errors, limiting reproducibility, and posing a barrier to broader adoption and extension. The `bmm` R package [@bmm2025] addresses this limitation by providing a standardized workflow to specify, fit, and evaluate Bayesian hierarchical M3 with minimal code, while remaining flexible enough to accommodate new task designs and custom model specifications. In this tutorial, we illustrate this approach with three worked examples covering the standard simple span (ss) and complex span (cs) tasks, and a custom extension, demonstrating how principled modeling of categorical response data can clarify the latent processes underlying working memory performance.
 
-<!-- ~1,000–1,500 words. Teach the model, not the theory. -->
+# The M3 Framework
 
-## What M3 Models
+The M3 framework is designed for categorical response data — tasks in which each trial produces one of $K$ mutually exclusive response types. Rather than collapsing responses into a single accuracy score, M3 treats the full frequency distribution across categories as the outcome to be explained. The model decomposes observed response proportions into latent activation parameters that reflect distinct cognitive contributions to retrieval.
 
-<!-- Categorical response data from memory tasks — response frequencies across
-categories (correct, other-list intrusions, NPL, etc.) -->
+Consider a cued recall task in which a participant sees a probe and selects from a set containing the correct target, other studied items, and new lures. Each response falls into one of three categories: *correct*, *other-list intrusion*, or *not-presented lure* (NPL). M3 explains why each category is selected with a certain frequency by assigning activation values to each category and deriving response probabilities through competitive selection.
 
-## Activation Sources and Competitive Retrieval
+## Activation Sources
 
-<!-- Core mechanism: activation sources feed into competitive retrieval via a
-choice rule (Luce's axiom). Response probability for a category depends on its
-total activation relative to all categories.
+In the M3 framework, each response category receives activation from one or more latent sources. The core parameters are:
 
-Activation parameters:
-  b = baseline (fixed for scaling)
-  a = general item memory
-  c = context-specific binding
-  Additional parameters for custom models
--->
+-   $b$: **baseline activation**, reflecting the tendency to select any response option in the absence of memory-based evidence. This parameter is fixed (not estimated) to set the scale of the model.
+-   $a$: **item activation**, reflecting general memory strength for studied items — the item was encountered during study, regardless of its position or context.
+-   $c$: **context binding**, reflecting the strength of the association between an item and its specific study context (e.g., serial position, paired associate).
 
-## Choice Rules
+For the simple span model, these sources combine additively to produce total activation for each response category:
 
-<!-- Simple (linear normalization) vs softmax (exponential normalization,
-equivalent to n-AFC SDT). Brief explanation of when to prefer each; note that
-recent evidence favors softmax. -->
+| Category           | Activation  |
+|--------------------|-------------|
+| Correct            | $b + a + c$ |
+| Other studied item | $b + a$     |
+| Not-presented lure | $b$         |
+
+The correct target receives activation from all three sources. Other studied items receive item activation but lack the context binding to the probed position. Lures receive only baseline activation.
+
+## Competitive Selection and Choice Rules
+
+The number of response options per category ($n_k$) also matters: if the recognition set contains 1 correct target, 3 other studied items, and 4 lures, the model weights each category's activation by its number of available options before computing response probabilities.
+
+M3 provides two rules for converting activations into response probabilities. Both implement competitive selection — a category's probability depends on its activation relative to the total — but they differ in the transformation applied.
+
+The *simple* (linear) choice rule [@luce1959individual] normalizes activations directly:
+
+$$P(k) = \frac{n_k \cdot \text{act}_k}{\sum_{j=1}^{K} n_j \cdot \text{act}_j}$$
+
+where $\text{act}_k$ is the total activation for category $k$ and $n_k$ is the number of response options in that category. This rule requires all activations to be positive, so the baseline $b$ is fixed at a small positive value (0.1 by default).
+
+The *softmax* (exponential) choice rule applies an exponential transformation before normalization:
+
+$$P(k) = \frac{n_k \cdot \exp(\text{act}_k)}{\sum_{j=1}^{K} n_j \cdot \exp(\text{act}_j)}$$
+
+Because $\exp(x) > 0$ for all $x$, softmax guarantees valid probabilities regardless of activation values. The baseline is fixed at $b = 0$ (since $\exp(0) = 1$, lures receive a positive baseline contribution automatically).
+
+The softmax rule is formally equivalent to an $n$-alternative forced-choice signal detection model with Gumbel-distributed noise [@yellott1977relationship; @oberauer2019simple]. Under this interpretation, each category's activation represents a deterministic signal, independent Gumbel noise is added to each alternative, and the observer selects the category with the highest noisy value. This equivalence gives activation parameters a principled interpretation as discriminability measures. Recent empirical comparisons have favored the softmax rule over the simple rule for working memory data [@oberauer2023measurement, @li2026filtering]. Tutorial 1 compares both rules; Tutorials 2 and 3 use softmax as the default.
 
 ## Model Versions
 
-<!-- Three versions: ss (simple span, 3 categories), cs (complex span,
-5 categories), custom (user-defined) -->
+The `bmm` package provides three M3 versions that differ in the number of response categories and estimated parameters.
+
+-   **Simple span** (`ss`): Three categories (correct, other, NPL) with two free parameters ($a$, $c$). Suitable for tasks without distractor processing, such as cued recall from a single study list.
+
+-   **Complex span** (`cs`): Five categories — correct, paired distractor, other memorandum, other distractor, and NPL — with three free parameters ($a$, $c$, $f$). The additional parameter $f \in [0, 1]$ captures distractor filtering efficiency: $f = 0$ indicates perfect filtering (distractors receive only baseline activation), while $f = 1$ indicates no filtering (distractors are activated as strongly as memoranda).
+
+-   **Custom**: User-defined response categories, activation formulas, and parameters. This version allows researchers to specify M3 of arbitrary complexity for novel task designs, as long as the model remains identified.
 
 ## The bmm Implementation
 
-<!-- Brief overview: m3() creates the model, bmf() specifies predictor formulas,
-bmm() fits via brms/Stan. Contrast with the old JAGS workflow.
+Fitting M3 with the `bmm` R package [@bmm2025] follows a three-step workflow:
 
-Brief mention of relationship to MPT models (1–2 sentences). -->
+1.  **Define the model** with `m3()`: specify response categories, the number of response options per category, the model version, and the choice rule.
+2.  **Specify predictor formulas** with `bmf()`: define how experimental conditions and individual differences predict each activation parameter, using the same formula syntax as `brms` [@burkner2017brms].
+3.  **Fit the model** with `bmm()`: estimate parameters via Bayesian inference using Stan [@carpenter2017stan], with full support for hierarchical (multilevel) models, prior specification, and posterior diagnostics.
 
+This workflow replaces the previous approach of writing custom JAGS code for each new experiment, in which the researcher had to manually specify the likelihood, priors, and sampling scheme — a process that was error-prone and difficult to adapt across designs. Readers familiar with multinomial processing tree (MPT) models will note similarities: both frameworks decompose categorical response distributions into latent process parameters. However, whereas MPT models use discrete processing trees with binary branching probabilities [@batchelder1999theoretical], M3 uses continuous activation values with competitive selection, making it particularly suited for theories emphasizing graded memory strength [for a detailed comparison, see @oberauer2019simple].
 
 <!-- ====================================================================== -->
+
 # Tutorial 1: Simple Span M3
+
 <!-- ====================================================================== -->
 
+```{=html}
 <!-- ~2,000–2,500 words. Full worked example with Oberauer (2019) data.
 Companion script: scripts/tutorial1_simple_span.R -->
+```
 
 ## Data
 
+```{=html}
 <!-- Oberauer (2019), Experiment 1 & 2. Simple span task with 3 response
 categories: correct, other (intrusion from a different list position), NPL.
 Data available at: https://osf.io/vekpd/ -->
+```
 
 ```{r}
 #| label: t1-data-load
@@ -140,8 +147,10 @@ data_agg <- read_csv(here("data", "Oberauer_2019_SimpleSpan_agg.csv"),
 
 ## Model Specification
 
+```{=html}
 <!-- m3(version = "ss") with softmax choice rule.
 bmf() with condition effects on a and c. -->
+```
 
 ```{r}
 #| label: t1-model-spec
@@ -166,7 +175,7 @@ m3_model_ss <- m3(
 
 ```{r}
 #| label: fig-t1-pp-check
-#| fig-cap: "Posterior predictive check for the simple span M3 model (softmax choice rule). Points show observed response proportions; error bars show ±1 SE."
+#| fig-cap: "Posterior predictive check for the simple span M3 (softmax choice rule). Points show observed response proportions; error bars show ±1 SE."
 # TODO: include pre-generated figure or generate inline
 ```
 
@@ -174,35 +183,42 @@ m3_model_ss <- m3(
 
 ```{r}
 #| label: fig-t1-param-estimates
-#| fig-cap: "Posterior parameter estimates for the simple span M3 model (softmax choice rule)."
+#| fig-cap: "Posterior parameter estimates for the simple span M3 (softmax choice rule)."
 # TODO: include pre-generated figure or generate inline
 ```
 
 ## Choice Rule Comparison
 
+```{=html}
 <!-- Fit with both simple and softmax, compare results. Explain the difference
 and why softmax is recommended as default. -->
+```
 
 ## Hypothesis Testing
 
 <!-- brms::hypothesis() with sample_prior = "yes" for Bayes Factors. -->
 
-
 <!-- ====================================================================== -->
+
 # Tutorial 2: Complex Span M3
+
 <!-- ====================================================================== -->
 
+```{=html}
 <!-- ~1,500–2,000 words. Builds on Tutorial 1 workflow.
 Data: Li, Frischkorn, & Oberauer (accepted, JEP:LMC).
 Companion script: scripts/tutorial2_complex_span.R
 Data preparation: scripts/prepare_Li2026_data.R -->
+```
 
 ## What Makes Complex Span Different
 
+```{=html}
 <!-- Distractor categories, the f parameter.
 5 response categories: corr, distc, other, disto, npl.
 IMPORTANT: cs version assigns activation formulas by position — resp_cats
 must follow the order corr, distc, other, disto, npl. -->
+```
 
 ## Data
 
@@ -214,8 +230,10 @@ data_agg <- read_csv(here("data", "Li_2026_ComplexSpan_Exp1_agg.csv"),
 
 ## Model Specification
 
+```{=html}
 <!-- m3(version = "cs") with softmax choice rule.
 Handling non-identified f in control condition (constant prior). -->
+```
 
 ```{r}
 #| label: t2-model-spec
@@ -231,7 +249,7 @@ m3_model_cs <- m3(
 
 ```{r}
 #| label: fig-t2-pp-check
-#| fig-cap: "Posterior predictive check for the complex span M3 model."
+#| fig-cap: "Posterior predictive check for the complex span M3."
 # TODO: include pre-generated figure
 ```
 
@@ -239,14 +257,16 @@ m3_model_cs <- m3(
 
 ```{r}
 #| label: fig-t2-param-estimates
-#| fig-cap: "Posterior parameter estimates for the complex span M3 model. Left panels show item memory (a) and context binding (c) across conditions. Right panel shows distractor filtering (f) for pre-cue and retro-cue conditions."
+#| fig-cap: "Posterior parameter estimates for the complex span M3. Left panels show item memory (a) and context binding (c) across conditions. Right panel shows distractor filtering (f) for pre-cue and retro-cue conditions."
 # TODO: include pre-generated figure
 ```
 
 ## Interpreting the f Parameter
 
+```{=html}
 <!-- f = 0 → perfect filtering; f = 1 → no filtering.
 Compare pre-cue vs retro-cue. -->
+```
 
 ## Hypothesis Tests
 
@@ -254,27 +274,35 @@ Compare pre-cue vs retro-cue. -->
 
 ## Comparison with the Published Model
 
+```{=html}
 <!-- Published analysis used separate ra/rc parameters (different attenuation
 for item vs binding activation). The cs model constrains ra = rc = f.
 When this constraint is too restrictive → custom model needed (Tutorial 3). -->
-
+```
 
 <!-- ====================================================================== -->
+
 # Tutorial 3: Custom M3 — Parameter Recovery
+
 <!-- ====================================================================== -->
 
+```{=html}
 <!-- ~2,500–3,000 words. Centerpiece for flexibility.
 Inline code follows: scripts/tutorial3_parameter_recovery_simple.R
 Design grid results from: scripts/tutorial3_parameter_recovery.R -->
+```
 
 ## Why Custom Models
 
+```{=html}
 <!-- When standard ss/cs don't fit the experimental design. The custom version
-allows specifying M3 models of arbitrary complexity with user-defined
+allows specifying M3 of arbitrary complexity with user-defined
 activation formulas, as long as the model is identified. -->
+```
 
-## Defining a Custom M3 Model
+## Defining a Custom M3
 
+```{=html}
 <!-- Memory updating model (Oberauer & Lewandowsky, 2019) with 5 response
 categories and 5 estimated parameters.
 
@@ -285,6 +313,7 @@ Activation formulas:
   otherold = b + exp(-r*tr) * d * (1 + e*te) * a
   npl      = b
 -->
+```
 
 ```{r}
 #| label: t3-model-spec
@@ -316,13 +345,17 @@ m3_act_funs <- bmf(
 
 ## Choosing Generating Parameter Values
 
+```{=html}
 <!-- Group-level means and between-person SDs on the link scale.
 Explain link-to-native scale conversion. -->
+```
 
 ## Simulating Data with rm3()
 
+```{=html}
 <!-- Demonstrate rm3() for a single participant and condition first,
 then show the full simulation loop. -->
+```
 
 ```{r}
 #| label: t3-rm3-demo
@@ -358,33 +391,41 @@ demo_data <- rm3(
 
 ## Practical Guidance
 
+```{=html}
 <!-- How sample size and trials per condition affect recovery quality.
 Note on Monte Carlo noise: single replication demonstrates the workflow;
 proper simulation studies should replicate each cell.
 Reference Göttmann et al. and SimDesign. -->
-
+```
 
 <!-- ====================================================================== -->
+
 # Summary and Additional Resources
+
 <!-- ====================================================================== -->
 
 <!-- ~300–500 words. Per AMPPS format — brief summary, no traditional Discussion. -->
 
+```{=html}
 <!-- Recap: three model versions, basic workflow, choice rules, custom flexibility.
 Practical recommendations: which version to choose, when custom, importance
 of parameter recovery. -->
+```
 
 ## Additional Resources
 
+```{=html}
 <!-- - bmm documentation: https://venpopov.github.io/bmm/articles/bmm_m3.html
      - Full tutorial scripts: [repository link]
-     - Parameter recovery methodology: Göttmann et al. (n.d.)
+     - Parameter recovery methodology: Göttmann et al. (2025)
      - M3 framework paper: Oberauer & Lewandowsky (2019)
-     - bmm mixture model tutorial: Popov et al. (2025) -->
-
+     - bmm mixture model tutorial: Frischkorn & Popov (2025) -->
+```
 
 <!-- ====================================================================== -->
+
 # References {.unnumbered}
+
 <!-- ====================================================================== -->
 
 ::: {#refs}

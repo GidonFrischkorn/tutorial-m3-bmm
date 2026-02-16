@@ -1,0 +1,840 @@
+\documentclass[
+  man,
+  longtable,
+  nolmodern,
+  notxfonts,
+  notimes,
+  colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{apa7}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+
+
+
+\RequirePackage{longtable}
+\RequirePackage{threeparttablex}
+
+\makeatletter
+\renewcommand{\paragraph}{\@startsection{paragraph}{4}{\parindent}%
+	{0\baselineskip \@plus 0.2ex \@minus 0.2ex}%
+	{-.5em}%
+	{\normalfont\normalsize\bfseries\typesectitle}}
+
+\renewcommand{\subparagraph}[1]{\@startsection{subparagraph}{5}{0.5em}%
+	{0\baselineskip \@plus 0.2ex \@minus 0.2ex}%
+	{-\z@\relax}%
+	{\normalfont\normalsize\bfseries\itshape\hspace{\parindent}{#1}\textit{\addperi}}{\relax}}
+\makeatother
+
+
+
+
+\usepackage{longtable, booktabs, multirow, multicol, colortbl, hhline, caption, array, float, xpatch}
+\usepackage{subcaption}
+
+
+\renewcommand\thesubfigure{\Alph{subfigure}}
+\setcounter{topnumber}{2}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0.85}
+\renewcommand{\textfraction}{0.15}
+\renewcommand{\floatpagefraction}{0.7}
+
+\usepackage{tcolorbox}
+\tcbuselibrary{listings,theorems, breakable, skins}
+\usepackage{fontawesome5}
+
+\definecolor{quarto-callout-color}{HTML}{909090}
+\definecolor{quarto-callout-note-color}{HTML}{0758E5}
+\definecolor{quarto-callout-important-color}{HTML}{CC1914}
+\definecolor{quarto-callout-warning-color}{HTML}{EB9113}
+\definecolor{quarto-callout-tip-color}{HTML}{00A047}
+\definecolor{quarto-callout-caution-color}{HTML}{FC5300}
+\definecolor{quarto-callout-color-frame}{HTML}{ACACAC}
+\definecolor{quarto-callout-note-color-frame}{HTML}{4582EC}
+\definecolor{quarto-callout-important-color-frame}{HTML}{D9534F}
+\definecolor{quarto-callout-warning-color-frame}{HTML}{F0AD4E}
+\definecolor{quarto-callout-tip-color-frame}{HTML}{02B875}
+\definecolor{quarto-callout-caution-color-frame}{HTML}{FD7E14}
+
+%\newlength\Oldarrayrulewidth
+%\newlength\Oldtabcolsep
+
+
+\usepackage{hyperref}
+
+
+
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{241,243,245}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.40,0.45,0.13}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\BuiltInTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\ExtensionTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.28,0.35,0.67}{#1}}
+\newcommand{\ImportTok}[1]{\textcolor[rgb]{0.00,0.46,0.62}{#1}}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.07,0.07,0.07}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+
+
+% definitions for citeproc citations
+\NewDocumentCommand\citeproctext{}{}
+\NewDocumentCommand\citeproc{mm}{%
+  \begingroup\def\citeproctext{#2}\cite{#1}\endgroup}
+\makeatletter
+ % allow citations to break across lines
+ \let\@cite@ofmt\@firstofone
+ % avoid brackets around text for \cite:
+ \def\@biblabel#1{}
+ \def\@cite#1#2{{#1\if@tempswa , #2\fi}}
+\makeatother
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newenvironment{CSLReferences}[2] % #1 hanging-indent, #2 entry-spacing
+ {\begin{list}{}{%
+  \setlength{\itemindent}{0pt}
+  \setlength{\leftmargin}{0pt}
+  \setlength{\parsep}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1
+   \setlength{\leftmargin}{\cslhangindent}
+   \setlength{\itemindent}{-1\cslhangindent}
+  \fi
+  % set entry spacing
+  \setlength{\itemsep}{#2\baselineskip}}}
+ {\end{list}}
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{\hfill\break\parbox[t]{\linewidth}{\strut\ignorespaces#1\strut}}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+
+
+
+
+
+\usepackage{newtx}
+
+\defaultfontfeatures{Scale=MatchLowercase}
+\defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+
+
+
+
+
+\title{Fitting the Memory Measurement Model (M3) with the bmm R Package:
+A Tutorial}
+
+
+\shorttitle{Fitting the Memory Measurement Model (M3) with the bmm R
+Package: A Tutorial}
+
+
+\usepackage{etoolbox}
+
+
+
+
+
+
+
+
+
+\authorsnames[{1},{1},{1,2}]{Gidon T. Frischkorn,Isabel Courage,Chenyu
+Li}
+
+
+
+
+
+
+
+\authorsaffiliations{
+{Department of Psychology, University of Zurich},{Department of
+Psychology, University of Chicago}}
+
+
+
+
+\leftheader{Frischkorn, Courage and Li}
+
+
+
+\abstract{TODO: Draft abstract covering (a) the M3 framework and what it
+measures, (b) the bmm package as a new accessible implementation, (c)
+the three tutorials (simple span, complex span, custom model with
+parameter recovery), and (d) what readers will be able to do after
+completing the tutorials. }
+
+\keywords{working memory, measurement model, multinomial model, Bayesian
+estimation, R package}
+
+\authornote{\par{\addORCIDlink{Gidon T.
+Frischkorn}{0000-0002-9555-0261}} 
+
+\par{       }
+\par{Correspondence concerning this article should be addressed to }
+}
+
+\makeatletter
+\let\endoldlt\endlongtable
+\def\endlongtable{
+\hline
+\endoldlt
+}
+\makeatother
+\RequirePackage{longtable}
+\DeclareDelayedFloatFlavor{longtable}{table}
+
+\urlstyle{same}
+
+
+
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\AtBeginDocument{%
+\ifdefined\contentsname
+  \renewcommand*\contentsname{Table of contents}
+\else
+  \newcommand\contentsname{Table of contents}
+\fi
+\ifdefined\listfigurename
+  \renewcommand*\listfigurename{List of Figures}
+\else
+  \newcommand\listfigurename{List of Figures}
+\fi
+\ifdefined\listtablename
+  \renewcommand*\listtablename{List of Tables}
+\else
+  \newcommand\listtablename{List of Tables}
+\fi
+\ifdefined\figurename
+  \renewcommand*\figurename{Figure}
+\else
+  \newcommand\figurename{Figure}
+\fi
+\ifdefined\tablename
+  \renewcommand*\tablename{Table}
+\else
+  \newcommand\tablename{Table}
+\fi
+}
+\@ifpackageloaded{float}{}{\usepackage{float}}
+\floatstyle{ruled}
+\@ifundefined{c@chapter}{\newfloat{codelisting}{h}{lop}}{\newfloat{codelisting}{h}{lop}[chapter]}
+\floatname{codelisting}{Listing}
+\newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
+\makeatother
+\makeatletter
+\makeatother
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
+\makeatother
+
+% From https://tex.stackexchange.com/a/645996/211326
+%%% apa7 doesn't want to add appendix section titles in the toc
+%%% let's make it do it
+\makeatletter
+\xpatchcmd{\appendix}
+  {\par}
+  {\addcontentsline{toc}{section}{\@currentlabelname}\par}
+  {}{}
+\makeatother
+
+%% Disable longtable counter
+%% https://tex.stackexchange.com/a/248395/211326
+
+\usepackage{etoolbox}
+
+\makeatletter
+\patchcmd{\LT@caption}
+  {\bgroup}
+  {\bgroup\global\LTpatch@captiontrue}
+  {}{}
+\patchcmd{\longtable}
+  {\par}
+  {\par\global\LTpatch@captionfalse}
+  {}{}
+\apptocmd{\endlongtable}
+  {\ifLTpatch@caption\else\addtocounter{table}{-1}\fi}
+  {}{}
+\newif\ifLTpatch@caption
+\makeatother
+
+\begin{document}
+
+\maketitle
+
+
+
+
+\setlength\LTleft{0pt}
+
+
+
+
+\section{Introduction}\label{introduction}
+
+Observed performance in memory and decision tasks is often summarized by
+overall accuracy. Yet, accuracy collapses across qualitatively distinct
+response categories that may arise from different latent processes. A
+long modeling tradition argues that specific error types are
+diagnostically informative because different cognitive processes imply
+different conditional response probabilities over observable outcomes.
+Multinomial processing tree (MPT) models formalize this logic by
+treating categorical responses---including distinct error classes---as
+consequences of latent states such as successful retrieval, guessing, or
+source confusion (\citeproc{ref-batchelder1999theoretical}{Batchelder \&
+Riefer, 1999}; \citeproc{ref-erdfelder2009multinomial}{Erdfelder et al.,
+2009}). Similarly, process-dissociation approaches demonstrate that
+patterns of correct and incorrect responses across task constraints can
+separate the contributions of multiple processes within a single task
+(\citeproc{ref-jacoby1991process}{Jacoby, 1991};
+\citeproc{ref-yonelinas2012process}{Yonelinas \& Jacoby, 2012}). Across
+these perspectives, the central insight is that the full multinomial
+response distribution --- not accuracy alone --- provides critical
+information about the latent cognitive mechanisms generating observed
+behavior.
+
+Working memory research frequently relies on tasks that inherently yield
+response frequencies across discrete outcome categories, such as correct
+responses, feature confusions, location errors, or intrusions
+(\citeproc{ref-oberauer2018benchmarks}{Oberauer et al., 2018}). These
+data are naturally multinomial: each trial produces one of several
+mutually exclusive response types. Theoretical claims can often be
+evaluated by how experimental manipulations and individual differences
+redistribute probability mass across these categories. A multinomial
+measurement perspective therefore treats the response profile as the
+observable consequence of latent memory states and retrieval processes.
+
+The recently proposed memory measurement model {[}M3; Oberauer and
+Lewandowsky (\citeproc{ref-oberauer2019simple}{2019}){]} framework
+provides one such decomposition. Its core architecture assumes that
+multiple activation sources contribute to each response category and
+that selection among categories follows a competitive retrieval rule
+(\citeproc{ref-luce1959individual}{Luce, 1959}). Although M3 was
+introduced for working memory tasks --- decomposing performance into
+item activation and context-specific binding strength --- this
+architecture is domain-general: whenever a task yields categorical
+responses that can be traced to distinct latent activation sources
+driving competitive selection, the framework applies.
+
+However, because activation formulas vary across tasks and response
+categories, each new application requires translating its specific model
+into custom statistical code. Accordingly, fitting M3 so far required
+custom JAGS or Stan code, increasing the risk of implementation errors,
+limiting reproducibility, and posing a barrier to broader adoption and
+extension. The \texttt{bmm} R package (\citeproc{ref-bmm2025}{Popov et
+al., 2025}) addresses this limitation by providing a standardized
+workflow to specify, fit, and evaluate Bayesian hierarchical M3 with
+minimal code, while remaining flexible enough to accommodate new task
+designs and custom model specifications. In this tutorial, we illustrate
+this approach with three worked examples covering the standard simple
+span (ss) and complex span (cs) tasks, and a custom extension,
+demonstrating how principled modeling of categorical response data can
+clarify the latent processes underlying working memory performance.
+
+\section{The M3 Framework}\label{the-m3-framework}
+
+The M3 framework is designed for categorical response data --- tasks in
+which each trial produces one of \(K\) mutually exclusive response
+types. Rather than collapsing responses into a single accuracy score, M3
+treats the full frequency distribution across categories as the outcome
+to be explained. The model decomposes observed response proportions into
+latent activation parameters that reflect distinct cognitive
+contributions to retrieval.
+
+Consider a cued recall task in which a participant sees a probe and
+selects from a set containing the correct target, other studied items,
+and new lures. Each response falls into one of three categories:
+\emph{correct}, \emph{other-list intrusion}, or \emph{not-presented
+lure} (NPL). M3 explains why each category is selected with a certain
+frequency by assigning activation values to each category and deriving
+response probabilities through competitive selection.
+
+\subsection{Activation Sources}\label{activation-sources}
+
+In the M3 framework, each response category receives activation from one
+or more latent sources. The core parameters are:
+
+\begin{itemize}
+\tightlist
+\item
+  \(b\): \textbf{baseline activation}, reflecting the tendency to select
+  any response option in the absence of memory-based evidence. This
+  parameter is fixed (not estimated) to set the scale of the model.
+\item
+  \(a\): \textbf{item activation}, reflecting general memory strength
+  for studied items --- the item was encountered during study,
+  regardless of its position or context.
+\item
+  \(c\): \textbf{context binding}, reflecting the strength of the
+  association between an item and its specific study context (e.g.,
+  serial position, paired associate).
+\end{itemize}
+
+For the simple span model, these sources combine additively to produce
+total activation for each response category:
+
+\begin{longtable}[]{@{}ll@{}}
+\toprule\noalign{}
+Category & Activation \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Correct & \(b + a + c\) \\
+Other studied item & \(b + a\) \\
+Not-presented lure & \(b\) \\
+\end{longtable}
+
+The correct target receives activation from all three sources. Other
+studied items receive item activation but lack the context binding to
+the probed position. Lures receive only baseline activation.
+
+\subsection{Competitive Selection and Choice
+Rules}\label{competitive-selection-and-choice-rules}
+
+The number of response options per category (\(n_k\)) also matters: if
+the recognition set contains 1 correct target, 3 other studied items,
+and 4 lures, the model weights each category's activation by its number
+of available options before computing response probabilities.
+
+M3 provides two rules for converting activations into response
+probabilities. Both implement competitive selection --- a category's
+probability depends on its activation relative to the total --- but they
+differ in the transformation applied.
+
+The \emph{simple} (linear) choice rule
+(\citeproc{ref-luce1959individual}{Luce, 1959}) normalizes activations
+directly:
+
+\[P(k) = \frac{n_k \cdot \text{act}_k}{\sum_{j=1}^{K} n_j \cdot \text{act}_j}\]
+
+where \(\text{act}_k\) is the total activation for category \(k\) and
+\(n_k\) is the number of response options in that category. This rule
+requires all activations to be positive, so the baseline \(b\) is fixed
+at a small positive value (0.1 by default).
+
+The \emph{softmax} (exponential) choice rule applies an exponential
+transformation before normalization:
+
+\[P(k) = \frac{n_k \cdot \exp(\text{act}_k)}{\sum_{j=1}^{K} n_j \cdot \exp(\text{act}_j)}\]
+
+Because \(\exp(x) > 0\) for all \(x\), softmax guarantees valid
+probabilities regardless of activation values. The baseline is fixed at
+\(b = 0\) (since \(\exp(0) = 1\), lures receive a positive baseline
+contribution automatically).
+
+The softmax rule is formally equivalent to an \(n\)-alternative
+forced-choice signal detection model with Gumbel-distributed noise
+(\citeproc{ref-oberauer2019simple}{Oberauer \& Lewandowsky, 2019};
+\citeproc{ref-yellott1977relationship}{Yellott, 1977}). Under this
+interpretation, each category's activation represents a deterministic
+signal, independent Gumbel noise is added to each alternative, and the
+observer selects the category with the highest noisy value. This
+equivalence gives activation parameters a principled interpretation as
+discriminability measures. Recent empirical comparisons have favored the
+softmax rule over the simple rule for working memory data Li et al.
+(\citeproc{ref-li2026filtering}{in press}). Tutorial 1 compares both
+rules; Tutorials 2 and 3 use softmax as the default.
+
+\subsection{Model Versions}\label{model-versions}
+
+The \texttt{bmm} package provides three M3 versions that differ in the
+number of response categories and estimated parameters.
+
+\begin{itemize}
+\item
+  \textbf{Simple span} (\texttt{ss}): Three categories (correct, other,
+  NPL) with two free parameters (\(a\), \(c\)). Suitable for tasks
+  without distractor processing, such as cued recall from a single study
+  list.
+\item
+  \textbf{Complex span} (\texttt{cs}): Five categories --- correct,
+  paired distractor, other memorandum, other distractor, and NPL ---
+  with three free parameters (\(a\), \(c\), \(f\)). The additional
+  parameter \(f \in [0, 1]\) captures distractor filtering efficiency:
+  \(f = 0\) indicates perfect filtering (distractors receive only
+  baseline activation), while \(f = 1\) indicates no filtering
+  (distractors are activated as strongly as memoranda).
+\item
+  \textbf{Custom}: User-defined response categories, activation
+  formulas, and parameters. This version allows researchers to specify
+  M3 of arbitrary complexity for novel task designs, as long as the
+  model remains identified.
+\end{itemize}
+
+\subsection{The bmm Implementation}\label{the-bmm-implementation}
+
+Fitting M3 with the \texttt{bmm} R package (\citeproc{ref-bmm2025}{Popov
+et al., 2025}) follows a three-step workflow:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Define the model} with \texttt{m3()}: specify response
+  categories, the number of response options per category, the model
+  version, and the choice rule.
+\item
+  \textbf{Specify predictor formulas} with \texttt{bmf()}: define how
+  experimental conditions and individual differences predict each
+  activation parameter, using the same formula syntax as \texttt{brms}
+  (\citeproc{ref-burkner2017brms}{Bürkner, 2017}).
+\item
+  \textbf{Fit the model} with \texttt{bmm()}: estimate parameters via
+  Bayesian inference using Stan
+  (\citeproc{ref-carpenter2017stan}{Carpenter et al., 2017}), with full
+  support for hierarchical (multilevel) models, prior specification, and
+  posterior diagnostics.
+\end{enumerate}
+
+This workflow replaces the previous approach of writing custom JAGS code
+for each new experiment, in which the researcher had to manually specify
+the likelihood, priors, and sampling scheme --- a process that was
+error-prone and difficult to adapt across designs. Readers familiar with
+multinomial processing tree (MPT) models will note similarities: both
+frameworks decompose categorical response distributions into latent
+process parameters. However, whereas MPT models use discrete processing
+trees with binary branching probabilities
+(\citeproc{ref-batchelder1999theoretical}{Batchelder \& Riefer, 1999}),
+M3 uses continuous activation values with competitive selection, making
+it particularly suited for theories emphasizing graded memory strength
+(for a detailed comparison, see
+\citeproc{ref-oberauer2019simple}{Oberauer \& Lewandowsky, 2019}).
+
+\section{Tutorial 1: Simple Span M3}\label{tutorial-1-simple-span-m3}
+
+\subsection{Data}\label{data}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data\_agg }\OtherTok{\textless{}{-}} \FunctionTok{read\_csv}\NormalTok{(}\FunctionTok{here}\NormalTok{(}\StringTok{"data"}\NormalTok{, }\StringTok{"Oberauer\_2019\_SimpleSpan\_agg.csv"}\NormalTok{),}
+                     \AttributeTok{show\_col\_types =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Model Specification}\label{model-specification}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{m3\_model\_ss }\OtherTok{\textless{}{-}} \FunctionTok{m3}\NormalTok{(}
+  \AttributeTok{resp\_cats   =} \FunctionTok{c}\NormalTok{(}\StringTok{"corr"}\NormalTok{, }\StringTok{"other"}\NormalTok{, }\StringTok{"npl"}\NormalTok{),}
+  \AttributeTok{num\_options =} \FunctionTok{c}\NormalTok{(}\StringTok{"n\_corr"}\NormalTok{, }\StringTok{"n\_other"}\NormalTok{, }\StringTok{"n\_npl"}\NormalTok{),}
+  \AttributeTok{version     =} \StringTok{"ss"}\NormalTok{,}
+  \AttributeTok{choice\_rule =} \StringTok{"softmax"}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Model Fitting}\label{model-fitting}
+
+\subsection{Convergence and Model
+Evaluation}\label{convergence-and-model-evaluation}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# }\AlertTok{TODO}\CommentTok{: include pre{-}generated figure or generate inline}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Parameter Estimates}\label{parameter-estimates}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# }\AlertTok{TODO}\CommentTok{: include pre{-}generated figure or generate inline}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Choice Rule Comparison}\label{choice-rule-comparison}
+
+\subsection{Hypothesis Testing}\label{hypothesis-testing}
+
+\section{Tutorial 2: Complex Span M3}\label{tutorial-2-complex-span-m3}
+
+\subsection{What Makes Complex Span
+Different}\label{what-makes-complex-span-different}
+
+\subsection{Data}\label{data-1}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data\_agg }\OtherTok{\textless{}{-}} \FunctionTok{read\_csv}\NormalTok{(}\FunctionTok{here}\NormalTok{(}\StringTok{"data"}\NormalTok{, }\StringTok{"Li\_2026\_ComplexSpan\_Exp1\_agg.csv"}\NormalTok{),}
+                     \AttributeTok{show\_col\_types =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Model Specification}\label{model-specification-1}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{m3\_model\_cs }\OtherTok{\textless{}{-}} \FunctionTok{m3}\NormalTok{(}
+  \AttributeTok{resp\_cats   =} \FunctionTok{c}\NormalTok{(}\StringTok{"corr"}\NormalTok{, }\StringTok{"distc"}\NormalTok{, }\StringTok{"other"}\NormalTok{, }\StringTok{"disto"}\NormalTok{, }\StringTok{"npl"}\NormalTok{),}
+  \AttributeTok{num\_options =} \FunctionTok{c}\NormalTok{(}\StringTok{"n\_corr"}\NormalTok{, }\StringTok{"n\_distc"}\NormalTok{, }\StringTok{"n\_other"}\NormalTok{, }\StringTok{"n\_disto"}\NormalTok{, }\StringTok{"n\_npl"}\NormalTok{),}
+  \AttributeTok{version     =} \StringTok{"cs"}\NormalTok{,}
+  \AttributeTok{choice\_rule =} \StringTok{"softmax"}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Model Fitting and
+Evaluation}\label{model-fitting-and-evaluation}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# }\AlertTok{TODO}\CommentTok{: include pre{-}generated figure}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Parameter Estimates}\label{parameter-estimates-1}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# }\AlertTok{TODO}\CommentTok{: include pre{-}generated figure}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Interpreting the f
+Parameter}\label{interpreting-the-f-parameter}
+
+\subsection{Hypothesis Tests}\label{hypothesis-tests}
+
+\subsection{Comparison with the Published
+Model}\label{comparison-with-the-published-model}
+
+\section{Tutorial 3: Custom M3 --- Parameter
+Recovery}\label{tutorial-3-custom-m3-parameter-recovery}
+
+\subsection{Why Custom Models}\label{why-custom-models}
+
+\subsection{Defining a Custom M3}\label{defining-a-custom-m3}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{m3\_model\_custom }\OtherTok{\textless{}{-}} \FunctionTok{m3}\NormalTok{(}
+  \AttributeTok{resp\_cats =} \FunctionTok{c}\NormalTok{(}\StringTok{"correct"}\NormalTok{, }\StringTok{"other"}\NormalTok{, }\StringTok{"oldinpos"}\NormalTok{, }\StringTok{"otherold"}\NormalTok{, }\StringTok{"npl"}\NormalTok{),}
+  \AttributeTok{num\_options =} \FunctionTok{c}\NormalTok{(}
+    \StringTok{"n\_correct"} \OtherTok{=} \DecValTok{1}\NormalTok{, }\StringTok{"n\_other"} \OtherTok{=} \DecValTok{4}\NormalTok{, }\StringTok{"n\_oldinpos"} \OtherTok{=} \DecValTok{1}\NormalTok{,}
+    \StringTok{"n\_otherold"} \OtherTok{=} \DecValTok{4}\NormalTok{, }\StringTok{"n\_npl"} \OtherTok{=} \DecValTok{5}
+\NormalTok{  ),}
+  \AttributeTok{version     =} \StringTok{"custom"}\NormalTok{,}
+  \AttributeTok{choice\_rule =} \StringTok{"softmax"}\NormalTok{,}
+  \AttributeTok{links =} \FunctionTok{list}\NormalTok{(}
+    \AttributeTok{a =} \StringTok{"identity"}\NormalTok{, }\AttributeTok{c =} \StringTok{"identity"}\NormalTok{,}
+    \AttributeTok{d =} \StringTok{"logit"}\NormalTok{, }\AttributeTok{e =} \StringTok{"log"}\NormalTok{, }\AttributeTok{r =} \StringTok{"log"}
+\NormalTok{  )}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{m3\_act\_funs }\OtherTok{\textless{}{-}} \FunctionTok{bmf}\NormalTok{(}
+\NormalTok{  correct  }\SpecialCharTok{\textasciitilde{}}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ e }\SpecialCharTok{*}\NormalTok{ te) }\SpecialCharTok{*}\NormalTok{ (a }\SpecialCharTok{+}\NormalTok{ c) }\SpecialCharTok{+}\NormalTok{ b,}
+\NormalTok{  other    }\SpecialCharTok{\textasciitilde{}}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ e }\SpecialCharTok{*}\NormalTok{ te) }\SpecialCharTok{*}\NormalTok{ a }\SpecialCharTok{+}\NormalTok{ b,}
+\NormalTok{  oldinpos }\SpecialCharTok{\textasciitilde{}} \FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{r }\SpecialCharTok{*}\NormalTok{ tr) }\SpecialCharTok{*}\NormalTok{ d }\SpecialCharTok{*}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ e }\SpecialCharTok{*}\NormalTok{ te) }\SpecialCharTok{*}\NormalTok{ (a }\SpecialCharTok{+}\NormalTok{ c) }\SpecialCharTok{+}\NormalTok{ b,}
+\NormalTok{  otherold }\SpecialCharTok{\textasciitilde{}} \FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{r }\SpecialCharTok{*}\NormalTok{ tr) }\SpecialCharTok{*}\NormalTok{ d }\SpecialCharTok{*}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ e }\SpecialCharTok{*}\NormalTok{ te) }\SpecialCharTok{*}\NormalTok{ a }\SpecialCharTok{+}\NormalTok{ b,}
+\NormalTok{  npl      }\SpecialCharTok{\textasciitilde{}}\NormalTok{ b}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Choosing Generating Parameter
+Values}\label{choosing-generating-parameter-values}
+
+\subsection{Simulating Data with rm3()}\label{simulating-data-with-rm3}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Simulate for one participant, one condition}
+\NormalTok{demo\_data }\OtherTok{\textless{}{-}} \FunctionTok{rm3}\NormalTok{(}
+  \AttributeTok{n =} \DecValTok{1}\NormalTok{, }\AttributeTok{size =} \DecValTok{50}\NormalTok{, }\AttributeTok{pars =}\NormalTok{ pars\_p1,}
+  \AttributeTok{m3\_model =}\NormalTok{ m3\_model\_custom, }\AttributeTok{act\_funs =}\NormalTok{ m3\_act\_funs,}
+  \AttributeTok{te =} \FloatTok{0.25}\NormalTok{, }\AttributeTok{tr =} \FloatTok{0.25}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Model Fitting}\label{model-fitting-1}
+
+\subsection{Recovery Evaluation}\label{recovery-evaluation}
+
+\subsubsection{Group-Level Recovery}\label{group-level-recovery}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# }\AlertTok{TODO}\CommentTok{: include pre{-}generated figure (tutorial3\_group\_recovery.pdf)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsubsection{Individual-Level
+Recovery}\label{individual-level-recovery}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# }\AlertTok{TODO}\CommentTok{: include pre{-}generated figure (tutorial3\_simple\_indiv\_scatter.pdf)}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{Practical Guidance}\label{practical-guidance}
+
+\section{Summary and Additional
+Resources}\label{summary-and-additional-resources}
+
+\subsection{Additional Resources}\label{additional-resources}
+
+\section*{References}\label{references}
+\addcontentsline{toc}{section}{References}
+
+\phantomsection\label{refs}
+\begin{CSLReferences}{1}{0}
+\bibitem[\citeproctext]{ref-batchelder1999theoretical}
+Batchelder, W. H., \& Riefer, D. M. (1999). Theoretical and empirical
+review of multinomial process tree modeling. \emph{Psychonomic Bulletin
+\& Review}, \emph{6}(1), 57--86.
+\url{https://doi.org/10.3758/BF03210812}
+
+\bibitem[\citeproctext]{ref-burkner2017brms}
+Bürkner, P.-C. (2017). {brms}: {A}n {R} package for {B}ayesian
+multilevel models using {S}tan. \emph{Journal of Statistical Software},
+\emph{80}(1), 1--28. \url{https://doi.org/10.18637/jss.v080.i01}
+
+\bibitem[\citeproctext]{ref-carpenter2017stan}
+Carpenter, B., Gelman, A., Hoffman, M. D., Lee, D., Goodrich, B.,
+Betancourt, M., Brauer, M., Guo, J., Li, P., \& Riddell, A. (2017).
+Stan: {A} probabilistic programming language. \emph{Journal of
+Statistical Software}, \emph{76}(1), 1--32.
+\url{https://doi.org/10.18637/jss.v076.i01}
+
+\bibitem[\citeproctext]{ref-erdfelder2009multinomial}
+Erdfelder, E., Auer, T.-S., Hilbig, B. E., Aßfalg, A., Moshagen, M., \&
+Nadarevic, L. (2009). Multinomial processing tree models: {A} review of
+the literature. \emph{Zeitschrift f{ü}r Psychologie / Journal of
+Psychology}, \emph{217}(3), 108--124.
+\url{https://doi.org/10.1027/0044-3409.217.3.108}
+
+\bibitem[\citeproctext]{ref-jacoby1991process}
+Jacoby, L. L. (1991). A process dissociation framework: Separating
+automatic from intentional uses of memory. \emph{Journal of Memory and
+Language}, \emph{30}(5), 513--541.
+\url{https://doi.org/10.1016/0749-596X(91)90025-F}
+
+\bibitem[\citeproctext]{ref-li2026filtering}
+Li, C., Frischkorn, G. T., \& Oberauer, K. (in press). Can we process
+information without encoding it into working memory? \emph{Journal of
+Experimental Psychology: Learning, Memory, and Cognition}.
+
+\bibitem[\citeproctext]{ref-luce1959individual}
+Luce, R. D. (1959). \emph{Individual choice behavior: {A} theoretical
+analysis}. John Wiley \& Sons.
+
+\bibitem[\citeproctext]{ref-oberauer2023measurement}
+Oberauer, K. (2023). Measurement models for visual working memory---{A}
+factorial model comparison. \emph{Psychological Review}, \emph{130}(3),
+841--852. \url{https://doi.org/10.1037/rev0000328}
+
+\bibitem[\citeproctext]{ref-oberauer2019simple}
+Oberauer, K., \& Lewandowsky, S. (2019). Simple measurement models for
+complex working-memory tasks. \emph{Psychological Review},
+\emph{126}(6), 880--932. \url{https://doi.org/10.1037/rev0000159}
+
+\bibitem[\citeproctext]{ref-oberauer2018benchmarks}
+Oberauer, K., Lewandowsky, S., Awh, E., Brown, G. D. A., Conway, A.,
+Cowan, N., Donkin, C., Farrell, S., Hitch, G. J., Hurlstone, M. J., Ma,
+W. J., Morey, C. C., Nee, D. E., Schweppe, J., Vergauwe, E., \& Ward, G.
+(2018). Benchmarks for models of short-term and working memory.
+\emph{Psychological Bulletin}, \emph{144}(9), 885--958.
+\url{https://doi.org/10.1037/bul0000153}
+
+\bibitem[\citeproctext]{ref-bmm2025}
+Popov, V., Frischkorn, G. T., Li, C., \& Bürkner, P.-C. (2025).
+\emph{Bmm: {E}asy and accessible {B}ayesian measurement models using
+'brms'}. \url{https://doi.org/10.32614/CRAN.package.bmm}
+
+\bibitem[\citeproctext]{ref-yellott1977relationship}
+Yellott, Jr., John I. (1977). The relationship between {L}uce's choice
+axiom, {T}hurstone's theory of comparative judgment, and the double
+exponential distribution. \emph{Journal of Mathematical Psychology},
+\emph{15}(2), 109--144.
+\url{https://doi.org/10.1016/0022-2496(77)90026-8}
+
+\bibitem[\citeproctext]{ref-yonelinas2012process}
+Yonelinas, A. P., \& Jacoby, L. L. (2012). The process-dissociation
+approach two decades later: Convergence, boundary conditions, and new
+directions. \emph{Memory \& Cognition}, \emph{40}(5), 663--680.
+\url{https://doi.org/10.3758/s13421-012-0205-5}
+
+\end{CSLReferences}
+
+
+
+
+
+
+\end{document}
