@@ -190,8 +190,7 @@
 A Tutorial}
 
 
-\shorttitle{Fitting the Memory Measurement Model (M3) with the bmm R
-Package: A Tutorial}
+\shorttitle{Fitting the M3 with the bmm R Package}
 
 
 \usepackage{etoolbox}
@@ -234,10 +233,14 @@ completing the tutorials. }
 estimation, R package}
 
 \authornote{\par{\addORCIDlink{Gidon T.
-Frischkorn}{0000-0002-9555-0261}} 
+Frischkorn}{0000-0002-9555-0261}}\par{\addORCIDlink{Isabel
+Courage}{0009-0000-8493-2240}}\par{\addORCIDlink{Chenyu
+Li}{0000-0001-8815-6189}} 
 
 \par{       }
-\par{Correspondence concerning this article should be addressed to }
+\par{Correspondence concerning this article should be addressed to Gidon
+T.
+Frischkorn, Email: \href{mailto:gidon.frischkorn@psychologie.uzh.ch}{gidon.frischkorn@psychologie.uzh.ch}}
 }
 
 \makeatletter
@@ -342,24 +345,23 @@ Frischkorn}{0000-0002-9555-0261}}
 
 Observed performance in memory and decision tasks is often summarized by
 overall accuracy. Yet, accuracy collapses across qualitatively distinct
-response categories that may arise from different latent processes. A
-long modeling tradition argues that specific error types are
-diagnostically informative because different cognitive processes imply
-different conditional response probabilities over observable outcomes.
-Multinomial processing tree (MPT) models formalize this logic by
-treating categorical responses---including distinct error classes---as
-consequences of latent states such as successful retrieval, guessing, or
-source confusion (\citeproc{ref-batchelder1999theoretical}{Batchelder \&
-Riefer, 1999}; \citeproc{ref-erdfelder2009multinomial}{Erdfelder et al.,
-2009}). Similarly, process-dissociation approaches demonstrate that
-patterns of correct and incorrect responses across task constraints can
-separate the contributions of multiple processes within a single task
+response categories that may arise from different latent processes.
+Specific error types are diagnostically informative because different
+cognitive processes imply different conditional response probabilities
+over observable outcomes. Multinomial processing tree (MPT) models
+formalize this logic by treating categorical responses---including
+distinct error classes---as consequences of latent states such as
+successful retrieval, guessing, or source confusion
+(\citeproc{ref-batchelder1999theoretical}{Batchelder \& Riefer, 1999};
+\citeproc{ref-erdfelder2009multinomial}{Erdfelder et al., 2009}).
+Similarly, process-dissociation approaches demonstrate that patterns of
+correct and incorrect responses across task constraints can separate the
+contributions of multiple processes within a single task
 (\citeproc{ref-jacoby1991process}{Jacoby, 1991};
 \citeproc{ref-yonelinas2012process}{Yonelinas \& Jacoby, 2012}). Across
-these perspectives, the central insight is that the full multinomial
-response distribution --- not accuracy alone --- provides critical
-information about the latent cognitive mechanisms generating observed
-behavior.
+these perspectives, the full multinomial response distribution -- not
+accuracy alone -- carries more information about latent cognitive
+mechanisms than a single accuracy score.
 
 Working memory research frequently relies on tasks that inherently yield
 response frequencies across discrete outcome categories, such as correct
@@ -378,26 +380,24 @@ provides one such decomposition. Its core architecture assumes that
 multiple activation sources contribute to each response category and
 that selection among categories follows a competitive retrieval rule
 (\citeproc{ref-luce1959individual}{Luce, 1959}). Although M3 was
-introduced for working memory tasks --- decomposing performance into
-item activation and context-specific binding strength --- this
-architecture is domain-general: whenever a task yields categorical
-responses that can be traced to distinct latent activation sources
-driving competitive selection, the framework applies.
+introduced for working memory tasks (decomposing performance into item
+activation and context-specific binding strength), this architecture is
+domain-general: whenever a task yields categorical responses that can be
+traced to distinct latent activation sources driving competitive
+selection, the framework applies.
 
 However, because activation formulas vary across tasks and response
 categories, each new application requires translating its specific model
 into custom statistical code. Accordingly, fitting M3 so far required
-custom JAGS or Stan code, increasing the risk of implementation errors,
-limiting reproducibility, and posing a barrier to broader adoption and
-extension. The \texttt{bmm} R package (\citeproc{ref-bmm2025}{Popov et
-al., 2025}) addresses this limitation by providing a standardized
-workflow to specify, fit, and evaluate Bayesian hierarchical M3 with
-minimal code, while remaining flexible enough to accommodate new task
-designs and custom model specifications. In this tutorial, we illustrate
-this approach with three worked examples covering the standard simple
-span (ss) and complex span (cs) tasks, and a custom extension,
-demonstrating how principled modeling of categorical response data can
-clarify the latent processes underlying working memory performance.
+custom JAGS or Stan code, which made each implementation error-prone and
+hard to reuse across designs. The \texttt{bmm} R package
+(\citeproc{ref-bmm2025}{Popov et al., 2025}) addresses this limitation
+by providing a standardized workflow to specify, fit, and evaluate
+Bayesian hierarchical M3 with minimal code, while remaining flexible
+enough to accommodate new task designs and custom model specifications.
+In this tutorial, we illustrate this approach with three worked examples
+covering the standard simple span (ss) and complex span (cs) tasks, and
+a custom extension.
 
 \section{The M3 Framework}\label{the-m3-framework}
 
@@ -425,33 +425,30 @@ or more latent sources. The core parameters are:
 \begin{itemize}
 \tightlist
 \item
-  \(b\): \textbf{baseline activation}, reflecting the tendency to select
-  any response option in the absence of memory-based evidence. This
-  parameter is fixed (not estimated) to set the scale of the model.
+  \(b\): \textbf{baseline activation}, the tendency to select any
+  response option in the absence of memory-based evidence. This
+  parameter is fixed (not estimated; e.g., \(b = 0\) for the softmax
+  rule) to set the scale of the model.
 \item
-  \(a\): \textbf{item activation}, reflecting general memory strength
-  for studied items --- the item was encountered during study,
-  regardless of its position or context.
+  \(a\): \textbf{item activation}, or general memory strength for
+  studied items. An item that was encountered during study receives this
+  activation regardless of its position or context.
 \item
-  \(c\): \textbf{context binding}, reflecting the strength of the
-  association between an item and its specific study context (e.g.,
-  serial position, paired associate).
+  \(c\): \textbf{context binding}, the strength of the association
+  between an item and its specific study context (e.g., serial position,
+  paired associate).
 \end{itemize}
 
 For the simple span model, these sources combine additively to produce
 total activation for each response category:
 
-\begin{longtable}[]{@{}ll@{}}
-\toprule\noalign{}
-Category & Activation \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-Correct & \(b + a + c\) \\
-Other studied item & \(b + a\) \\
-Not-presented lure & \(b\) \\
-\end{longtable}
+\[
+\begin{aligned}
+\text{act}_{\text{correct}} &= b + a + c \\
+\text{act}_{\text{other}} &= b + a \\
+\text{act}_{\text{NPL}} &= b
+\end{aligned}
+\]
 
 The correct target receives activation from all three sources. Other
 studied items receive item activation but lack the context binding to
@@ -500,9 +497,11 @@ signal, independent Gumbel noise is added to each alternative, and the
 observer selects the category with the highest noisy value. This
 equivalence gives activation parameters a principled interpretation as
 discriminability measures. Recent empirical comparisons have favored the
-softmax rule over the simple rule for working memory data Li et al.
-(\citeproc{ref-li2026filtering}{in press}). Tutorial 1 compares both
-rules; Tutorials 2 and 3 use softmax as the default.
+softmax rule over the simple rule for working memory data
+(\citeproc{ref-li2026filtering}{Li et al., in press};
+\citeproc{ref-oberauer2023measurement}{Oberauer, 2023}). Tutorial 1
+compares both rules; Tutorials 2 and 3 use the softmax rule as the
+default.
 
 \subsection{Model Versions}\label{model-versions}
 
@@ -519,10 +518,10 @@ number of response categories and estimated parameters.
   \textbf{Complex span} (\texttt{cs}): Five categories --- correct,
   paired distractor, other memorandum, other distractor, and NPL ---
   with three free parameters (\(a\), \(c\), \(f\)). The additional
-  parameter \(f \in [0, 1]\) captures distractor filtering efficiency:
-  \(f = 0\) indicates perfect filtering (distractors receive only
-  baseline activation), while \(f = 1\) indicates no filtering
-  (distractors are activated as strongly as memoranda).
+  parameter \(f\) captures distractor filtering efficiency on a scale
+  from 0 to 1: \(f = 0\) indicates perfect filtering (distractors
+  receive only baseline activation), while \(f = 1\) indicates no
+  filtering (distractors are activated as strongly as memoranda).
 \item
   \textbf{Custom}: User-defined response categories, activation
   formulas, and parameters. This version allows researchers to specify

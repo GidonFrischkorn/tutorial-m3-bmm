@@ -12,7 +12,7 @@
 #'   4) Evaluates recovery quality at the group and individual level
 #'
 #' The simulation varies sample size (N = 25, 50, 100) and trials per
-#' condition (25, 50, 100) to illustrate how data quantity affects recovery.
+#' condition (5, 10, 25) to illustrate how data quantity affects recovery.
 #'
 #' Reference:
 #'   Oberauer, K., & Lewandowsky, S. (2019). Simple measurement models for
@@ -257,7 +257,7 @@ simulate_cell <- function(N, trials_per_cond, true_native,
 
 # Recovery design: 3 sample sizes × 3 trial counts = 9 cells
 sample_sizes  <- c(25, 50, 100)
-trial_counts  <- c(25, 50, 100)
+trial_counts  <- c(5, 10, 25)
 
 recovery_grid <- expand_grid(
   N               = sample_sizes,
@@ -278,9 +278,9 @@ sim_data <- recovery_grid %>%
 
 ## 2.6) Verify simulated data -------------------------------------------------
 
-# Quick check: inspect one cell (N = 50, trials = 50)
+# Quick check: inspect one cell (N = 50, trials = 25)
 example_data <- sim_data %>%
-  filter(N == 50, trials_per_cond == 50) %>%
+  filter(N == 50, trials_per_cond == 25) %>%
   pull(data) %>%
   .[[1]]
 
@@ -522,14 +522,23 @@ print(indiv_summary, n = 45)
 
 ## 4.5) Individual-level scatter plots -----------------------------------------
 
-# Show true vs. recovered for each parameter in the N=100, trials=100 cell
+# Show true vs. recovered for each parameter in the N=100, trials=25 cell
 indiv_best <- indiv_recovery %>%
-  filter(N == 100, trials_per_cond == 100)
+  filter(N == 100, trials_per_cond == 25)
+
+# Correlation labels for each panel
+corr_labels <- indiv_best %>%
+  group_by(parameter) %>%
+  summarise(correlation = cor(true_link, recovered_link), .groups = "drop") %>%
+  mutate(label = paste0("r = ", sprintf("%.2f", correlation)))
 
 scatter_plot <- ggplot(indiv_best,
                        aes(x = true_link, y = recovered_link)) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "grey50") +
   geom_point(alpha = 0.4, size = 1.5) +
+  geom_text(data = corr_labels,
+            aes(x = Inf, y = -Inf, label = label),
+            hjust = 1.1, vjust = -0.5, size = 3.5, inherit.aes = FALSE) +
   facet_wrap(~ parameter, scales = "free") +
   labs(x = "True value (link scale)",
        y = "Recovered value (link scale)") +
@@ -542,22 +551,15 @@ ggsave(here("figures", "tutorial3_indiv_recovery_scatter.pdf"),
 
 ## 4.6) Recovery across cells: correlation heatmap -----------------------------
 
-# How does individual-level correlation change with N and trials?
-corr_summary <- indiv_summary %>%
-  group_by(N, trials_per_cond) %>%
-  summarise(mean_correlation = mean(correlation),
-            mean_coverage    = mean(coverage),
-            .groups = "drop")
-
-corr_plot <- ggplot(corr_summary,
+# How does individual-level correlation change with N and trials per parameter?
+corr_plot <- ggplot(indiv_summary,
                     aes(x = factor(trials_per_cond), y = factor(N),
-                        fill = mean_correlation)) +
+                        fill = correlation)) +
   geom_tile() +
-  geom_text(aes(label = sprintf("r = %.2f\ncov = %.0f%%",
-                                mean_correlation, mean_coverage * 100)),
-            size = 3) +
+  geom_text(aes(label = sprintf("%.2f", correlation)), size = 2.8) +
+  facet_wrap(~ parameter, nrow = 1) +
   scale_fill_gradient(low = "white", high = "#0072B2",
-                      limits = c(0, 1), name = "Mean r") +
+                      limits = c(0, 1), name = "r") +
   labs(x = "Trials per condition",
        y = "Sample size (N)") +
   clean_plot()
@@ -565,7 +567,7 @@ corr_plot <- ggplot(corr_summary,
 corr_plot
 
 ggsave(here("figures", "tutorial3_recovery_heatmap.pdf"),
-       corr_plot, width = 5, height = 4)
+       corr_plot, width = 6.5, height = 3.5)
 
 ## 4.7) Note on simulation design ---------------------------------------------
 

@@ -181,7 +181,7 @@ cat("  r:", round(exp(mean_r - 2*sd_r), 2), "to",
 # The full script (tutorial3_parameter_recovery.R) repeats this across
 # multiple sample sizes and trial counts.
 N               <- 50    # number of participants
-trials_per_cond <- 50    # trials per experimental condition
+trials_per_cond <- 25    # trials per experimental condition
 
 ## 2.3) Draw true individual parameters ---------------------------------------
 
@@ -271,7 +271,7 @@ pars_p1 <- c(
 cat("\nParticipant 1 parameters (native scale):\n")
 print(round(pars_p1, 3))
 
-# Simulate 50 trials for condition 1 (te = 0.25, tr = 0.25)
+# Simulate trials for condition 1 (te = 0.25, tr = 0.25)
 demo_data <- rm3(
   n        = 1,
   size     = trials_per_cond,
@@ -285,8 +285,8 @@ demo_data <- rm3(
 cat("\nrm3() output for participant 1, condition 1 (te=0.25, tr=0.25):\n")
 print(data.frame(demo_data))
 cat("→ These are response COUNTS out of", trials_per_cond, "trials.\n")
-cat("  e.g., 'correct' =", demo_data$correct,
-    "means the target was selected", demo_data$correct, "times.\n")
+cat("  e.g., 'correct' =", demo_data[1],
+    "means the target was selected", demo_data[1], "times.\n")
 
 ## 2.6) Simulate the full dataset ---------------------------------------------
 
@@ -426,7 +426,7 @@ fit <- bmm(
   warmup  = warmup,
   iter    = iter,
   backend = "cmdstanr",
-  file    = here("output", "fit_m3_custom_simple_N50_T50")
+  file    = here("output", "fit_m3_custom_simple_N50_T25")
 )
 
 ## 3.4) Convergence checks -----------------------------------------------------
@@ -587,10 +587,18 @@ print(indiv_summary)
 
 # True vs. recovered for each parameter. Points near the diagonal = good
 # recovery. Spread around the diagonal = uncertainty in individual estimates.
+
+# Prepare correlation labels for annotation in each panel
+corr_labels <- indiv_summary %>%
+  mutate(label = paste0("r = ", sprintf("%.2f", correlation)))
+
 scatter_plot <- ggplot(indiv_recovery,
                        aes(x = true_link, y = recovered_link)) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "grey50") +
   geom_point(alpha = 0.4, size = 1.5) +
+  geom_text(data = corr_labels,
+            aes(x = Inf, y = -Inf, label = label),
+            hjust = 1.1, vjust = -0.5, size = 3.5, inherit.aes = FALSE) +
   facet_wrap(~ parameter, scales = "free") +
   labs(x = "True value (link scale)",
        y = "Recovered value (link scale)",
@@ -607,11 +615,11 @@ ggsave(here("figures", "tutorial3_simple_indiv_scatter.pdf"),
 ###############################################################################!
 
 # This simplified script demonstrates the full workflow for a single cell
-# (N = 50, 50 trials/condition). The full tutorial script
+# (N = 50, trials_per_cond as set in Section 2.2). The full tutorial script
 # (tutorial3_parameter_recovery.R) extends this by:
 #
 #   1) Varying sample size (N = 25, 50, 100) and trials per condition
-#      (25, 50, 100) to show how data quantity affects recovery quality.
+#      (5, 10, 25) to show how data quantity affects recovery quality.
 #
 #   2) Simulating true parameters once for N_max = 100, then using subsets
 #      for smaller sample sizes to ensure fair comparison.
