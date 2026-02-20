@@ -229,6 +229,9 @@ summary(fit_m3_ss_simple)
 conditional_effects(fit_m3_ss_softmax)
 conditional_effects(fit_m3_ss_simple)
 
+pp_check(fit_m3_ss_softmax)
+pp_check(fit_m3_ss_simple)
+
 ###############################################################################!
 # 3) Model Evaluation ----------------------------------------------------------
 ###############################################################################!
