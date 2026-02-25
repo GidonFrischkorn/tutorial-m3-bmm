@@ -34,7 +34,7 @@ Companion repository for the tutorial paper on fitting M3 models (Oberauer & Lew
 
 **Tutorial 1 — Simple Span** (`tutorial1_simple_span.R`): Introduces the complete M3 workflow using data from Oberauer (2019). Covers model specification with `m3(version = "ss")`, fitting with `bmm()`, posterior predictive checks, parameter interpretation, choice rule comparison (simple vs. softmax), and hypothesis testing with `brms::hypothesis()`.
 
-**Tutorial 2 — Complex Span** (`tutorial2_complex_span.R`): Extends the workflow to a task with distractors using data from Li, Frischkorn, & Oberauer (in press). Demonstrates `m3(version = "cs")`, the distractor filtering parameter `f`, handling non-identified parameters via constant priors, and condition-level hypothesis tests.
+**Tutorial 2 — Complex Span** (`tutorial2_complex_span.R`): Extends the workflow to a task with distractors using data from Li, Frischkorn, & Oberauer (2026). Demonstrates `m3(version = "cs")`, the distractor filtering parameter `f`, handling non-identified parameters via constant priors, and condition-level hypothesis tests.
 
 **Tutorial 3 — Custom Model** (`tutorial3_parameter_recovery_simple.R` and `tutorial3_parameter_recovery.R`): Defines a fully custom M3 model for a memory updating task with 5 response categories and 5 estimated parameters. Instead of real data, this tutorial simulates data with known parameters using `rm3()`, fits the model, and evaluates parameter recovery at both group and individual levels. The simplified script walks through a single simulation cell; the full script varies sample size and trials per condition across a 3 x 3 design grid.
 
@@ -54,10 +54,11 @@ Open the RStudio project (`tutorial-m3-bmm.Rproj`) and run any script from `scri
 ## Data Sources
 
 - **Oberauer (2019)**: Oberauer, K., & Lewandowsky, S. (2019). Simple measurement models for complex working-memory tasks. *Psychological Review, 126*(6), 880–932. Data: [https://osf.io/vekpd/](https://osf.io/vekpd/)
-- **Li et al. (in press)**: Li, C., Frischkorn, G. T., & Oberauer, K. (in press). Can we process information without encoding it into working memory? *Journal of Experimental Psychology: Learning, Memory, and Cognition*. Data: [https://osf.io/wpcx5/](https://osf.io/wpcx5/)
+- **Li et al. (2026)**: Li, C., Frischkorn, G. T., & Oberauer, K. (2026). Can we process information without encoding it into working memory? *Journal of Experimental Psychology: Learning, Memory, and Cognition*. https://doi.org/10.1037/xlm0001585. Data: [https://osf.io/wpcx5/](https://osf.io/wpcx5/)
 
 ## References
 
 - Oberauer, K., & Lewandowsky, S. (2019). Simple measurement models for complex working-memory tasks. *Psychological Review, 126*(6), 880–932.
+- Li, C., Frischkorn, G. T., & Oberauer, K. (2026). Can we process information without encoding it into working memory? *Journal of Experimental Psychology: Learning, Memory, and Cognition*. https://doi.org/10.1037/xlm0001585
 - Frischkorn, G. T. & Popov, V. (2025). A tutorial for estimating Bayesian hierarchical mixture models for visual working memory tasks. *Behavior Research Methods*.
 - bmm package: [https://venpopov.github.io/bmm/](https://venpopov.github.io/bmm/)
