@@ -290,7 +290,7 @@ str(example_data)
 
 # Response proportions should show correct > other > oldinpos/otherold > npl
 example_data %>%
-  summarise(across(correct:npl, ~ mean(.x / trials_per_cond))) %>%
+  summarise(across(correct:npl, ~ mean(.x / 25))) %>%
   print()
 
 ###############################################################################!
@@ -398,19 +398,19 @@ group_recovery <- group_recovery %>%
 ## 4.2) Group-level recovery plot ----------------------------------------------
 
 group_plot <- ggplot(group_recovery,
-                     aes(x = true_mean, y = recovered_mean,
-                         color = factor(N))) +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "grey50") +
+                     aes(x = factor(N), y = recovered_mean,
+                         color = coverage)) +
+  geom_hline(aes(yintercept = true_mean), linetype = "dashed", color = "grey50") +
   geom_pointrange(aes(ymin = recovered_lower, ymax = recovered_upper),
-                  position = position_dodge(width = 0.15), size = 0.4) +
-  facet_grid(trials_per_cond ~ parameter, scales = "free",
+                  size = 0.4) +
+  facet_grid(trials_per_cond ~ parameter, scales = "free_y",
              labeller = labeller(
                trials_per_cond = ~ paste(.x, "trials/cond")
              )) +
-  scale_color_m3() +
-  labs(x = "True value (link scale)",
-       y = "Recovered value (link scale)",
-       color = "Sample size") +
+  scale_color_manual(values = c("TRUE" = "black", "FALSE" = "grey70"),
+                     guide = "none") +
+  labs(x = "Sample size",
+       y = "Recovered value (link scale)") +
   clean_plot()
 
 group_plot

@@ -163,6 +163,10 @@ m3_model_simple <- m3(
   choice_rule = "simple"
 )
 
+m3_model_softmax$parameters
+m3_model_softmax$fixed_parameters
+m3_model_softmax$links
+
 ## 1.2) Define the predictor formulas ------------------------------------------
 
 # Linear set size effects on a and c, mirroring the original JAGS analysis
@@ -226,11 +230,6 @@ fit_m3_ss_simple <- bmm(
 summary(fit_m3_ss_softmax)
 summary(fit_m3_ss_simple)
 
-conditional_effects(fit_m3_ss_softmax)
-conditional_effects(fit_m3_ss_simple)
-
-pp_check(fit_m3_ss_softmax)
-pp_check(fit_m3_ss_simple)
 
 ###############################################################################!
 # 3) Model Evaluation ----------------------------------------------------------

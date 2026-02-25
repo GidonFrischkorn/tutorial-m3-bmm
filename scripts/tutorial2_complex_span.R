@@ -1,9 +1,10 @@
 #' Tutorial 2: Complex Span M3 Model with bmm
 #'
 #' This script extends the M3 workflow to tasks with distractors, using:
-#' Li, C., Frischkorn, G. T., & Oberauer, K. (accepted). Can We Process
+#' Li, C., Frischkorn, G. T., & Oberauer, K. (2026). Can We Process
 #' Information Without Encoding It into Working Memory? Journal of Experimental
 #' Psychology: Learning, Memory, and Cognition.
+#' https://doi.org/10.1037/xlm0001585
 #' Data available at: https://osf.io/wpcx5/overview
 #'
 #' The task is a novel complex-span paradigm with three conditions:
@@ -95,12 +96,12 @@ default_prior(m3_formula_cs, m3_model_cs, data = data_agg)
 
 # Fix f in the control condition: there are no distractors (n_distc = 0,
 # n_disto = 0), so f does not influence the likelihood and is not identified.
-# We fix the fixed effect at constant(10) on the logit scale (f ≈ 1.0) and
-# the random effect SD at constant(0) to fully remove f in control from
-# the model. Without fixing the SD, it samples from its wide default prior
-# and can become very large, potentially affecting other parameters.
+# We fix both the fixed effect and the random effect SD at constant(0) to
+# fully remove f in the control condition from the model. Without fixing the
+# SD, it samples from its wide default prior and can become very large,
+# potentially affecting other parameters.
 priors_cs <- c(
-  prior(constant(10), nlpar = "f", coef = "conditioncontrol"),
+  prior(constant(0), nlpar = "f", coef = "conditioncontrol"),
   prior(constant(0), class = "sd", nlpar = "f",
         coef = "conditioncontrol", group = "participant")
 )

@@ -1,5 +1,6 @@
 \documentclass[
   man,
+  floatsintext,
   longtable,
   nolmodern,
   notxfonts,
@@ -186,11 +187,11 @@
 
 
 
-\title{Fitting the Memory Measurement Model (M3) with the bmm R Package:
-A Tutorial}
+\title{Fitting the Memory Measurement Model (\(M^3\)) with the bmm R
+Package: A Tutorial}
 
 
-\shorttitle{Fitting the M3 with the bmm R Package}
+\shorttitle{Fitting the \(M^3\) with the bmm R Package}
 
 
 \usepackage{etoolbox}
@@ -223,22 +224,23 @@ Psychology, University of Chicago}}
 
 
 
-\abstract{The memory measurement model (M3) decomposes categorical
+\abstract{The memory measurement model (\(M^3\)) decomposes categorical
 response data from memory tasks into latent activation parameters,
 separating item memory from context-specific binding via competitive
-retrieval. Fitting M3 has so far required custom JAGS or Stan code for
-each task design. The bmm R package provides a standardized interface to
-specify, fit, and evaluate Bayesian hierarchical M3 with minimal code.
-This tutorial demonstrates the bmm workflow through three worked
-examples: fitting a simple span M3 to cued recall data, where Bayes
-factor model comparison favors the softmax over the simple choice rule;
-extending the workflow to a complex span task with distractor categories
-and a filtering parameter; and defining a fully custom M3 for a memory
-updating task, validating it through parameter recovery across a range
-of sample sizes and trial counts. Complete R scripts accompany each
-tutorial. After completing the tutorials, readers will be able to fit
-standard and custom M3 to their own data and validate new model
-specifications through simulation. }
+retrieval. Fitting \(M^3\) has so far required custom JAGS or Stan code
+for each task design. The bmm R package provides a standardized
+interface to specify, fit, and evaluate Bayesian hierarchical \(M^3\)
+with minimal code. This tutorial demonstrates the bmm workflow through
+three worked examples: fitting a simple span \(M^3\) to cued recall
+data, where Bayes factor model comparison favors the softmax over the
+simple choice rule; extending the workflow to a complex span task with
+distractor categories and a filtering parameter; and defining a fully
+custom \(M^3\) for a memory updating task, validating it through
+parameter recovery across a range of sample sizes and trial counts.
+Complete R scripts accompany each tutorial. After completing the
+tutorials, readers will be able to fit standard and custom \(M^3\) to
+their own data and validate new model specifications through
+simulation. }
 
 \keywords{working memory, measurement model, multinomial model, Bayesian
 estimation, R package}
@@ -268,8 +270,6 @@ Frischkorn, Email: \href{mailto:gidon.frischkorn@psychologie.uzh.ch}{gidon.frisc
 \endoldlt
 }
 \makeatother
-\RequirePackage{longtable}
-\DeclareDelayedFloatFlavor{longtable}{table}
 
 \urlstyle{same}
 
@@ -362,94 +362,108 @@ Frischkorn, Email: \href{mailto:gidon.frischkorn@psychologie.uzh.ch}{gidon.frisc
 \section{Introduction}\label{introduction}
 
 Observed performance in memory and decision tasks is often summarized by
-overall accuracy. Yet, accuracy collapses across qualitatively distinct
-response categories that may arise from different latent processes.
-Specific error types are diagnostically informative because different
-cognitive processes imply different conditional response probabilities
-over observable outcomes. Multinomial processing tree (MPT) models
-formalize this logic by treating categorical responses---including
-distinct error classes---as consequences of latent states such as
-successful retrieval, guessing, or source confusion
+overall accuracy. Yet, for many tasks accuracy collapses across
+qualitatively distinct response categories and error types that may
+arise from different latent processes. In particular, different error
+types are diagnostically informative because different cognitive
+processes imply different conditional response probabilities over
+observable outcomes. Multinomial processing tree (MPT) models formalize
+this logic by treating categorical responses --- including distinct
+error classes --- as consequences of latent states such as successful
+retrieval, guessing, or source confusion
 (\citeproc{ref-batchelder1999theoretical}{Batchelder \& Riefer, 1999};
 \citeproc{ref-erdfelder2009multinomial}{Erdfelder et al., 2009}).
 Similarly, process-dissociation approaches demonstrate that patterns of
 correct and incorrect responses across task constraints can separate the
 contributions of multiple processes within a single task
 (\citeproc{ref-jacoby1991process}{Jacoby, 1991};
-\citeproc{ref-yonelinas2012process}{Yonelinas \& Jacoby, 2012}). Across
-these perspectives, the full multinomial response distribution -- not
-accuracy alone -- carries more information about latent cognitive
-mechanisms than a single accuracy score.
+\citeproc{ref-yonelinas2012process}{Yonelinas \& Jacoby, 2012}). In sum,
+the full multinomial response distribution - not accuracy alone -
+carries more information about latent cognitive mechanisms than a single
+accuracy score.
 
 Working memory research frequently relies on tasks that inherently yield
 response frequencies across discrete outcome categories, such as correct
 responses, feature confusions, location errors, or intrusions
-(\citeproc{ref-oberauer2018benchmarks}{Oberauer et al., 2018}). These
-data are naturally multinomial: each trial produces one of several
-mutually exclusive response types. Theoretical claims can often be
+(\citeproc{ref-oberauer2018benchmarks}{Oberauer et al., 2018}). For
+discrete feature spaces (e.g., words, numbers, letters), these data are
+naturally multinomial: each retrieval produces one of several mutually
+exclusive response types. Thus, theoretical claims can often be
 evaluated by how experimental manipulations and individual differences
-redistribute probability mass across these categories. A multinomial
-measurement perspective therefore treats the response profile as the
-observable consequence of latent memory states and retrieval processes.
+redistribute probability mass across these categories.
 
-The recently proposed memory measurement model {[}M3; Oberauer and
+The recently proposed memory measurement model {[}\(M^3\); Oberauer and
 Lewandowsky (\citeproc{ref-oberauer2019simple}{2019}){]} framework
-provides one such decomposition. Its core architecture assumes that
+provides one such decomposition. Its core assumptions are that 1)
 multiple activation sources contribute to each response category and
-that selection among categories follows a competitive retrieval rule
-(\citeproc{ref-luce1959individual}{Luce, 1959}). Although M3 was
-introduced for working memory tasks (decomposing performance into item
-activation and context-specific binding strength), this architecture is
-domain-general: whenever a task yields categorical responses that can be
-traced to distinct latent activation sources driving competitive
-selection, the framework applies.
+that 2) selection among categories follows a competitive retrieval rule
+(\citeproc{ref-luce1959individual}{Luce, 1959}). Although the \(M^3\)
+framework was introduced for working memory tasks, the general
+architecture is domain-general: whenever a task yields categorical
+responses that can be traced to distinct latent activation sources
+driving competitive selection, the framework applies.\footnote{Readers
+  familiar with multinomial processing tree (MPT) models will note
+  similarities: both frameworks decompose categorical response
+  distributions into latent process parameters. However, whereas MPT
+  models use discrete processing trees with binary branching
+  probabilities (\citeproc{ref-batchelder1999theoretical}{Batchelder \&
+  Riefer, 1999}; e.g., \citeproc{ref-heck2018treebugs}{Heck et al.,
+  2018} for Bayesian hierarchical implementations), \(M^3\) uses
+  continuous activation values with competitive selection, making it
+  particularly suited for theories emphasizing graded memory strength
+  (for a detailed comparison, see
+  \citeproc{ref-oberauer2019simple}{Oberauer \& Lewandowsky, 2019}).}
 
-However, because activation formulas vary across tasks and response
-categories, each new application requires translating its specific model
-into custom statistical code. Accordingly, fitting M3 so far required
-custom JAGS or Stan code, which made each implementation error-prone and
-hard to reuse across designs. The \texttt{bmm} R package
-(\citeproc{ref-bmm2025}{Popov et al., 2025}) addresses this limitation
-by providing a standardized workflow to specify, fit, and evaluate
-Bayesian hierarchical M3 with minimal code, while remaining flexible
-enough to accommodate new task designs and custom model specifications.
-In this tutorial, we illustrate this approach with three worked examples
-covering the standard simple span (ss) and complex span (cs) tasks, and
-a custom extension.
+Because the \(M^3\) framework is flexible --- Oberauer and Lewandowsky
+(\citeproc{ref-oberauer2019simple}{2019}) already introduced more than
+five model architectures --- the activation formulas that drive response
+selection typically vary across tasks and response categories. Each new
+application therefore required translating its model into custom JAGS or
+Stan code, making implementations error-prone and hard to reuse. The
+\texttt{bmm} R package (\citeproc{ref-bmm2025}{Popov et al., 2025})
+addresses this limitation by providing a standardized workflow to
+specify, fit, and evaluate Bayesian hierarchical \(M^3\) with minimal
+code, while remaining flexible enough to accommodate new task designs
+and custom model specifications. In this tutorial, we illustrate this
+approach with three worked examples covering the standard simple span
+(ss) and complex span (cs) tasks, and a custom extension.
 
-\section{The M3 Framework}\label{the-m3-framework}
+\section{\texorpdfstring{The \(M^3\)
+Framework}{The M\^{}3 Framework}}\label{the-m3-framework}
 
-The M3 framework is designed for categorical response data, tasks in
-which each trial produces one of \(K\) mutually exclusive response
-types. Rather than collapsing responses into a single accuracy score
-(correct vs.~all other categories), M3 treats the full frequency
-distribution across categories as the outcome to be explained. The model
-decomposes observed response proportions into latent activation
-parameters that reflect distinct cognitive processes contributing to
-memory performance.
+Consider a cued recall task (e.g., remembering letters in serial
+positions or icons in spatial positions) in which a participant sees a
+retrieval cue and selects a response from a set containing the correct
+target, other studied items, and new lures. Each response falls into one
+of three categories: \emph{correct} --- the item associated with the
+retrieval cue, \emph{other-list intrusion} --- a studied item associated
+with a different cue, or \emph{not-presented lure} (NPL) --- an item not
+presented during the trial. The \(M^3\) framework explains each
+category's selection frequency by specifying activation formulas:
+different activation sources feed into each category, and response
+probabilities arise as the result of applying choice rules that
+implement competitive selection among all options.
 
-Consider a cued recall task in which a participant sees a probe and
-selects their response from a set containing the correct target, other
-studied items, and new lures. From a memory perspective, each response
-falls into one of three categories: \emph{correct}, \emph{other-list
-intrusion}, or \emph{not-presented lure} (NPL). By specifying activation
-formulas for each category, M3 explains why each category is selected
-with a certain frequency: different activation sources feed into each
-category, and response probabilities follow from competitive selection.
+\subsection{Activation Formulas and Model
+Parameters}\label{activation-formulas-and-model-parameters}
 
-\subsection{Activation Sources}\label{activation-sources}
+Each response category's activation formula specifies which latent
+sources contribute to its selection probability. Because the \(M^3\)
+framework is not committed to any particular memory theory, different
+assumptions about the processes limiting memory performance can be
+accommodated through different activation formulas.
 
-In the M3 framework, each response category receives activation from one
-or more latent sources. For the cued recall task introduced above, these
-parameters are:
+Each response category usually receives activation from one or more
+latent sources. For the cued recall task introduced above, the
+theoretically assumed activation sources are:
 
 \begin{itemize}
 \tightlist
 \item
   \(b\): \textbf{baseline activation}, the tendency to select any
-  response option in the absence of memory-based evidence. This
-  parameter is fixed (not estimated; e.g., \(b = 0\) for the softmax
-  rule) to set the scale of the model.
+  response option in the absence of memory-based evidence. This could
+  reflect guessing, response bias, or other non-mnemonic factors that
+  contribute to selection probabilities across all categories.
 \item
   \(a\): \textbf{item activation}, or general memory strength for
   studied items. An item that was encountered during study receives this
@@ -460,63 +474,94 @@ parameters are:
   paired associate).
 \end{itemize}
 
-This so-called simple span model
-(\citeproc{ref-oberauer2019simple}{Oberauer \& Lewandowsky, 2019})
-assumes that these activation sources combine additively to produce
-total activations for each response category:
+These activation sources or additional mechanisms are specified as
+parameters that can vary and are estimated from data. Using these
+parameters, we can specify how they are combined to produce total
+activations for each response category. The simple span model proposed
+by Oberauer and Lewandowsky (\citeproc{ref-oberauer2019simple}{2019})
+assumes that these activation sources combine additively, with the
+correct target receiving activation from all three sources, other
+studied items receiving item activation but lacking context binding, and
+lures receiving only baseline activation:
 
 \[
 \begin{aligned}
-\text{act}_{\text{correct}} &= b + a + c \\
-\text{act}_{\text{other}} &= b + a \\
-\text{act}_{\text{NPL}} &= b
+\text{A}_{\text{correct}} &= b + a + c \\
+\text{A}_{\text{other}} &= b + a \\
+\text{A}_{\text{lures}} &= b
 \end{aligned}
 \]
 
-The correct target receives activation from all three sources. Other
-studied items receive item activation but lack the context binding to
-the probed position. Lures receive only baseline activation.
+Another perspective on the interplay of these processes could also
+assume that context activation boosts item activation, such that the
+correct target receives a multiplicative boost from context binding,
+while other studied items receive only item activation:
+
+\[
+\begin{aligned}
+\text{A}_{\text{correct}} &= b + a \cdot (1 + c) \\
+\text{A}_{\text{other}} &= b + a \\
+\text{A}_{\text{lures}} &= b
+\end{aligned}
+\]
+
+These two examples illustrate how distinct theoretical perspectives can
+be encoded through the activation formulas.\footnote{Although the
+  \(M^3\) framework was concieved as a measurement tool, it can thus be
+  used to implement and test specific theoretical assumptions. For
+  example, similarity between spatial positions could be implemented by
+  other list items getting a partial boost from context binding
+  dependent on their distance to the currently cued position. Thereby
+  the \(M^3\) framework sits at the intersection of measurement and
+  process models, it can account for the interplay of different
+  processes, but does not provide any implementation of the activation
+  sources and why they might differ in strength.} The \texttt{bmm}
+package provides pre-specified formulas for the simple span and complex
+span versions proposed by Oberauer and Lewandowsky
+(\citeproc{ref-oberauer2019simple}{2019}), and also allows users to
+define custom formulas for novel task designs.
 
 \subsection{Competitive Selection and Choice
 Rules}\label{competitive-selection-and-choice-rules}
 
-The activation formulas specify the activation of a single item in each
-category. The number of response options per category (\(n_k\)) also
-matters. If the recognition set contains 1 correct target, 3 other
-studied items, and 4 lures, the model weights each category's activation
-by its number of available options before computing response
-probabilities.
+To link activations to observed responses, each category's activation
+must be converted into a response probability. The \(M^3\) framework
+assumes competitive selection, that is a category's probability depends
+on its activation relative to all competitors. For implementing any
+choice rules that implement competivie selection the number of all
+competitors, that is options per category, needs to be known. Therefore,
+tasks designed for \(M^3\) should use a recognition format in which the
+experimenter controls the available response options instead of
+free-recall where participants generate their response set internally.
 
-M3 provides two rules for converting activations into response
-probabilities. Both implement competitive selection, where a category's
-probability depends on its activation relative to the total, but they
-differ in the transformation applied.
-
-The \emph{simple} (linear) choice rule
+Given these option counts, \(M^3\) provides two choice rules that differ
+in how activations are transformed before normalization. The
+\emph{simple} (or linear) choice rule
 (\citeproc{ref-luce1959individual}{Luce, 1959}) normalizes activations
 directly:
 
-\[P(k) = \frac{n_k \cdot \text{act}_k}{\sum_{j=1}^{K} n_j \cdot \text{act}_j}\]
+\[P(k) = \frac{n_k \cdot \text{A}_k}{\sum_{j=1}^{K} n_j \cdot \text{A}_j}\]
 
-where \(\text{act}_k\) is the total activation for category \(k\) and
+where \(\text{A}_k\) is the total activation for category \(k\) and
 \(n_k\) is the number of response options in that category. This rule
-requires all activations to be positive, so the baseline \(b\) is fixed
-at a small positive value (0.1 by default).
+requires all activations to be positive. To identify the scaling of
+activations, the baseline \(b\) is fixed at a small positive value (0.1
+by default).
 
-The \emph{softmax} (exponential) choice rule applies an exponential
+The \emph{softmax} (or exponential) choice rule applies an exponential
 transformation before normalization:
 
-\[P(k) = \frac{n_k \cdot \exp(\text{act}_k)}{\sum_{j=1}^{K} n_j \cdot \exp(\text{act}_j)}\]
+\[P(k) = \frac{n_k \cdot \exp(\text{A}_k)}{\sum_{j=1}^{K} n_j \cdot \exp(\text{A}_j)}\]
 
 Because \(\exp(x) > 0\) for all \(x\), softmax guarantees valid
-probabilities regardless of activation values. The baseline is fixed at
-\(b = 0\) (since \(\exp(0) = 1\), lures receive a positive baseline
-contribution automatically).
+probabilities regardless of activation values. Again, to identify the
+scaling of activations, the baseline is fixed at \(b = 0\) (since
+\(\exp(0) = 1\), lures receive a positive baseline contribution
+automatically).
 
 The softmax rule is formally equivalent to an \(n\)-alternative
 forced-choice signal detection model with Gumbel-distributed noise
-(\citeproc{ref-oberauer2019simple}{Oberauer \& Lewandowsky, 2019};
-\citeproc{ref-thurstone1927law}{Thurstone, 1927};
+(\citeproc{ref-thurstone1927law}{Thurstone, 1927};
 \citeproc{ref-yellott1977relationship}{Yellott, 1977}). Under this
 interpretation, each category's activation represents a deterministic
 signal, independent Gumbel noise is added to each alternative, and the
@@ -524,156 +569,166 @@ observer selects the category with the highest noisy value. This
 equivalence gives activation parameters a principled interpretation as
 discriminability measures. Recent empirical comparisons have favored the
 softmax rule over the simple rule for working memory data
-(\citeproc{ref-li2026filtering}{Li et al., in press};
-\citeproc{ref-oberauer2023measurement}{Oberauer, 2023}). Tutorial 1
-compares both rules; Tutorials 2 and 3 use the softmax rule as the
-default.
+(\citeproc{ref-li2026filtering}{Li et al., 2026};
+\citeproc{ref-oberauer2023measurement}{Oberauer, 2023}) although the
+simple choice rule was endorsed initially
+(\citeproc{ref-oberauer2019simple}{Oberauer \& Lewandowsky, 2019}).
+Tutorial 1 compares both rules; Tutorials 2 and 3 use the softmax rule
+as the default.
 
 \subsection{Model Versions}\label{model-versions}
 
-The \texttt{bmm} package provides three M3 versions that differ in the
-number of response categories and estimated parameters.
+The \texttt{bmm} package provides three \(M^3\) versions, two of which
+implement canonical paradigms often used in working memory research. The
+versions differ in the response categories and estimated parameters.
+Here we shortly introduce them, the following tutorials provide more
+details.
 
-\begin{itemize}
-\item
-  \textbf{Simple span} (\texttt{ss}): Three categories (correct, other,
-  NPL) with two free parameters (\(a\), \(c\)). Suitable for tasks
-  without distractor processing, such as cued recall from a single study
-  list.
-\item
-  \textbf{Complex span} (\texttt{cs}): Five categories --- correct,
-  paired distractor, other memorandum, other distractor, and NPL ---
-  with three free parameters (\(a\), \(c\), \(f\)). The additional
-  parameter \(f\) captures distractor filtering efficiency on a scale
-  from 0 to 1: \(f = 0\) indicates perfect filtering (distractors
-  receive only baseline activation), while \(f = 1\) indicates no
-  filtering (distractors are activated as strongly as memoranda).
-\item
-  \textbf{Custom}: User-defined response categories, activation
-  formulas, and parameters. This version allows researchers to specify
-  M3 of arbitrary complexity for novel task designs, as long as the
-  model remains identified.
-\end{itemize}
+The \textbf{simple span} (\texttt{ss}) version implements \(M^3\) for
+cued recall tasks separating three response categories (correct
+response, other, lures) with two free parameters (\(a\), \(c\)). It
+implements the additive activation formula proposed by Oberauer and
+Lewandowsky (\citeproc{ref-oberauer2019simple}{2019}).
 
-\subsection{The bmm Implementation}\label{the-bmm-implementation}
+The \textbf{complex span} (\texttt{cs}) version extends the simple span
+to tasks that interleave distractor processing with memorization. It
+requires that memoranda and distractors are drawn from the same material
+so that distractors can plausibly intrude during retrieval
+(\citeproc{ref-li2026filtering}{Li et al., 2026}; for examples, see
+\citeproc{ref-oberauer2019simple}{Oberauer \& Lewandowsky, 2019}). The
+\texttt{cs} version separates five response categories (correct, paired
+distractor, other memorandum, other distractor, and NPL) with three free
+parameters (\(a\), \(c\), \(f\)). The additional parameter \(f\)
+captures distractor filtering efficiency on a scale from 0 to 1:
+\(f = 0\) indicates perfect filtering (distractors receive only baseline
+activation), while \(f = 1\) indicates no filtering (distractors are
+activated as strongly as memoranda).
 
-Fitting M3 with the \texttt{bmm} R package (\citeproc{ref-bmm2025}{Popov
-et al., 2025}) follows a three-step workflow:
+The \textbf{custom} version allows user-defined response categories,
+activation formulas, and parameters. This version allows researchers to
+specify \(M^3\) of arbitrary complexity for novel task designs, as long
+as the model remains identified. The only requirement is that all
+activation formulas include the baseline activation \(b\), which
+reflects random guessing if no other activations were included. The
+\texttt{bmm} package provides a flexible syntax for defining custom
+models, and Tutorial 3 demonstrates how to validate a custom model
+through parameter recovery simulations.
+
+\subsection{The bmm Workflow}\label{the-bmm-workflow}
+
+Fitting \(M^3\) with the \texttt{bmm} R package
+(\citeproc{ref-bmm2025}{Popov et al., 2025}) follows a three-step
+workflow that is consistent for all measurement models implemented in
+the package:
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  \textbf{Define the model} with \texttt{m3()}: specify response
-  categories, the number of response options per category, the model
-  version, and the choice rule.
+  \textbf{Define the model}: The package includes a constructor function
+  \texttt{m3()} that generates a model object with all relevant
+  information for model specification. This entails the variable names
+  of response categories in the data, the number of response options per
+  category, the model version, and the choice rule.
 \item
-  \textbf{Specify predictor formulas} with \texttt{bmf()}: define how
-  experimental conditions and individual differences predict each
-  activation parameter, using the same formula syntax as \texttt{brms}
-  (\citeproc{ref-burkner2017brms}{Bürkner, 2017}).
+  \textbf{Specify predictor formulas}: The \texttt{bmm} package provides
+  a \texttt{bmmformula()} or shorthand \texttt{bmf()} function to
+  specify the linear prediction formulas that define how experimental
+  conditions and individual differences predict each activation
+  parameter. The \texttt{bmmformula} syntax uses the same formula syntax
+  as \texttt{brms} (\citeproc{ref-burkner2017brms}{Bürkner, 2017}) and
+  also includes random effects and non-linear formulas.\footnote{For
+    details on the \texttt{bmmformula} syntax, see
+    \url{https://venpopov.com/bmm/articles/bmm_bmmformula.html}.}
 \item
-  \textbf{Fit the model} with \texttt{bmm()}: estimate parameters via
-  Bayesian inference using Stan
-  (\citeproc{ref-carpenter2017stan}{Carpenter et al., 2017}), with full
-  support for hierarchical (multilevel) models, prior specification, and
-  posterior diagnostics.
+  \textbf{Fit the model}: The model object and prediction formula are
+  passed to \texttt{bmm()} together with the data. This function
+  translates the specification into a \texttt{brms} model and passes it
+  to Stan (\citeproc{ref-carpenter2017stan}{Carpenter et al., 2017}) for
+  Bayesian estimation.
 \end{enumerate}
 
-This workflow replaces the previous approach of writing custom JAGS code
-for each new experiment, in which the researcher had to manually specify
-the likelihood, priors, and sampling scheme --- a process that was
-error-prone and difficult to adapt across designs. Readers familiar with
-multinomial processing tree (MPT) models will note similarities: both
-frameworks decompose categorical response distributions into latent
-process parameters. However, whereas MPT models use discrete processing
-trees with binary branching probabilities
-(\citeproc{ref-batchelder1999theoretical}{Batchelder \& Riefer, 1999};
-e.g., \citeproc{ref-heck2018treebugs}{Heck et al., 2018} for Bayesian
-hierarchical implementations), M3 uses continuous activation values with
-competitive selection, making it particularly suited for theories
-emphasizing graded memory strength (for a detailed comparison, see
-\citeproc{ref-oberauer2019simple}{Oberauer \& Lewandowsky, 2019}).
+Because \texttt{bmm} builds on \texttt{brms}, fitted models inherit most
+of the \texttt{brms} post-processing ecosystem, including posterior
+predictive checks, hypothesis tests, and model comparison.\footnote{We
+  are continously working on extending the post-processing functions to
+  accommodaate the specific requirements of the measurement models
+  implemented in the \texttt{bmm} R package.}
 
-\section{Tutorial 1: Simple Span M3}\label{tutorial-1-simple-span-m3}
+\section{\texorpdfstring{Tutorial 1: Simple Span
+\(M^3\)}{Tutorial 1: Simple Span M\^{}3}}\label{tutorial-1-simple-span-m3}
 
-This tutorial walks through the complete M3 workflow using data from
-Oberauer (\citeproc{ref-oberauer2019bindings}{2019}), who measured cued
-recall with word pairs. Two experiments (20 participants each) differed
-in stimulus set type: Experiment 1 used new word pairs on each trial
-(open set), while Experiment 2 reused a small set of words across trials
-(closed set). Set size (2, 4, 6, 8 pairs) varied within participants.
-The full companion script (\texttt{scripts/tutorial1\_simple\_span.R})
-contains all code; we reproduce the key steps here.
+This tutorial walks through the complete \(M^3\) workflow for the
+\emph{simple span} (ss) version using data from Oberauer
+(\citeproc{ref-oberauer2019bindings}{2019}), who measured cued recall
+with words presented in boxes distributed horizontally on the screen.
+Two experiments (20 participants each) differed in stimulus set type:
+Experiment 1 used new words on each trial (open set), while Experiment 2
+reused a small set of words across trials (closed set). Set size (2, 4,
+6, 8 pairs) varied within participants. For more details on the
+experimental procedure please refer to the original publication. The
+full companion script available in the online supplement
+(\texttt{scripts/tutorial1\_simple\_span.R}) contains all code; we
+reproduce the key steps here.
 
 \subsection{Data}\label{data}
 
-Each recognition trial presents a probe together with a set of response
-options: the correct target, other studied items from the same list, and
-not-presented lures. Participants select one item, producing a
+Each recognition trial presents a retrieval cue (``?'') in one of the
+boxes together with a set of response options. This set contained the
+correct target, other studied items from the same list, and
+not-presented lures. Participants selected one item, producing a
 categorical response: \emph{correct}, \emph{other} (intrusion from a
 different list position), or \emph{NPL} (not-presented lure). The number
-of response options per category varies across the 24 recognition
-conditions (combinations of set size, list items in the recognition set,
-and number of lures).
+of response options per category varied across 24 recognition conditions
+(combinations of set size, list items in the recognition set, and number
+of lures) that we will not model in detail here.
 
-M3 in \texttt{bmm} expects aggregated data: response frequency counts
-per participant and condition, along with the number of response options
-per category. Starting from the trial-level data (available at
-https://osf.io/vekpd/), we filter to recognition trials, aggregate
-response categories, and compute option counts:
+A \(M^3\) in \texttt{bmm} expects aggregated data with one row per
+participant and condition. Each row must contain (a) response frequency
+counts for each response category --- that is how often the participant
+chose each category --- and (b) the number of response options available
+per category. For the simple span version, the three response categories
+are \emph{correct}, \emph{other}, and \emph{NPL}, so the dataset
+requires three frequency columns (\texttt{corr}, \texttt{other},
+\texttt{npl}) and three option-count columns (\texttt{n\_corr},
+\texttt{n\_other}, \texttt{n\_npl}). Any predictors of interest (here,
+mean-centered set size \texttt{ss\_lin} and experiment \texttt{exp}) are
+included as additional columns. The companion script
+(\texttt{scripts/tutorial1\_simple\_span.R}) shows how to aggregate
+trial-level data from Oberauer
+(\citeproc{ref-oberauer2019bindings}{2019}) into this format; the
+resulting dataset has 960 rows (40 participants \(\times\) 24
+recognition conditions). Below are the first rows of the data set:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\# Read both experiments; create unique participant IDs}
-\NormalTok{col\_names }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"id"}\NormalTok{, }\StringTok{"session"}\NormalTok{, }\StringTok{"block"}\NormalTok{, }\StringTok{"trial"}\NormalTok{, }\StringTok{"setsize"}\NormalTok{,}
-               \StringTok{"rsizeList"}\NormalTok{, }\StringTok{"rsizeNPL"}\NormalTok{, }\StringTok{"tested"}\NormalTok{, }\StringTok{"response"}\NormalTok{, }\StringTok{"rcat"}\NormalTok{, }\StringTok{"rt"}\NormalTok{)}
-
-\NormalTok{read\_exp }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(file, exp\_label) \{}
-  \FunctionTok{read.table}\NormalTok{(}\FunctionTok{here}\NormalTok{(}\StringTok{"data"}\NormalTok{, file), }\AttributeTok{header =} \ConstantTok{FALSE}\NormalTok{,}
-             \AttributeTok{col.names =}\NormalTok{ col\_names, }\AttributeTok{fill =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-    \FunctionTok{drop\_na}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%}
-    \FunctionTok{mutate}\NormalTok{(}\AttributeTok{exp =}\NormalTok{ exp\_label,}
-           \AttributeTok{id  =} \FunctionTok{paste}\NormalTok{(id, exp\_label, }\AttributeTok{sep =} \StringTok{"\_"}\NormalTok{))}
-\NormalTok{\}}
-
-\NormalTok{data\_raw }\OtherTok{\textless{}{-}} \FunctionTok{bind\_rows}\NormalTok{(}
-  \FunctionTok{read\_exp}\NormalTok{(}\StringTok{"Oberauer\_2019\_SimpleSpan\_Exp1.dat"}\NormalTok{, }\StringTok{"openset"}\NormalTok{),}
-  \FunctionTok{read\_exp}\NormalTok{(}\StringTok{"Oberauer\_2019\_SimpleSpan\_Exp2.dat"}\NormalTok{, }\StringTok{"closedset"}\NormalTok{)}
-\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\# Keep recognition trials only, aggregate to response frequencies}
-\NormalTok{data\_agg }\OtherTok{\textless{}{-}}\NormalTok{ data\_raw }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{filter}\NormalTok{(rsizeList }\SpecialCharTok{+}\NormalTok{ rsizeNPL }\SpecialCharTok{\textgreater{}} \DecValTok{0}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{group\_by}\NormalTok{(id, exp, setsize, rsizeList, rsizeNPL) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{summarise}\NormalTok{(}\AttributeTok{corr  =} \FunctionTok{sum}\NormalTok{(rcat }\SpecialCharTok{==} \DecValTok{1}\NormalTok{),}
-            \AttributeTok{other =} \FunctionTok{sum}\NormalTok{(rcat }\SpecialCharTok{==} \DecValTok{2}\NormalTok{),}
-            \AttributeTok{npl   =} \FunctionTok{sum}\NormalTok{(rcat }\SpecialCharTok{==} \DecValTok{3}\NormalTok{), }\AttributeTok{.groups =} \StringTok{"drop"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{n\_corr  =} \DecValTok{1}\NormalTok{,}
-         \AttributeTok{n\_other =}\NormalTok{ rsizeList }\SpecialCharTok{{-}} \DecValTok{1}\NormalTok{,  }\CommentTok{\# rsizeList includes the correct item}
-         \AttributeTok{n\_npl   =}\NormalTok{ rsizeNPL,}
-         \AttributeTok{ss\_lin  =}\NormalTok{ setsize }\SpecialCharTok{{-}} \FunctionTok{mean}\NormalTok{(setsize),}
-         \AttributeTok{exp     =} \FunctionTok{factor}\NormalTok{(exp))}
-\end{Highlighting}
-\end{Shaded}
-
-The resulting dataset has 960 rows (40 participants \(\times\) 24
-recognition conditions) with response frequencies (\texttt{corr},
-\texttt{other}, \texttt{npl}) and the corresponding option counts
-(\texttt{n\_corr}, \texttt{n\_other}, \texttt{n\_npl}). Set size is
-mean-centered (\texttt{ss\_lin}) for the linear predictor.
+\begin{verbatim}
+# A tibble: 6 x 12
+  id     exp   setsize rsizeList rsizeNPL  corr other   npl n_corr n_other n_npl
+  <chr>  <fct>   <int>     <int>    <int> <int> <int> <int>  <dbl>   <dbl> <int>
+1 10_cl~ clos~       2         1        1    23     0     0      1       0     1
+2 10_cl~ clos~       2         2        0    23     0     0      1       1     0
+3 10_cl~ clos~       2         2        2    23     0     0      1       1     2
+4 10_cl~ clos~       4         1        1    23     0     0      1       0     1
+5 10_cl~ clos~       4         2        0    23     0     0      1       1     0
+6 10_cl~ clos~       4         2        2    22     0     1      1       1     2
+# i 1 more variable: ss_lin <dbl>
+\end{verbatim}
 
 \subsection{Model Specification}\label{model-specification}
 
-Specifying an M3 requires two objects: a model definition
-(\texttt{m3()}) and a predictor formula (\texttt{bmf()}). The model
-definition declares the response categories, the columns containing
-option counts, the model version, and the choice rule. For the simple
-span version with the softmax rule:
+Specifying an \(M^3\) requires two R objects: 1) the \(M^3\) object
+using the \texttt{m3()} and 2) a predictor formula (\texttt{bmf()}). For
+creating the \(M^3\) object you need to call the \texttt{m3()} model
+constructor an pass a) the name of the variables that contain the
+response frequency in all response categories, b) the columns containing
+option counts or a named vector with the number of response options if
+they are constant for all observations, c) the model version, and d) the
+choice rule. If no model version is specified the \texttt{"custom"}
+version is used, and if no choice rule is specified the
+\texttt{"softmax"} rule is used as default.
+
+When explicitly passing all arguments, the specification of the simple
+span model object for the data from Oberauer
+(\citeproc{ref-oberauer2019bindings}{2019}) looks like this:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -686,14 +741,36 @@ span version with the softmax rule:
 \end{Highlighting}
 \end{Shaded}
 
-The predictor formula specifies how experimental conditions map onto the
-activation parameters \(a\) and \(c\). Because the two experiments are
+Once we have the model object specified, we can assess which parameters
+the model contains by calling \texttt{m3\_model\_ss\$parameters}. For
+the simple span version, the parameters are \texttt{a} (item activation)
+and \texttt{c} (context binding). The baseline parameter \texttt{b} is
+fixed and not estimated as can be seen in
+\texttt{m3\_model\_ss\$fixed\_parameters}.
+
+One important note applies to all pre-built \texttt{m3()} versions:
+activation formulas are assigned to response categories \emph{by
+position}, not by name. The \texttt{resp\_cats} vector must therefore
+follow the canonical order for the chosen version --- for \texttt{ss}:
+\texttt{corr,\ other,\ npl}. Supplying categories in a different order
+will silently assign the wrong activation formulas to the wrong
+categories, producing incorrect estimates without any warning. The same
+positional rule applies to \texttt{num\_options}.
+
+With this information, we know that we can specify predictor formulas
+for the two activation parameters \(a\) and \(c\). Because the two
+experiments in Oberauer (\citeproc{ref-oberauer2019bindings}{2019}) are
 between-subjects, we use cell means coding (\texttt{0\ +\ exp}) so that
 each experiment receives its own intercept rather than a difference from
-a reference level. Set size enters as a linear predictor
-(\texttt{exp:ss\_lin}), and random effects allow both intercepts and
-slopes to vary across participants, with separate variance components
-per experiment (\texttt{gr(id,\ by\ =\ exp)}):
+a reference level or grand mean. Similar to the original study by
+Oberauer (\citeproc{ref-oberauer2019bindings}{2019}), we entered set
+size as a linear predictor (\texttt{exp:ss\_lin}), and random effects
+allowed both intercepts and slopes to vary across participants, with
+separate variance components per experiment
+(\texttt{gr(id,\ by\ =\ exp)})\footnote{For details on the specification
+  of the \texttt{bmmformula}, see the \texttt{bmm} package documentation
+  and the documentation of the \texttt{brmsformula} function on which it
+  builds.}.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -704,22 +781,35 @@ per experiment (\texttt{gr(id,\ by\ =\ exp)}):
 \end{Highlighting}
 \end{Shaded}
 
-Under the softmax rule, \(a\) and \(c\) are estimated on the identity
-link (native activation scale). The default priors can be inspected with
+When using the softmax rule, \(a\) and \(c\) are estimated on the
+identity link (native activation scale) which can be seen via
+\texttt{m3\_model\_ss\$links}. Because there is some information about
+parameter ranges available from previous literature, \texttt{bmm}
+specifies weakly informative priors on the intercepts and effect
+parameters. This is different to \texttt{brms}, which uses flat priors
+for effects by default. These default priors can be inspected with
 \texttt{default\_prior(m3\_formula,\ m3\_model\_ss,\ data\ =\ data\_agg)}.
-We use the defaults throughout this tutorial; Tutorial 2 shows how to
-set custom priors when needed.
+All these priors can be overridden if needed. Throughout this tutorial
+we use the defaults; Tutorial 2 shows how to set custom priors when
+needed.
 
 \subsection{Model Fitting}\label{model-fitting}
 
 The \texttt{bmm()} function combines the model definition and formula,
-passes them to \texttt{brms} and Stan, and returns a fitted model
-object. All models in this tutorial were estimated with 4 chains of
-2,000 iterations each (1,000 warmup), using \texttt{cmdstanr} as the
-backend. We set \texttt{sample\_prior\ =\ "yes"} so that prior samples
-are available for later hypothesis tests. The \texttt{file} argument
-caches the fitted model to disk; re-running the script loads the cached
-fit rather than re-fitting.
+and passes them together with the data to \texttt{brms} and Stan, and
+returns a fitted model object. All models in this tutorial were
+estimated with the default setting of 4 chains of 2,000 iterations each
+(1,000 warmup), using \texttt{cmdstanr} as the backend. We set
+\texttt{sample\_prior\ =\ "yes"} so that prior samples are available for
+later hypothesis tests. In addition,
+\texttt{save\_pars\ =\ save\_pars(all\ =\ TRUE)} specifies that all
+model parameters and likelihood results should be saved, which is
+necessary to perfrom model comparisons via Bayes Factors. The
+\texttt{file} argument caches the fitted model to disk; re-running the
+script loads the cached fit rather than re-fitting.\footnote{These are
+  all additional options that are passed to \texttt{brms} and can be
+  modified as needed. For details on these additional arguments, please
+  refer to \texttt{brm()} documentation.}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -736,62 +826,112 @@ fit rather than re-fitting.
 \end{Highlighting}
 \end{Shaded}
 
-After fitting, check convergence with
-\texttt{summary(fit\_m3\_ss\_softmax)}. All \(\hat{R}\) values
-(\citeproc{ref-gelman1992inference}{Gelman \& Rubin, 1992}) should be
-below 1.01 and effective sample sizes should be adequate. For all models
-in this tutorial, these criteria were met (\(\hat{R} \leq\) 1.013, bulk
-ESS \(>\) 460). For guidance on Bayesian convergence diagnostics, see
-Gabry et al. (\citeproc{ref-gabry2019visualization}{2019}) and the
-\texttt{brms} documentation.
+As for all Bayesian models we should check convergence after fitting.
+The summary contains \texttt{summary(fit\_m3\_ss\_softmax)} convergence
+statistics \(\hat{R}\) for all major model parameters. All \(\hat{R}\)
+values (\citeproc{ref-gelman1992inference}{Gelman \& Rubin, 1992})
+should be below 1.01 and effective sample sizes should be adequate. For
+all models in this tutorial, these criteria were met (\(\hat{R} \leq\)
+1.006, bulk ESS \(>\) 514).\footnote{In principle, the measurement
+  models implemented in \texttt{bmm} are similar to all other Bayesian
+  generalized linear models and thus similar criteria for convergence
+  apply. For guidance on Bayesian convergence diagnostics, see Gabry et
+  al. (\citeproc{ref-gabry2019visualization}{2019}) and the
+  \texttt{brms} documentation.} Ocassionally, Stan may report warnings
+for divergent transitions, hitting the maximum tree depth, or low
+effective sample sizes. These issues can often be resolved by increasing
+the number of iterations, adjusting the \texttt{adapt\_delta} parameter,
+or reparameterizing the model. For guidance on addressing convergence
+issues, see the \texttt{brms} documentation and resources on Bayesian
+modeling best practices. In cases where more samples and tuning do not
+resolve convergence issues, it may be necessary to simplify the model or
+reconsider the model specification.
 
 \subsection{Model Evaluation}\label{model-evaluation}
 
-A posterior predictive check compares observed response proportions to
-those predicted by the fitted model. We use \texttt{posterior\_epred()}
-to obtain expected counts per category for each observation, average
-across posterior draws, and aggregate to participant-level proportions
-by set size and experiment. \textbf{?@fig-t1-pp-check} shows the result.
-Across all conditions and response categories, predicted proportions
-fall within one standard error of the observed means.
+Before interpreting parameter estimates, we verify that the fitted model
+matches the observed data. A posterior predictive check compares
+observed response proportions to model-predicted proportions; systematic
+discrepancies would indicate that the activation formulas or choice rule
+fail to capture the data-generating process. We used
+\texttt{posterior\_epred()} provided from the \texttt{brms} package to
+obtain expected counts per category for each observation. We then
+averaged across posterior draws, and aggregated to participant-level
+proportions by set size and experiment. Figure~\ref{fig-t1-pp-check}
+shows the result. Across all conditions and response categories,
+predicted proportions fall within one standard error of the observed
+means, indicating that the simple span \(M^3\) with softmax choice rule
+adequately captures the response distributions.
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{include\_graphics}\NormalTok{(}\FunctionTok{here}\NormalTok{(}\StringTok{"figures"}\NormalTok{, }\StringTok{"tutorial1\_pp\_check\_softmax.pdf"}\NormalTok{))}
-\end{Highlighting}
-\end{Shaded}
+\begin{figure}
+
+\caption{\label{fig-t1-pp-check}Posterior predictive check for the
+simple span \(M^3\) (softmax choice rule). Points and lines show mean
+response proportions by set size and experiment; error bars show
+\(\pm 1\) SE across participants. Color distinguishes observed from
+predicted values.}
+
+\centering{
+
+\pandocbounded{\includegraphics[keepaspectratio]{../figures/tutorial1_pp_check_softmax.pdf}}
+
+}
+
+\end{figure}%
 
 \subsection{Parameter Estimates}\label{parameter-estimates}
 
-With the softmax choice rule, \(a\) and \(c\) are on the identity link,
-so the posterior draws are directly interpretable as activation values.
-To compute condition-specific estimates, we reconstruct the linear
+With the model validated, we can examine how item memory (\(a\)) and
+context binding (\(c\)) varied across set sizes and experiments. Under
+the softmax choice rule, both parameters are on the identity link, so
+the posterior draws are directly interpretable as activation values. To
+compute condition-specific estimates, we reconstructed the linear
 predictor from the fixed effects: for each set size \(s\),
 \(\hat{a}_{\text{exp}} = \beta_{a,\text{exp}} + \beta_{a,\text{exp:ss\_lin}} \cdot (s - \bar{s})\),
-and analogously for \(c\). The companion script extracts draws with
-\texttt{as\_draws\_df()} and computes 95\% highest-density intervals
-{[}HDIs; McElreath (\citeproc{ref-mcelreath2020statistical}{2020}){]}
-via \texttt{tidybayes::mean\_hdci()}.
+and analogously for \(c\). The companion script extracts draws using
+\texttt{tidybayes::as\_draws\_df()} and computes 95\% highest-density
+intervals {[}HDIs; McElreath
+(\citeproc{ref-mcelreath2020statistical}{2020}){]} via
+\texttt{tidybayes::mean\_hdci()}.
 
-\textbf{?@fig-t1-param-estimates} shows the resulting estimates. Context
-binding (\(c\)) is consistently higher than item memory (\(a\)), which
-suggests that the primary source of correct responding is
-context-specific retrieval rather than general familiarity. Both
-parameters decrease with set size, but the decline is steeper for \(c\),
-consistent with binding being more sensitive to memory load. The two
-experiments show similar patterns, though the closed set tends to
-produce slightly higher item activation, likely because the same words
-recur across trials and accumulate familiarity.
+Figure~\ref{fig-t1-param-estimates} shows the resulting estimates.
+Context binding (\(c\)) is descriptively higher than item memory (\(a\))
+across all set sizes in both experiments, with the gap being especially
+pronounced in the closed-set experiment. Both parameters decrease with
+set size, but the decline is substantially steeper for \(c\) than for
+\(a\), consistent with binding being more sensitive to memory load. The
+two experiments differ markedly in item activation: \(a\) is notably
+higher in the open-set experiment than in the closed-set experiment.
+This likely reflects cross-trial interference in the closed-set
+condition, where the same words recur across trials and become
+associated with multiple contexts, reducing effective item-specific
+memory strength. These resuls are consistent with the original findings
+by Oberauer (\citeproc{ref-oberauer2019bindings}{2019}), who also found
+higher \(a\) in the open-set experiment and a steeper decline of \(c\)
+with set size.
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{include\_graphics}\NormalTok{(}\FunctionTok{here}\NormalTok{(}\StringTok{"figures"}\NormalTok{, }\StringTok{"tutorial1\_param\_estimates\_softmax.pdf"}\NormalTok{))}
-\end{Highlighting}
-\end{Shaded}
+\begin{figure}
+
+\caption{\label{fig-t1-param-estimates}Posterior estimates of item
+memory (\(a\)) and context binding (\(c\)) across set sizes for the
+open-set and closed-set experiments (softmax choice rule). Points show
+posterior means; error bars show 95\% HDIs.}
+
+\centering{
+
+\pandocbounded{\includegraphics[keepaspectratio]{../figures/tutorial1_param_estimates_softmax.pdf}}
+
+}
+
+\end{figure}%
 
 \subsection{Choice Rule Comparison}\label{choice-rule-comparison}
 
-To compare the two choice rules, we fit a second model with
+As introduced in the \(M^3\) framework section, the choice rule
+determines how activations are converted to response probabilities.
+Because the choice rule affects both the parameter scale and the model's
+fit to data, selecting the appropriate rule is an important modeling
+decision. To compare the two options, we fit a second model with
 \texttt{choice\_rule\ =\ "simple"} using the same formula and data.
 Under the simple rule, \(a\) and \(c\) are estimated on the log link, so
 the raw coefficients must be exponentiated to obtain activation values.
@@ -800,10 +940,10 @@ The posterior predictive checks for both models are qualitatively
 similar, but the softmax rule tends to capture the tails of the response
 distribution more accurately, particularly for the NPL category at
 larger set sizes. The simple rule slightly overpredicts other-list
-intrusions in some conditions. These figures are available in the
-companion script.
+intrusions in some conditions. The companion script contains the full
+posterior predictive figures for both models.
 
-For a formal comparison, we compute the marginal likelihood of each
+For a formal comparison, we computed the marginal likelihood of each
 model via bridge sampling (\citeproc{ref-gronau2017bridge}{Gronau et
 al., 2017}) and derive a Bayes factor. This requires
 \texttt{save\_pars(all\ =\ TRUE)} during fitting (set in the
@@ -817,16 +957,13 @@ al., 2017}) and derive a Bayes factor. This requires
 \end{Highlighting}
 \end{Shaded}
 
-The Bayes factor strongly favors the softmax rule
-(\emph{BF}\textsubscript{10} = \(2.7 \times 10^{7}\),
-\(3.2 \times 10^{7}\), \(3.1 \times 10^{7}\), \(2.0 \times 10^{7}\),
-\(2.6 \times 10^{7}\), \(2.9 \times 10^{7}\), \(2.8 \times 10^{7}\),
-\(3.9 \times 10^{7}\), \(1.2 \times 10^{7}\), \(2.8 \times 10^{7}\)).
-This is consistent with recent comparisons by Oberauer
-(\citeproc{ref-oberauer2023measurement}{2023}) and Li et al.
-(\citeproc{ref-li2026filtering}{in press}), who found softmax to
-outperform the simple rule across different working memory tasks. We use
-the softmax rule as the default in the remaining tutorials.
+The Bayes factor strongly favored the softmax rule (median
+\emph{BF}\textsubscript{10} = \(4.8 \times 10^{7}\) across 10 bridge
+sampling repetitions). This is consistent with recent comparisons by
+Oberauer (\citeproc{ref-oberauer2023measurement}{2023}) and Li et al.
+(\citeproc{ref-li2026filtering}{2026}), who found softmax to outperform
+the simple rule across different working memory tasks. We use the
+softmax rule as the default in the remaining tutorials.
 
 \subsection{Hypothesis Testing}\label{hypothesis-testing}
 
@@ -839,42 +976,50 @@ experiment:
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{hypothesis}\NormalTok{(fit\_m3\_ss\_softmax, }\StringTok{"c\_expopenset {-} a\_expopenset \textgreater{} 0"}\NormalTok{)}
+\FunctionTok{hypothesis}\NormalTok{(fit\_m3\_ss\_softmax, }\StringTok{"c\_expopenset = a\_expopenset"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
-This returns an evidence ratio quantifying how much the data shift
-belief toward \(c > a\) relative to the prior (ER = 58.7 for the
-open-set experiment). We can similarly test whether set size reduces
-\(c\) (averaged across experiments) and whether set size effects differ
+This returns a Savage-Dickey density ratio: the ratio of prior to
+posterior density at the point null \(c = a\). Values substantially
+greater than 1 indicate that the data have shifted belief away from
+equality; values near 1 indicate inconclusive evidence. In the open-set
+experiment, the result is inconclusive (BF\(_{10}\) = 2.28), suggesting
+the data do not clearly distinguish whether \(c\) and \(a\) differ at
+the mean set size. We can similarly test whether set size reduces \(c\)
+(averaged across experiments) and whether set size effects differ
 between experiments:
 
 \begin{Shaded}
 \begin{Highlighting}[]
+\CommentTok{\# Comparion of c and a for the closed{-}set experiment}
+\FunctionTok{hypothesis}\NormalTok{(fit\_m3\_ss\_softmax, }\StringTok{"c\_expclosedset = a\_expclosedset"}\NormalTok{)}
+
 \CommentTok{\# Set size effect on context binding (averaged across experiments)}
 \FunctionTok{hypothesis}\NormalTok{(fit\_m3\_ss\_softmax,}
-  \StringTok{"(c\_expopenset:ss\_lin + c\_expclosedset:ss\_lin) / 2 \textless{} 0"}\NormalTok{)}
+  \StringTok{"(c\_expopenset:ss\_lin + c\_expclosedset:ss\_lin) / 2 = 0"}\NormalTok{)}
 
 \CommentTok{\# Experiment difference in set size effect on c}
 \FunctionTok{hypothesis}\NormalTok{(fit\_m3\_ss\_softmax,}
-  \StringTok{"c\_expopenset:ss\_lin {-} c\_expclosedset:ss\_lin = 0"}\NormalTok{)}
+  \StringTok{"c\_expopenset:ss\_lin = c\_expclosedset:ss\_lin"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
-The results confirm that \(c > a\) in both experiments, that set size
-reduces both \(a\) and \(c\), and that the set size effect on \(c\) is
-steeper for the closed-set experiment. The companion script contains the
-full set of six hypothesis tests. For other examples of M3-based
-hypothesis testing with simple span data, see Loaiza and Souza
-(\citeproc{ref-loaiza2024active}{2024}); for an application of the cs
-version to WM load and intelligence, see Schubert et al.
-(\citeproc{ref-schubert2023working}{2023}).
+The closed-set experiment yields strong evidence that \(c > a\)
+(BF\(_{10}\) = \textgreater{} 10,000). However, there is moderate
+evidence is that set size reduces \(a\) (BF\(_{10}\) = 5.56) and strong
+evidence for \(c\) decreasing with larger set size (BF\(_{10}\) =
+\textgreater{} 10,000). There is also strong evidence that the set size
+effect on \(c\) is equal for the closed-set compared to the open-set
+experiment (BF\(_{01}\) = 63.6). The companion script contains the full
+set of six hypothesis tests.
 
-\section{Tutorial 2: Complex Span M3}\label{tutorial-2-complex-span-m3}
+\section{\texorpdfstring{Tutorial 2: Complex Span
+\(M^3\)}{Tutorial 2: Complex Span M\^{}3}}\label{tutorial-2-complex-span-m3}
 
 This tutorial extends the workflow to tasks where distractors appear
 alongside memoranda. We use data from Li et al.
-(\citeproc{ref-li2026filtering}{in press}), who developed a complex-span
+(\citeproc{ref-li2026filtering}{2026}), who developed a complex-span
 filtering task to test whether processed information can be kept out of
 working memory. The companion script is
 \texttt{scripts/tutorial2\_complex\_span.R}; data preparation is in
@@ -884,54 +1029,63 @@ working memory. The companion script is
 different}\label{what-makes-complex-span-different}
 
 The simple span model has three response categories. When distractors
-are present, two more categories are needed: the distractor paired with
-the tested target (\emph{paired distractor}) and distractors from other
-positions (\emph{other distractor}). The complex span (cs) model extends
-the activation formulas with a filtering parameter \(f\) that scales the
-activation of distractor categories:
+are present, and parameters capturing the effect of distractors should
+be estimated, two more categories are needed: the distractor paired with
+respect to the context of the tested target (\emph{paired or close
+distractor}) and distractors from other positions (\emph{other
+distractor}). The complex span (\texttt{cs}) model extends the
+activation formulas with a filtering parameter \(f\) that determines how
+much activation distractors receive relative to memoranda. In the model
+for complex span tasks proposed by Oberauer and Lewandowsky
+(\citeproc{ref-oberauer2019simple}{2019}) it appears as a multiplier on
+item memory and context binding for distractor categories:
 
 \[
 \begin{aligned}
-\text{act}_{\text{correct}} &= b + a + c \\
-\text{act}_{\text{paired dist.}} &= b + f \cdot a + f \cdot c \\
-\text{act}_{\text{other}} &= b + a \\
-\text{act}_{\text{other dist.}} &= b + f \cdot a \\
-\text{act}_{\text{NPL}} &= b
+\text{A}_{\text{correct}} &= b + a + c \\
+\text{A}_{\text{close dist.}} &= b + f \cdot a + f \cdot c \\
+\text{A}_{\text{other}} &= b + a \\
+\text{A}_{\text{other dist.}} &= b + f \cdot a \\
+\text{A}_{\text{NPL}} &= b
 \end{aligned}
 \]
 
 The parameter \(f\) ranges from 0 to 1 (estimated on the logit scale).
-When \(f = 0\), distractors receive only baseline activation (perfect
-filtering). When \(f = 1\), distractors are activated as strongly as
-memoranda (no filtering).
-
-A critical implementation detail: the \texttt{cs} version assigns
-activation formulas by position, so \texttt{resp\_cats} must follow the
-order \texttt{corr,\ distc,\ other,\ disto,\ npl}. Misordering silently
-assigns the wrong formula to each category.
+At the extremes, \(f = 0\) means distractors receive only baseline
+activation, as if they were never encountered (perfect filtering);
+\(f = 1\) means distractors are activated identically to memoranda, as
+if filtering failed entirely.
 
 \subsection{Data}\label{data-1}
 
-Li et al. (\citeproc{ref-li2026filtering}{in press}) presented
-participants with image pairs and manipulated whether targets and
-distractors were identified before processing (pre-cue), after
-processing (retro-cue), or whether no distractors were present
-(control). We use Experiment 1 (45 participants after exclusions,
-within-subjects). The data are pre-aggregated into response frequencies
-across the five categories; see the companion preparation script for
-classification details.
+Li et al. (\citeproc{ref-li2026filtering}{2026}) presented participants
+with image pairs and manipulated whether targets and distractors were
+identified using an arrow cue pointing to one of the items before
+processing (pre-cue), after processing (retro-cue), or whether no
+distractors were present (control). We use Experiment 1 (45 participants
+after exclusions, within-subjects) for this tutorial. The data are
+pre-aggregated into response frequencies across the five categories:
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{data\_agg }\OtherTok{\textless{}{-}} \FunctionTok{read\_csv}\NormalTok{(}\FunctionTok{here}\NormalTok{(}\StringTok{"data"}\NormalTok{, }\StringTok{"Li\_2026\_ComplexSpan\_Exp1\_agg.csv"}\NormalTok{),}
-                     \AttributeTok{show\_col\_types =} \ConstantTok{FALSE}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{condition =} \FunctionTok{factor}\NormalTok{(condition, }\AttributeTok{levels =} \FunctionTok{c}\NormalTok{(}\StringTok{"control"}\NormalTok{, }\StringTok{"pre"}\NormalTok{, }\StringTok{"retro"}\NormalTok{)))}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+# A tibble: 6 x 12
+  participant condition  corr other distc disto   npl n_corr n_other n_distc
+        <dbl> <fct>     <dbl> <dbl> <dbl> <dbl> <dbl>  <dbl>   <dbl>   <dbl>
+1           1 control      41    18     0     0     1      1       2       0
+2           1 pre          31    17     4     6     1      1       2       1
+3           1 retro        34    15     5     4     1      1       2       1
+4           2 control      52     7     0     0     1      1       2       0
+5           2 pre          33    14     6     7     0      1       2       1
+6           2 retro        44     9     4     3     0      1       2       1
+# i 2 more variables: n_disto <dbl>, n_npl <dbl>
+\end{verbatim}
 
 \subsection{Model specification}\label{model-specification-1}
 
-The model definition follows the same pattern as Tutorial 1:
+The model definition follows the same pattern as in Tutorial 1. As noted
+before, the \texttt{cs} version also assigns activation formulas by
+position: \texttt{resp\_cats} must follow the order
+\texttt{corr,\ distc,\ other,\ disto,\ npl}. The model specification for
+the complex span version thus looks like this:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -944,9 +1098,14 @@ The model definition follows the same pattern as Tutorial 1:
 \end{Highlighting}
 \end{Shaded}
 
-The predictor formula specifies condition effects on all three
-parameters with cell means coding and uncorrelated random effects per
-condition:
+Again, we can use the information from the model object that is returned
+by the \texttt{m3} call to obtain information on the parameters that are
+estimated and can be predicted. For the \texttt{cs} version, these are
+again context activation \(c\), general activation \(a\), and now also
+the filtering parameter \(f\). According to the experimental design of
+experiment 1 from Li et al. (\citeproc{ref-li2026filtering}{2026}), the
+predictor formula specifies condition effects on all three parameters
+with cell means coding and uncorrelated random effects per condition:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -958,52 +1117,69 @@ condition:
 \end{Highlighting}
 \end{Shaded}
 
-There is a complication: in the control condition, no distractors are
-present (\texttt{n\_distc\ =\ 0}, \texttt{n\_disto\ =\ 0}), so \(f\)
-does not influence the likelihood and is not identified. If left free,
-the sampler will wander through the prior, and the resulting large
-variance can affect other parameters. The solution is to fix \(f\) in
-the control condition using a \texttt{constant()} prior on both the
-fixed effect and the random effect SD:
+There is one complication that we should address for this data: in the
+control condition, no distractors are presented
+(\texttt{n\_distc\ =\ 0}, \texttt{n\_disto\ =\ 0}), so \(f\) does not
+influence the likelihood and is not identified. If left free, the
+sampler will wander through the prior, which can slow down sampling. The
+solution is to fix \(f\) in the control condition using a
+\texttt{constant()} prior on both the fixed effect and the random effect
+SD:
 
 \begin{Shaded}
 \begin{Highlighting}[]
 \NormalTok{priors\_cs }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}
-  \FunctionTok{prior}\NormalTok{(}\FunctionTok{constant}\NormalTok{(}\DecValTok{10}\NormalTok{), }\AttributeTok{nlpar =} \StringTok{"f"}\NormalTok{, }\AttributeTok{coef =} \StringTok{"conditioncontrol"}\NormalTok{),}
+  \FunctionTok{prior}\NormalTok{(}\FunctionTok{constant}\NormalTok{(}\DecValTok{0}\NormalTok{), }\AttributeTok{nlpar =} \StringTok{"f"}\NormalTok{, }\AttributeTok{coef =} \StringTok{"conditioncontrol"}\NormalTok{),}
   \FunctionTok{prior}\NormalTok{(}\FunctionTok{constant}\NormalTok{(}\DecValTok{0}\NormalTok{),  }\AttributeTok{class =} \StringTok{"sd"}\NormalTok{, }\AttributeTok{nlpar =} \StringTok{"f"}\NormalTok{,}
         \AttributeTok{coef =} \StringTok{"conditioncontrol"}\NormalTok{, }\AttributeTok{group =} \StringTok{"participant"}\NormalTok{)}
 \NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
-Setting the fixed effect to 10 on the logit scale (effectively
-\(f \approx 1\)) and the SD to 0 removes \(f\) in the control condition
-from the model entirely.
+The specific values are not critical, as \(f\) will not influence the
+likelihood in the control condition. Still, setting the fixed effect to
+0 on the logit scale (effectively \(f = 0.5\)) and the SD to 0 pins the
+control-condition filtering at a fixed value. The remaining conditions
+still estimate \(f\) freely. For more information on setting priors in
+\texttt{bmm}, you can check the \texttt{brms} documentation. As
+\texttt{bmm} builds on \texttt{brms}, the same syntax applies for
+setting priors. The companion script contains the full set of priors
+used for this model, which are mostly the default weakly informative
+priors.
 
 \subsection{Model fitting and
 evaluation}\label{model-fitting-and-evaluation}
 
-Fitting follows the same \texttt{bmm()} call as in Tutorial 1, passing
-the custom priors. The model converged without issues (\(\hat{R} \leq\)
-1.004, bulk ESS \(>\) 750, no divergent transitions).
-\textbf{?@fig-t2-pp-check} shows the posterior predictive check. The
-model captures the observed response proportions well across all three
-conditions and five categories.
+Fitting follows the same \texttt{bmm()} call as in Tutorial 1, now
+additionally passing the custom priors. The model converged without
+issues (\(\hat{R} \leq\) 1.004, bulk ESS \(>\) 1,148, no divergent
+transitions). Figure~\ref{fig-t2-pp-check} shows the posterior
+predictive check. The model captured the observed response proportions
+well across all three conditions and five categories.
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{include\_graphics}\NormalTok{(}\FunctionTok{here}\NormalTok{(}\StringTok{"figures"}\NormalTok{, }\StringTok{"tutorial2\_pp\_check.pdf"}\NormalTok{))}
-\end{Highlighting}
-\end{Shaded}
+\begin{figure}
+
+\caption{\label{fig-t2-pp-check}Posterior predictive check for the
+complex span \(M^3\). Points show mean response proportions per category
+and condition; error bars show \(\pm 1\) SE across participants.}
+
+\centering{
+
+\pandocbounded{\includegraphics[keepaspectratio]{../figures/tutorial2_pp_check.pdf}}
+
+}
+
+\end{figure}%
 
 \subsection{Parameter estimates and interpreting
 f}\label{parameter-estimates-and-interpreting-f}
 
-\textbf{?@fig-t2-param-estimates} shows the posterior estimates. Item
+We now examine the posterior estimates for all three parameters. Item
 memory (\(a\)) and context binding (\(c\)) are on the identity link and
-can be read directly. The filtering parameter \(f\) is estimated on the
-logit scale; to interpret it as a probability, we apply the inverse
-logit transformation (\texttt{plogis()} in R):
+can be read directly from the posterior draws. The filtering parameter
+\(f\), however, is estimated on the logit scale. To interpret it as a
+proportional reduction between 0 and 1, we apply the inverse logit
+transformation (\texttt{plogis()}):
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1013,24 +1189,35 @@ logit transformation (\texttt{plogis()} in R):
 \end{Highlighting}
 \end{Shaded}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{include\_graphics}\NormalTok{(}\FunctionTok{here}\NormalTok{(}\StringTok{"figures"}\NormalTok{, }\StringTok{"tutorial2\_param\_estimates.pdf"}\NormalTok{))}
-\end{Highlighting}
-\end{Shaded}
+\begin{figure}
 
-On the probability scale, \(f\) is close to 1 in both conditions
+\caption{\label{fig-t2-param-estimates}Posterior parameter estimates for
+the complex span \(M^3\). Left panels show item memory (\(a\)) and
+context binding (\(c\)) across conditions. Right panel shows distractor
+filtering (\(f\)) for pre-cue and retro-cue conditions, transformed to
+the probability scale. The control condition is omitted from the \(f\)
+panel because it was fixed (no distractors present).}
+
+\centering{
+
+\pandocbounded{\includegraphics[keepaspectratio]{../figures/tutorial2_param_estimates.pdf}}
+
+}
+
+\end{figure}%
+
+On the probability scale, \(f\) is around 0.65 in both conditions
 (pre-cue: \(M\) = 0.66, 95\% HDI {[}0.61, 0.70{]}; retro-cue: \(M\) =
-0.63, 95\% HDI {[}0.59, 0.66{]}), indicating little to no filtering.
-This matches the conclusion of Li et al.
-(\citeproc{ref-li2026filtering}{in press}): once distractors are
-processed, they are encoded into working memory regardless of whether
-participants knew in advance which items were distractors.
+0.62, 95\% HDI {[}0.59, 0.66{]}), indicating some filtering. This
+matches the conclusion of Li et al.
+(\citeproc{ref-li2026filtering}{2026}): once distractors are processed,
+they are encoded into working memory regardless of whether participants
+knew in advance which items were distractors.
 
 \subsection{Hypothesis tests}\label{hypothesis-tests}
 
-We can test condition differences formally using
-\texttt{brms::hypothesis()}:
+Again, we can test condition differences for the different parameters
+formally using \texttt{brms::hypothesis()}:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1043,88 +1230,117 @@ We can test condition differences formally using
 \end{Highlighting}
 \end{Shaded}
 
-The evidence ratio for the \(f\) comparison is close to 1 (ER = 10.3),
-providing no evidence for a difference in filtering between cue
-conditions. Item memory and context binding are slightly lower in the
-distractor conditions than in the control, in line with a general cost
-of distractor processing on memory strength.
+The evidence ratio for the \(f\) comparison indicated that filtering is
+equivalent between cue conditions (BF\(_{01}\) = 9.79). There is
+inconclusive evidence for item memory \(a\) comparing the distractor
+conditions to the control (BF\(_{10}\) = 0.48); however, context
+activation \(c\) is lower in the distractor conditions (BF\(_{10}\) =
+6.38).
 
 \subsection{Comparison with the published
 model}\label{comparison-with-the-published-model}
 
-The standard \texttt{cs} model constrains distractor attenuation to be
-equal for item memory and context binding: both are scaled by the single
-parameter \(f\). The original analysis by Li et al.
-(\citeproc{ref-li2026filtering}{in press}) used a custom model with two
-separate ratio parameters, \(r_a\) and \(r_c\), allowing item and
-binding activation to transfer differently to distractors. The
-\texttt{cs} model implicitly assumes \(r_a = r_c = f\).
+The standard \texttt{cs} model makes a simplifying assumption:
+distractor attenuation is symmetric, with both item memory and context
+binding scaled by the single parameter \(f\). This is a reasonable
+default, but it rules out the possibility that item and context
+information transfer to distractors at different rates. The original
+analysis by Li et al. (\citeproc{ref-li2026filtering}{2026}) tested
+exactly this distinction using a custom model with two separate ratio
+parameters, \(r_a\) and \(r_c\), allowing item and binding activation to
+transfer differently to distractors. Their findings suggest that item
+memory is barely reduced, whereas context activation is more affected.
+When a research question requires this kind of flexibility - or when the
+task design does not map onto any pre-built version - a custom model is
+needed. Tutorial 3 demonstrates how to define, validate, and fit such a
+model from scratch.
 
-When this equal-attenuation constraint is too restrictive for the
-research question, a custom model is needed. Tutorial 3 demonstrates how
-to define such models from scratch.
-
-\section{Tutorial 3: Custom M3 --- Parameter
-Recovery}\label{tutorial-3-custom-m3-parameter-recovery}
+\section{\texorpdfstring{Tutorial 3: Custom \(M^3\) --- Parameter
+Recovery}{Tutorial 3: Custom M\^{}3 --- Parameter Recovery}}\label{tutorial-3-custom-m3-parameter-recovery}
 
 The previous tutorials used pre-built model versions (\texttt{ss} and
-\texttt{cs}). When a task design does not fit one of these templates,
-\texttt{bmm} allows defining a fully custom M3 with user-specified
-response categories, activation formulas, and link functions. This
-tutorial demonstrates the custom version through a parameter recovery
-simulation: we define a custom model, simulate data with known
+\texttt{cs}) that required specific task designs and distractor
+categories to be present in the data. When a task design does not fit
+one of these templates, \texttt{bmm} allows defining a fully custom
+\(M^3\) with user-specified response categories and activation formulas.
+This third tutorial demonstrates the custom version through a parameter
+recovery simulation: we define a custom model, simulate data with known
 parameters, fit the model, and check whether the generating values are
-recovered. The walkthrough follows
+recovered. The walkthrough follows the simplified script implementing a
+single simulation run
 \texttt{scripts/tutorial3\_parameter\_recovery\_simple.R}; design-grid
-results come from \texttt{scripts/tutorial3\_parameter\_recovery.R}.
+results from multiple repetitions for each design cell come from
+\texttt{scripts/tutorial3\_parameter\_recovery.R}.
 
 \subsection{Why parameter recovery}\label{why-parameter-recovery}
 
-Before applying a new or modified M3 to empirical data, the model should
-be able to recover the parameters that generated the data. If recovery
-fails under ideal conditions (known generating values, no model
-misspecification), the problem lies in the model or the design, not in
-the data. Recovery simulations are especially informative for custom
+Before applying a new or modified \(M^3\) to empirical data, the model
+should be able to recover the parameters that generated the data. If
+recovery fails under ideal conditions (known generating values, no model
+misspecification), there are likely problems with the model
+specification or the design providing the data to identify the
+parameters. Recovery simulations are especially informative for custom
 models where the number of parameters and the functional form of the
 activation equations are chosen by the researcher Wilson \& Collins
 (\citeproc{ref-wilson2019ten}{2019}).
 
-\subsection{Defining a custom M3}\label{defining-a-custom-m3}
+\subsection{\texorpdfstring{Defining a custom
+\(M^3\)}{Defining a custom M\^{}3}}\label{defining-a-custom-m3}
 
-As a running example, we use a memory updating task from Oberauer and
-Lewandowsky (\citeproc{ref-oberauer2019simple}{2019}; applied with a
-custom M3 by \citeproc{ref-li2025updating}{Li et al., 2025}).
-Participants memorize items at five positions, then each position is
-updated once (the old item is replaced). At test, one position is probed
-and the participant selects from a recognition set containing: the
-current target (1 option), other current items (4), the old item from
-the tested position (1), old items from other positions (4), and
-not-presented lures (5). This produces five response categories with the
-following activation formulas:
+For this simulation we use a memory updating task as a running example
+to illustrate a common situation: the task produces response categories
+and activation structures that do not match either the \texttt{ss} or
+\texttt{cs} versions of the \(M^3\). Specifically, replaced (outdated)
+items create additional response categories, and two experimental timing
+variables modulate activations in ways that require custom formulas. The
+task design mimicks the updating task and models from Oberauer and
+Lewandowsky (\citeproc{ref-oberauer2019simple}{2019}). Participants
+memorize items at five positions, then position are updated randomly. At
+test, one position is probed and the participant selects from a
+recognition set containing: the current target (1 option), other current
+items (4), the old item from the tested position (1), old items from
+other positions (4), and not-presented lures (5). This produces five
+response categories, based on the model proposed by Oberauer and
+Lewandowsky (\citeproc{ref-oberauer2019simple}{2019}) for these kinds of
+updating tasks these categories have the following activation formulas:
 
 \[
 \begin{aligned}
-\text{act}_{\text{correct}}  &= b + (1 + e \cdot t_e) \cdot (a + c) \\
-\text{act}_{\text{other}}    &= b + (1 + e \cdot t_e) \cdot a \\
-\text{act}_{\text{oldinpos}} &= b + \exp(-r \cdot t_r) \cdot d \cdot (1 + e \cdot t_e) \cdot (a + c) \\
-\text{act}_{\text{otherold}} &= b + \exp(-r \cdot t_r) \cdot d \cdot (1 + e \cdot t_e) \cdot a \\
-\text{act}_{\text{NPL}}      &= b
+\text{A}_{\text{correct}}  &= b + (1 + e \cdot t_e) \cdot (a + c) \\
+\text{A}_{\text{other}}    &= b + (1 + e \cdot t_e) \cdot a \\
+\text{A}_{\text{oldinpos}} &= b + \exp(-r \cdot t_r) \cdot d \cdot (1 + e \cdot t_e) \cdot (a + c) \\
+\text{A}_{\text{otherold}} &= b + \exp(-r \cdot t_r) \cdot d \cdot (1 + e \cdot t_e) \cdot a \\
+\text{A}_{\text{NPL}}      &= b
 \end{aligned}
 \]
 
-Beyond the familiar \(a\) (item memory) and \(c\) (context binding),
-three new parameters appear: \(d\) captures the residual activation of
-replaced (outdated) items, \(e\) scales the benefit of extended encoding
-time \(t_e\), and \(r\) governs how quickly old-item activation decays
-with removal time \(t_r\). The design variables \(t_e\) and \(t_r\) are
-experimentally manipulated (each at 0.25, 0.5, and 1.0 s), producing a
-\(3 \times 3\) within-subjects design with 9 conditions.
+Beyond the familiar \(a\) (item memory) and \(c\) (context binding)
+parameters, three new parameters appear: \(d\) captures the residual
+activation of replaced (outdated) items that represents instant
+\emph{deletion} of outdated items independent of the time manipulations,
+\(e\) scales the benefit of extended encoding time \(t_e\), and \(r\)
+governs how old-item activation is removed with removal time \(t_r\). To
+understand the composite terms: \((1 + e \cdot t_e)\) scales all memory
+activations as a function of encoding time - when encoding is brief the
+boost is minimal, when it is long activations are amplified. The term
+\(\exp(-r \cdot t_r) \cdot d\) governs how much activation old items
+retain: \(d\) sets the residual activation at the moment of replacement,
+and \(r\) controls how quickly this residual is removed over time. Note
+that \(t_e\) and \(t_r\) are experimentally manipulated design variables
+(in ours simulation each at 0.25, 0.5, and 1.0 s), not estimated
+parameters, producing a \(3 \times 3\) within-subjects design with 9
+conditions.
 
-The model definition in \texttt{bmm} specifies the response categories,
-option counts, and link functions. Link functions are chosen to match
-each parameter's natural scale: identity for \(a\) and \(c\) (unbounded
-activation), logit for \(d\) (bounded between 0 and 1), and log for
-\(e\) and \(r\) (positive values):
+As for fitting an \(M^3\) in \texttt{bmm}, the model definition for
+simulatiing data for the \(M^3\) specifies the response categories and
+option counts. In addition, we recommend to specify link functions to
+match each parameter's theoretical constraints: identity for \(a\) and
+\(c\) because activations are unbounded; logit for \(d\) because it
+represents a proportion of original activation retained after
+replacement (bounded between 0 and 1); and log for \(e\) and \(r\)
+because encoding benefit and decay rate must be positive. These links
+functions are then internally applied to the parameters during
+sampleing:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1144,10 +1360,10 @@ activation), logit for \(d\) (bounded between 0 and 1), and log for
 \end{Highlighting}
 \end{Shaded}
 
-The activation formulas are specified separately using \texttt{bmf()}.
-Note that \texttt{te} and \texttt{tr} are data variables (not estimated
-parameters); \texttt{bmm} parses these expressions and passes them to
-\texttt{brms} as non-linear formulas:
+As for model fitting, we have to specify the activation formulas
+separately using \texttt{bmf()}. For the simulation we do not need to
+add predictor formulas for the parameters as data generating parameters
+will be passed to the random generation function:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1161,16 +1377,30 @@ parameters); \texttt{bmm} parses these expressions and passes them to
 \end{Highlighting}
 \end{Shaded}
 
+Note that \texttt{te} and \texttt{tr} appear in the formulas but are not
+estimated parameters - they are data columns whose values vary across
+conditions. When \texttt{bmm} encounters variables in the activation
+formulas that are not listed as model parameters, it treats them as data
+columns and requires them to be present in the dataset. This allows
+custom models to incorporate any number of experimentally manipulated
+design variables directly into the activation equations, providing
+flexibility to capture complex task dynamics. For this simulation, we
+ensure that the simulated dataset includes \texttt{te} and \texttt{tr}
+columns with the appropriate values for each condition.
+
 \subsection{Choosing generating parameter
 values}\label{choosing-generating-parameter-values}
 
 For the recovery simulation, we need group-level means and
-between-person standard deviations for each parameter. These are
-specified on the link scale (the scale on which the sampler operates),
-not the native scale. Table~\ref{tbl-gen-pars} lists the generating
-values. The native range column shows the approximate span of individual
-differences (\(\pm 2\) SD around the mean, transformed to native scale
-via the inverse link functions).
+between-person standard deviations for each parameter to simulate
+subject-level parameters. These are specified on the link scale (the
+scale on which the sampler operates), not the native scale to respect
+the required bounds. The values were chosen to approximate empirical
+estimates from Li et al. (\citeproc{ref-li2025updating}{2025}) and to
+produce realistic individual differences. Table~\ref{tbl-gen-pars} lists
+the generating values. The native range column shows the approximate
+span of individual differences (\(\pm 2\) SD around the mean,
+transformed to native scale via the inverse link functions).
 
 \begin{table}
 
@@ -1211,17 +1441,23 @@ Native range (\(\pm 2\) SD)
 
 Individual parameters are drawn from
 \(\mathcal{N}(\mu_\text{link}, \sigma_\text{link})\) independently for
-each person and parameter. We simulate \(N = 50\) participants, each
-completing 25 trials per condition (225 trials total). With set size 5,
-this corresponds to roughly one hour of testing.
+each person and parameter. We simulated \(N = 50\) participants with 25
+observations per condition (225 observations total across the
+\(3 \times 3\) design). Because the task uses set size 5 and we assumed
+that all positions within each trial are tested, each trial yields 5
+responses, so 25 observations correspond to 5 trials per condition. With
+9 conditions this amounts to 45 trials in total per participant,
+corresponding to roughly one hour of testing.
 
 \subsection{Simulating data with rm3()}\label{simulating-data-with-rm3}
 
-The \texttt{rm3()} function generates multinomial response counts from a
-custom M3 specification. It takes a vector of parameter values (on the
-native scale), the model definition, the activation formulas, and the
-design variables as inputs. Here is a call for a single participant in
-one condition:
+The \texttt{bmm} package provides the random generation function
+\texttt{rm3()} as the data-generating counterpart to the model-fitting
+workflow. Given a set of parameter values on the native scale, the model
+definition, and the activation formulas, it computes category
+probabilities via the specified choice rule and draws random samples
+from the multinomial distribution. Here is an example call for
+simulating a single participant in one condition:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1236,14 +1472,21 @@ one condition:
 \end{Shaded}
 
 This returns a one-row data frame with response counts across the five
-categories. The full simulation loops over all 50 participants and 9
-conditions, generating 450 rows of simulated data. The companion script
-contains the complete loop and data inspection code.
+categories. To simulate a full dataset, we apply \texttt{rm3()} over all
+50 participants and 9 conditions (3 encoding times \(\times\) 3 removal
+times), producing 450 rows of simulated data. The companion script
+available online contains the complete generation workflow and data
+inspection code.
 
 \subsection{Model fitting}\label{model-fitting-1}
 
-We fit the simulated data with the same \texttt{bmm()} workflow used in
-the previous tutorials, now passing the custom model object:
+We fitted the simulated data with the same \texttt{bmm()} workflow
+already shown in Tutorial 1 and 2. For custom models, the prediction
+formula serves double duty: it repeats the activation equations (telling
+\texttt{bmm} how parameters combine into category activations) and
+appends regression formulas that specify how each parameter varies
+across participants (here, an intercept plus a random intercept per
+participant):
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1254,8 +1497,8 @@ the previous tutorials, now passing the custom model object:
 \NormalTok{  oldinpos }\SpecialCharTok{\textasciitilde{}} \FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{r }\SpecialCharTok{*}\NormalTok{ tr) }\SpecialCharTok{*}\NormalTok{ d }\SpecialCharTok{*}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ e }\SpecialCharTok{*}\NormalTok{ te) }\SpecialCharTok{*}\NormalTok{ (a }\SpecialCharTok{+}\NormalTok{ c) }\SpecialCharTok{+}\NormalTok{ b,}
 \NormalTok{  otherold }\SpecialCharTok{\textasciitilde{}} \FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{r }\SpecialCharTok{*}\NormalTok{ tr) }\SpecialCharTok{*}\NormalTok{ d }\SpecialCharTok{*}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ e }\SpecialCharTok{*}\NormalTok{ te) }\SpecialCharTok{*}\NormalTok{ a }\SpecialCharTok{+}\NormalTok{ b,}
 \NormalTok{  npl      }\SpecialCharTok{\textasciitilde{}}\NormalTok{ b,}
-\NormalTok{  a }\SpecialCharTok{\textasciitilde{}} \DecValTok{1} \SpecialCharTok{+}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{||}\NormalTok{ id), c }\SpecialCharTok{\textasciitilde{}} \DecValTok{1} \SpecialCharTok{+}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{||}\NormalTok{ id),}
-\NormalTok{  d }\SpecialCharTok{\textasciitilde{}} \DecValTok{1} \SpecialCharTok{+}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{||}\NormalTok{ id), e }\SpecialCharTok{\textasciitilde{}} \DecValTok{1} \SpecialCharTok{+}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{||}\NormalTok{ id), r }\SpecialCharTok{\textasciitilde{}} \DecValTok{1} \SpecialCharTok{+}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{||}\NormalTok{ id)}
+\NormalTok{  a }\SpecialCharTok{\textasciitilde{}} \DecValTok{1} \SpecialCharTok{+}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{|}\NormalTok{ participant), c }\SpecialCharTok{\textasciitilde{}} \DecValTok{1} \SpecialCharTok{+}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{|}\NormalTok{ participant),}
+\NormalTok{  d }\SpecialCharTok{\textasciitilde{}} \DecValTok{1} \SpecialCharTok{+}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{|}\NormalTok{ participant), e }\SpecialCharTok{\textasciitilde{}} \DecValTok{1} \SpecialCharTok{+}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{|}\NormalTok{ participant), r }\SpecialCharTok{\textasciitilde{}} \DecValTok{1} \SpecialCharTok{+}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{|}\NormalTok{ participant)}
 \NormalTok{)}
 
 \NormalTok{fit }\OtherTok{\textless{}{-}} \FunctionTok{bmm}\NormalTok{(}
@@ -1269,13 +1512,16 @@ the previous tutorials, now passing the custom model object:
 \end{Highlighting}
 \end{Shaded}
 
-Note that the prediction formula repeats the activation equations and
-adds regression formulas for each parameter (here, an intercept plus a
-random intercept per participant). Fitting a custom model with 5
-parameters and 50 participants takes roughly 10--30 minutes depending on
-hardware.
-
 \subsection{Recovery evaluation}\label{recovery-evaluation}
+
+Recovery can be evaluated at two levels. Group-level recovery asks
+whether the model recovers the true population means and between-person
+variability (i.e.~standard deviation of the random intercepts and
+effects). Individual-level recovery asks whether each participant's true
+parameter value is correctly estimated - this is critical for
+researchers who plan to use \(M^3\) parameter estimates as
+individual-difference measures, for example when correlating \(a\) or
+\(c\) with external variables.
 
 \subsubsection{Group-level recovery}\label{group-level-recovery}
 
@@ -1283,65 +1529,101 @@ We first compare the recovered fixed effects to the true generating
 means. For each parameter, we extract the posterior median and 95\% HDI
 from \texttt{fixef()} and check two things: (1) bias (is the posterior
 median close to the true value?) and (2) coverage (does the 95\% HDI
-contain the true value?). We also recover the between-person SDs from
-\texttt{VarCorr()} and compare them to the generating SDs.
+contain the true value?). We also extracted the between-person SDs from
+\texttt{brms::VarCorr()} and compare them to the generating SDs.
 
 \subsubsection{Individual-level
 recovery}\label{individual-level-recovery}
 
-Individual-level recovery asks a finer question: for each participant,
-does the recovered estimate (fixed + random effect, extracted via
-\texttt{coef()}) match their true generating value?
-\textbf{?@fig-t3-indiv-scatter} shows scatter plots of true versus
-recovered parameters for the single simulation cell (\(N = 50\), 25
+Individual-level recovery asks a similar question, but at the level of
+subject-level parameter estimates: for each participant, does the
+recovered estimate (fixed + random effect) match their true generating
+value? Figure~\ref{fig-t3-indiv-scatter} shows scatter plots of true
+versus recovered parameters for a single simulation cell (\(N = 50\), 25
 trials per condition). Points close to the diagonal indicate good
-recovery; the Pearson correlation (\(r\)) is annotated in each panel.
+recovery; the Pearson correlation (\(r\)) between true and estimated
+parameters is annotated in each panel.
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{include\_graphics}\NormalTok{(}\FunctionTok{here}\NormalTok{(}\StringTok{"figures"}\NormalTok{, }\StringTok{"tutorial3\_simple\_indiv\_scatter.pdf"}\NormalTok{))}
-\end{Highlighting}
-\end{Shaded}
+\begin{figure}
 
-Parameters \(a\), \(c\), and \(d\) show strong individual-level recovery
-(\(r\) = 0.84, 0.91, and 0.74, respectively). The parameters \(e\) and
-\(r\) are harder to recover (\(r\) = 0.70 and 0.43) because they
-interact multiplicatively with the design variables \(t_e\) and \(t_r\),
-which partially confounds them.
+\caption{\label{fig-t3-indiv-scatter}Individual-level parameter recovery
+for the single simulation cell (\(N = 50\), 25 trials per condition).
+Each point is one participant; the dashed line indicates perfect
+recovery. Pearson correlations are shown per parameter.}
+
+\centering{
+
+\pandocbounded{\includegraphics[keepaspectratio]{../figures/tutorial3_simple_indiv_scatter.pdf}}
+
+}
+
+\end{figure}%
+
+Parameters \(a\) and \(c\) show the strongest individual-level recovery
+(\(r\) = 0.84 and 0.91, respectively). Parameters \(d\) and \(r\) show
+moderate recovery (\(r\) = 0.74 and 0.43). Recovery is weakest for \(e\)
+(\(r\) = 0.70), which interacts multiplicatively with the design
+variable \(t_e\), making it harder to separate from the other
+parameters. This is in line with more comprehensive parameter recovery
+simulations using the simple choice rule by Göttmann et al.
+(\citeproc{ref-goettmann2025recovery}{2025}), who found that \(e\) and
+\(r\) require considerably more data to recover well than \(a\) and
+\(c\).
 
 \subsection{Practical guidance}\label{practical-guidance}
 
-The simplified script demonstrates the workflow for a single design
-cell. To understand how recovery depends on sample size and the number
-of trials per condition, the full simulation script
+The simplified simulation script demonstrates the workflow for a single
+design cell. To understand how recovery depends on sample size and the
+number of trials per condition, the full simulation script
 (\texttt{tutorial3\_parameter\_recovery.R}) varies both factors across a
 \(3 \times 3\) grid: \(N \in \{25, 50, 100\}\) and trials per condition
 \(\in \{5, 10, 25\}\).
 
-\textbf{?@fig-t3-group-recovery} shows group-level recovery across the
+Figure~\ref{fig-t3-group-recovery} shows group-level recovery across the
 design grid. Recovered estimates are close to the true values in most
 cells, with HDIs narrowing as \(N\) increases. With only 5 trials per
 condition, some parameters (particularly \(e\) and \(r\)) show
 noticeable bias, but this improves substantially at 10 and 25 trials.
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{include\_graphics}\NormalTok{(}\FunctionTok{here}\NormalTok{(}\StringTok{"figures"}\NormalTok{, }\StringTok{"tutorial3\_group\_recovery.pdf"}\NormalTok{))}
-\end{Highlighting}
-\end{Shaded}
+\begin{figure}
 
-\textbf{?@fig-t3-heatmap} shows individual-level recovery (Pearson
+\caption{\label{fig-t3-group-recovery}Group-level parameter recovery
+across the simulation design grid (\(3 \times 3\): sample sizes
+\(\times\) trials per condition). Points show recovered posterior
+medians; error bars show 95\% HDIs. Dashed horizontal lines indicate the
+true generating value for each parameter. Gray point-ranges indicate
+estimates whose 95\% HDI does not include the true value.}
+
+\centering{
+
+\pandocbounded{\includegraphics[keepaspectratio]{../figures/tutorial3_group_recovery.pdf}}
+
+}
+
+\end{figure}%
+
+Figure~\ref{fig-t3-heatmap} shows individual-level recovery (Pearson
 correlation between true and recovered values) for each parameter across
 the same design grid. Individual-level recovery is more demanding than
 group-level recovery: \(e\) and \(r\) require both a reasonable sample
 size and a sufficient number of trials per condition to reach
 correlations above .7.
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{include\_graphics}\NormalTok{(}\FunctionTok{here}\NormalTok{(}\StringTok{"figures"}\NormalTok{, }\StringTok{"tutorial3\_recovery\_heatmap.pdf"}\NormalTok{))}
-\end{Highlighting}
-\end{Shaded}
+\begin{figure}
+
+\caption{\label{fig-t3-heatmap}Individual-level parameter recovery
+(Pearson \(r\)) across the simulation design grid. Each panel shows one
+parameter; rows are sample sizes and columns are trials per condition.
+Higher correlations (darker shading) indicate better recovery of
+individual differences.}
+
+\centering{
+
+\pandocbounded{\includegraphics[keepaspectratio]{../figures/tutorial3_recovery_heatmap.pdf}}
+
+}
+
+\end{figure}%
 
 These results are based on a single replication per design cell. A
 proper simulation study should replicate each cell many times to account
@@ -1349,27 +1631,31 @@ for Monte Carlo variability Talts et al.
 (\citeproc{ref-talts2018validating}{2018}). Recovery quality also
 depends on the model structure itself. Parameters that appear in
 interaction terms or that are only weakly identified by the design may
-require more data. Running a recovery check before collecting empirical
-data helps determine whether the planned sample size and number of
-trials are sufficient.
+require more data. As a rule of thumb, if individual-level correlations
+fall below .7 for a parameter of interest, the design likely needs more
+trials or a larger sample before that parameter can support
+individual-differences analyses. Running a recovery check before
+collecting empirical data is therefore a practical necessity for custom
+models: it reveals whether the planned sample size and trial count are
+sufficient, or whether the design needs refinement.
 
 \section{Summary and Additional
 Resources}\label{summary-and-additional-resources}
 
-This tutorial covered three progressively complex applications of the M3
-framework using the \texttt{bmm} R package. The simple span example
-(Tutorial 1) introduced the full workflow: specification, fitting,
-evaluation, and hypothesis testing. It also compared the two choice
-rules. The complex span example (Tutorial 2) added distractor
-categories, the filtering parameter \(f\), and the handling of
-non-identified parameters. The custom model example (Tutorial 3) showed
-how to define an M3 from scratch for a memory updating task and how to
-validate it through parameter recovery.
+This tutorial covered three progressively complex applications of the
+\(M^3\) framework using the \texttt{bmm} R package. The simple span
+example (Tutorial 1) introduced the full workflow: specification,
+fitting, evaluation, and hypothesis testing. It also compared the two
+choice rules implemented for the \(M^3\). The complex span example
+(Tutorial 2) added distractor categories, the filtering parameter \(f\),
+and the handling of non-identified parameters. The custom model example
+(Tutorial 3) showed how to define an \(M^3\) from scratch for a memory
+updating task and how to validate it through parameter recovery.
 
 A few practical recommendations. If the task produces three response
 categories (correct, other-list intrusion, NPL), the simple span version
 (\texttt{ss}) is the natural starting point. Tasks with distractors that
-are the same material type as memoranda fit the complex span version
+are the same material type as memoranda can fit the complex span version
 (\texttt{cs}). For other designs, the custom version gives full control
 over activation formulas, parameters, and link functions. In all cases,
 the softmax choice rule is the recommended default based on current
@@ -1378,20 +1664,35 @@ simulation before data collection reveals whether the planned design can
 distinguish the parameters of interest and whether the model is
 identified.
 
+We hope that the implementation of the \(M^3\) framework in the
+\texttt{bmm} package and the accompanying tutorials will make this
+powerful modeling approach accessible to a wide range of researchers
+interested in working memory. As noted before the \(M^3\) is not
+necessarily limited to memory tasks, but can be applied to any decision
+paradigm yielding a multinomial response distribution
+(\citeproc{ref-busemeyer1993decision}{Busemeyer \& Townsend, 1993};
+\citeproc{ref-mcfadden1974conditional}{McFadden, 1974};
+\citeproc{ref-roe2001multialternative}{Roe et al., 2001}). By providing
+a flexible yet structured way to model response distributions, \(M^3\)
+can yield insights into the underlying cognitive processes that generate
+observed behavior. We encourage users to explore the package
+documentation, experiment with different model specifications, and
+contribute to the ongoing development of this tool.
+
 \subsection{Additional resources}\label{additional-resources}
 
 \begin{itemize}
 \tightlist
 \item
-  \texttt{bmm} package documentation and M3 vignette:
+  \texttt{bmm} package documentation and \(M^3\) vignette:
   \url{https://venpopov.github.io/bmm/articles/bmm_m3.html}
 \item
   Full companion scripts for all three tutorials: {[}repository link{]}
 \item
-  M3 framework paper: Oberauer and Lewandowsky
+  \(M^3\) framework paper: Oberauer and Lewandowsky
   (\citeproc{ref-oberauer2019simple}{2019})
 \item
-  Systematic parameter recovery for M3: Göttmann et al.
+  Systematic parameter recovery for \(M^3\): Göttmann et al.
   (\citeproc{ref-goettmann2025recovery}{2025})
 \item
   Companion \texttt{bmm} tutorial for continuous-response mixture
@@ -1414,6 +1715,12 @@ review of multinomial process tree modeling. \emph{Psychonomic Bulletin
 Bürkner, P.-C. (2017). {brms}: {A}n {R} package for {B}ayesian
 multilevel models using {S}tan. \emph{Journal of Statistical Software},
 \emph{80}(1), 1--28. \url{https://doi.org/10.18637/jss.v080.i01}
+
+\bibitem[\citeproctext]{ref-busemeyer1993decision}
+Busemeyer, J. R., \& Townsend, J. T. (1993). Decision field theory: {A}
+dynamic-cognitive approach to decision making in an uncertain
+environment. \emph{Psychological Review}, \emph{100}(3), 432--459.
+\url{https://doi.org/10.1037/0033-295X.100.3.432}
 
 \bibitem[\citeproctext]{ref-carpenter2017stan}
 Carpenter, B., Gelman, A., Hoffman, M. D., Lee, D., Goodrich, B.,
@@ -1486,15 +1793,10 @@ information in working memory: {T}ime course and consequences.
 \url{https://doi.org/10.1016/j.cogpsych.2024.101702}
 
 \bibitem[\citeproctext]{ref-li2026filtering}
-Li, C., Frischkorn, G. T., \& Oberauer, K. (in press). Can we process
+Li, C., Frischkorn, G. T., \& Oberauer, K. (2026). Can we process
 information without encoding it into working memory? \emph{Journal of
 Experimental Psychology: Learning, Memory, and Cognition}.
-
-\bibitem[\citeproctext]{ref-loaiza2024active}
-Loaiza, V. M., \& Souza, A. S. (2024). Active maintenance in working
-memory reinforces bindings for future retrieval from episodic long-term
-memory. \emph{Memory \& Cognition}, \emph{52}(8), 1999--2021.
-\url{https://doi.org/10.3758/s13421-024-01596-7}
+\url{https://doi.org/10.1037/xlm0001585}
 
 \bibitem[\citeproctext]{ref-luce1959individual}
 Luce, R. D. (1959). \emph{Individual choice behavior: {A} theoretical
@@ -1504,6 +1806,11 @@ analysis}. John Wiley \& Sons.
 McElreath, R. (2020). \emph{Statistical rethinking: {A} {B}ayesian
 course with examples in {R} and {S}tan} (2nd ed.). Chapman; Hall/CRC.
 \url{https://doi.org/10.1201/9780429029608}
+
+\bibitem[\citeproctext]{ref-mcfadden1974conditional}
+McFadden, D. (1974). Conditional logit analysis of qualitative choice
+behavior. In P. Zarembka (Ed.), \emph{Frontiers in econometrics} (pp.
+105--142). Academic Press.
 
 \bibitem[\citeproctext]{ref-oberauer2019bindings}
 Oberauer, K. (2019). Working memory capacity limits memory for bindings.
@@ -1533,19 +1840,17 @@ Popov, V., Frischkorn, G. T., Li, C., \& Bürkner, P.-C. (2025).
 \emph{Bmm: {E}asy and accessible {B}ayesian measurement models using
 'brms'}. \url{https://doi.org/10.32614/CRAN.package.bmm}
 
+\bibitem[\citeproctext]{ref-roe2001multialternative}
+Roe, R. M., Busemeyer, J. R., \& Townsend, J. T. (2001).
+Multialternative decision field theory: {A} dynamic connectionist model
+of decision making. \emph{Psychological Review}, \emph{108}(2),
+370--392. \url{https://doi.org/10.1037/0033-295X.108.2.370}
+
 \bibitem[\citeproctext]{ref-schad2021toward}
 Schad, D. J., Betancourt, M., \& Vasishth, S. (2021). Toward a
 principled {B}ayesian workflow in cognitive science. \emph{Psychological
 Methods}, \emph{26}(1), 103--126.
 \url{https://doi.org/10.1037/met0000275}
-
-\bibitem[\citeproctext]{ref-schubert2023working}
-Schubert, A.-L., Löffler, C., Sadus, K., Göttmann, J., Hein, J.,
-Schröer, P., Teuber, A., \& Hagemann, D. (2023). Working memory load
-affects intelligence test performance by reducing the strength of
-relational item bindings and impairing the filtering of irrelevant
-information. \emph{Cognition}, \emph{236}, 105438.
-\url{https://doi.org/10.1016/j.cognition.2023.105438}
 
 \bibitem[\citeproctext]{ref-talts2018validating}
 Talts, S., Betancourt, M., Simpson, D., Vehtari, A., \& Gelman, A.

@@ -2,6 +2,21 @@
 \ifnextchar[{\eatarg}{}
 
 
+{\caption{{First six rows of the aggregated dataset. Response
+frequencies (\texttt{corr}, \texttt{other}, \texttt{npl}) and option
+counts (\texttt{n\_corr}, \texttt{n\_other}, \texttt{n\_npl}) are the
+required inputs for \(M^3\); \texttt{id}, \texttt{exp},
+\texttt{setsize}, and \texttt{ss\_lin} serve as grouping variables and
+predictors.}{\label{tbl-t1-data-agg}}}
+\vspace{-20pt}}
+
+\end{table*}
+\efloatseparator
+ 
+\begin{table*}[hbt]
+\ifnextchar[{\eatarg}{}
+
+
 {\caption{{Generating parameter values for the recovery simulation. All
 values are on the link scale.}{\label{tbl-gen-pars}}}
 \vspace{-20pt}}
