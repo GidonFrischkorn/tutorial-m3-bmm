@@ -33,9 +33,9 @@ author-note:
       Isabel Courage: Software, Formal Analysis, Writing -- Review & Editing.
       Chenyu Li: Software, Data Curation, Writing -- Review & Editing.
 format:
+  apaquarto-docx: default
   apaquarto-pdf:
     keep-tex: true
-  apaquarto-docx: default
 floatsintext: true
 bibliography: references.bib
 abstract: |
@@ -738,7 +738,7 @@ Individual-level recovery asks a similar question, but at the level of subject-l
 knitr::include_graphics(here("figures", "tutorial3_simple_indiv_scatter.pdf"))
 ```
 
-Parameters $a$ and $c$ show the strongest individual-level recovery ($r$ = `r val_cor_a` and `r val_cor_c`, respectively). Parameters $d$ and $r$ show moderate recovery ($r$ = `r val_cor_d` and `r val_cor_r`). Recovery is weakest for $e$ ($r$ = `r val_cor_e`), which interacts multiplicatively with the design variable $t_e$, making it harder to separate from the other parameters. This is in line with more comprehensive parameter recovery simulations using the simple choice rule by @goettmann2025recovery, who found that $e$ and $r$ require considerably more data to recover well than $a$ and $c$.
+Parameters $a$ and $c$ show the strongest individual-level recovery ($r$ = `r val_cor_a` and `r val_cor_c`, respectively). Parameters $d$ and $e$ show moderate recovery ($r$ = `r val_cor_d` and `r val_cor_e`). Recovery is weakest for $r$ ($r$ = `r val_cor_r`), which governs the exponential reduction of outdated item activation over removal time, making it harder to separate from the other parameters. This is in line with more comprehensive parameter recovery simulations using the simple choice rule by @goettmann2025recovery, who found that $r$ requires considerably more data to recover well.
 
 ## Practical guidance
 

@@ -984,7 +984,7 @@ This returns a Savage-Dickey density ratio: the ratio of prior to
 posterior density at the point null \(c = a\). Values substantially
 greater than 1 indicate that the data have shifted belief away from
 equality; values near 1 indicate inconclusive evidence. In the open-set
-experiment, the result is inconclusive (BF\(_{10}\) = 2.28), suggesting
+experiment, the result is inconclusive (BF\(_{10}\) = 2.31), suggesting
 the data do not clearly distinguish whether \(c\) and \(a\) differ at
 the mean set size. We can similarly test whether set size reduces \(c\)
 (averaged across experiments) and whether set size effects differ
@@ -1007,11 +1007,11 @@ between experiments:
 
 The closed-set experiment yields strong evidence that \(c > a\)
 (BF\(_{10}\) = \textgreater{} 10,000). However, there is moderate
-evidence is that set size reduces \(a\) (BF\(_{10}\) = 5.56) and strong
+evidence is that set size reduces \(a\) (BF\(_{10}\) = 5.43) and strong
 evidence for \(c\) decreasing with larger set size (BF\(_{10}\) =
 \textgreater{} 10,000). There is also strong evidence that the set size
 effect on \(c\) is equal for the closed-set compared to the open-set
-experiment (BF\(_{01}\) = 63.6). The companion script contains the full
+experiment (BF\(_{01}\) = 59.5). The companion script contains the full
 set of six hypothesis tests.
 
 \section{\texorpdfstring{Tutorial 2: Complex Span
@@ -1231,11 +1231,11 @@ formally using \texttt{brms::hypothesis()}:
 \end{Shaded}
 
 The evidence ratio for the \(f\) comparison indicated that filtering is
-equivalent between cue conditions (BF\(_{01}\) = 9.79). There is
+equivalent between cue conditions (BF\(_{01}\) = 10.1). There is
 inconclusive evidence for item memory \(a\) comparing the distractor
-conditions to the control (BF\(_{10}\) = 0.48); however, context
+conditions to the control (BF\(_{10}\) = 0.52); however, context
 activation \(c\) is lower in the distractor conditions (BF\(_{10}\) =
-6.38).
+6.58).
 
 \subsection{Comparison with the published
 model}\label{comparison-with-the-published-model}
@@ -1560,15 +1560,14 @@ recovery. Pearson correlations are shown per parameter.}
 \end{figure}%
 
 Parameters \(a\) and \(c\) show the strongest individual-level recovery
-(\(r\) = 0.84 and 0.91, respectively). Parameters \(d\) and \(r\) show
-moderate recovery (\(r\) = 0.74 and 0.43). Recovery is weakest for \(e\)
-(\(r\) = 0.70), which interacts multiplicatively with the design
-variable \(t_e\), making it harder to separate from the other
-parameters. This is in line with more comprehensive parameter recovery
-simulations using the simple choice rule by Göttmann et al.
-(\citeproc{ref-goettmann2025recovery}{2025}), who found that \(e\) and
-\(r\) require considerably more data to recover well than \(a\) and
-\(c\).
+(\(r\) = 0.84 and 0.91, respectively). Parameters \(d\) and \(e\) show
+moderate recovery (\(r\) = 0.74 and 0.70). Recovery is weakest for \(r\)
+(\(r\) = 0.43), which governs the exponential reduction of outdated item
+activation over removal time, making it harder to separate from the
+other parameters. This is in line with more comprehensive parameter
+recovery simulations using the simple choice rule by Göttmann et al.
+(\citeproc{ref-goettmann2025recovery}{2025}), who found that \(r\)
+requires considerably more data to recover well.
 
 \subsection{Practical guidance}\label{practical-guidance}
 
