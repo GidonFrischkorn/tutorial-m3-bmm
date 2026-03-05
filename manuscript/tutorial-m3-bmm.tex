@@ -204,8 +204,7 @@ Package: A Tutorial}
 
 
 
-\authorsnames[{1},{1},{1,2}]{Gidon T. Frischkorn,Isabel Courage,Chenyu
-Li}
+\authorsnames[{1},{1,2}]{Gidon T. Frischkorn,Chenyu Li}
 
 
 
@@ -220,7 +219,7 @@ Psychology, University of Chicago}}
 
 
 
-\leftheader{Frischkorn, Courage and Li}
+\leftheader{Frischkorn and Li}
 
 
 
@@ -254,8 +253,7 @@ companion R scripts for all four tutorials are available at
 {[}repository link{]}.  The authors declare no conflicts of
 interest. {[}FUNDING INFORMATION{]} {[}ACKNOWLEDGMENTS{]} Gidon T.
 Frischkorn: Conceptualization, Methodology, Software, Formal Analysis,
-Visualization, Writing -- Original Draft. Isabel Courage: Software,
-Formal Analysis, Writing -- Review \& Editing. Chenyu Li: Software, Data
+Visualization, Writing -- Original Draft. Chenyu Li: Software, Data
 Curation, Writing -- Review \& Editing. }
 \par{Correspondence concerning this article should be addressed to Gidon
 T.
@@ -1032,7 +1030,7 @@ This returns a Savage-Dickey density ratio: the ratio of prior to
 posterior density at the point null \(c = a\). Values substantially
 greater than 1 indicate that the data have shifted belief away from
 equality; values near 1 indicate inconclusive evidence. In the open-set
-experiment, the result is inconclusive (BF\(_{10}\) = 2.23), suggesting
+experiment, the result is inconclusive (BF\(_{10}\) = 2.19), suggesting
 the data do not clearly distinguish whether \(c\) and \(a\) differ at
 the mean set size. We can similarly test whether set size reduces \(c\)
 (averaged across experiments) and whether set size effects differ
@@ -1055,11 +1053,11 @@ between experiments:
 
 The closed-set experiment yields strong evidence that \(c > a\)
 (BF\(_{10}\) = \textgreater{} 10,000). However, there is moderate
-evidence that set size reduces \(a\) (BF\(_{10}\) = 5.50) and strong
+evidence that set size reduces \(a\) (BF\(_{10}\) = 5.69) and strong
 evidence for \(c\) decreasing with larger set size (BF\(_{10}\) =
 \textgreater{} 10,000). There is also strong evidence that the set size
 effect on \(c\) is equal for the closed-set compared to the open-set
-experiment (BF\(_{01}\) = 62.3). The companion script contains the full
+experiment (BF\(_{01}\) = 66.9). The companion script contains the full
 set of six hypothesis tests.
 
 \section{\texorpdfstring{Tutorial 2: Complex Span
@@ -1279,11 +1277,11 @@ formally using \texttt{brms::hypothesis()}:
 \end{Shaded}
 
 The evidence ratio for the \(f\) comparison indicated that filtering is
-equivalent between cue conditions (BF\(_{01}\) = 10.1). There is
+equivalent between cue conditions (BF\(_{01}\) = 9.86). There is
 inconclusive evidence for item memory \(a\) comparing the distractor
 conditions to the control (BF\(_{10}\) = 0.43); however, context
 activation \(c\) is lower in the distractor conditions (BF\(_{10}\) =
-7.66).
+7.36).
 
 \subsection{Comparison with the published
 model}\label{comparison-with-the-published-model}
@@ -1482,8 +1480,8 @@ As in Tutorial 2, we can test parameter differences formally. Within
 both the pre-cue (BF\(_{10}\) = \textgreater{} 10,000) and retro-cue
 condition (BF\(_{10}\) = \textgreater{} 10,000), there is strong
 evidence that \(r_a > r_c\). Across conditions, \(r_a\) does not differ
-between pre-cue and retro-cue (BF\(_{01}\) = 6.18), and the same holds
-for \(r_c\) (BF\(_{01}\) = 7.25). Item memory transfers to distractors
+between pre-cue and retro-cue (BF\(_{01}\) = 6.05), and the same holds
+for \(r_c\) (BF\(_{01}\) = 7.50). Item memory transfers to distractors
 regardless of cue timing, while context binding is selectively
 attenuated, consistent with the view that filtering operates on binding
 rather than item activation.

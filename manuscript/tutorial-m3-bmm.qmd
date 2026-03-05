@@ -9,10 +9,6 @@ author:
     affiliations:
       - name: University of Zurich
         department: Department of Psychology
-  - name: Isabel Courage
-    affiliations:
-      - name: University of Zurich
-        department: Department of Psychology
   - name: Chenyu Li
     orcid: 0000-0001-8815-6189
     affiliations:
@@ -29,7 +25,6 @@ author-note:
     gratitude: "[ACKNOWLEDGMENTS]"
     authorship-agreements: |
       Gidon T. Frischkorn: Conceptualization, Methodology, Software, Formal Analysis, Visualization, Writing -- Original Draft.
-      Isabel Courage: Software, Formal Analysis, Writing -- Review & Editing.
       Chenyu Li: Software, Data Curation, Writing -- Review & Editing.
 format:
   apaquarto-docx: default
