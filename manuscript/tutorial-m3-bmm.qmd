@@ -9,6 +9,10 @@ author:
     affiliations:
       - name: University of Zurich
         department: Department of Psychology
+  - name: Isabel Courage
+    affiliations:
+      - name: University of Zurich
+        department: Department of Psychology
   - name: Chenyu Li
     orcid: 0000-0001-8815-6189
     affiliations:
@@ -32,6 +36,7 @@ format:
   apaquarto-pdf:
     keep-tex: true
 floatsintext: true
+output-dir: "."
 bibliography: references.bib
 abstract: |
   The memory measurement model ($M^3$) decomposes categorical response data from memory tasks into latent activation parameters, separating item memory from context-specific binding via competitive retrieval. Fitting $M^3$ has so far required custom JAGS or Stan code for each task design. The bmm R package provides a standardized interface to specify, fit, and evaluate Bayesian hierarchical $M^3$ with minimal code. This tutorial demonstrates the bmm workflow through four worked examples: fitting a simple span $M^3$ to cued recall data, where Bayes factor model comparison favors the softmax over the simple choice rule; extending the workflow to a complex span task with distractor categories and a filtering parameter; defining a custom $M^3$ that relaxes assumptions of the standard version by separating item and binding transfer to distractors; and validating the custom specification through parameter recovery simulation. Complete R scripts accompany each tutorial. After completing the tutorials, readers will be able to fit standard and custom $M^3$ to their own data and validate new model specifications through simulation.
@@ -547,7 +552,7 @@ knitr::include_graphics(here("figures", "tutorial1_pp_check_softmax.pdf"))
 
 With the model validated, we can examine how item memory ($a$) and context binding ($c$) varied across set sizes and experiments. Under the softmax choice rule, both parameters are on the identity link, so the posterior draws are directly interpretable as activation values. To compute condition-specific estimates, we reconstructed the linear predictor from the fixed effects: for each set size $s$, $\hat{a}_{\text{exp}} = \beta_{a,\text{exp}} + \beta_{a,\text{exp:ss\_lin}} \cdot (s - \bar{s})$, and analogously for $c$. The companion script extracts draws using  `tidybayes::as_draws_df()` and computes 95% highest-density intervals [HDIs; @mcelreath2020statistical] via `tidybayes::mean_hdci()`.
 
-@fig-t1-param-estimates shows the resulting estimates. Context binding ($c$) is descriptively higher than item memory ($a$) across all set sizes in both experiments, with the gap being especially pronounced in the closed-set experiment. Both parameters decrease with set size, but the decline is substantially steeper for $c$ than for $a$, consistent with binding being more sensitive to memory load. The two experiments differ markedly in item activation: $a$ is notably higher in the open-set experiment than in the closed-set experiment. This likely reflects cross-trial interference in the closed-set condition, where the same words recur across trials and become associated with multiple contexts, reducing effective item-specific memory strength. These resuls are consistent with the original findings by @oberauer2019bindings, who also found higher $a$ in the open-set experiment and a steeper decline of $c$ with set size. 
+@fig-t1-param-estimates shows the resulting estimates. Context binding ($c$) is descriptively higher than item memory ($a$) across all set sizes in both experiments, with the gap being especially pronounced in the closed-set experiment. Both parameters decrease with set size, but the decline is substantially steeper for $c$ than for $a$, consistent with binding being more sensitive to memory load. The two experiments differ markedly in item activation: $a$ is notably higher in the open-set experiment than in the closed-set experiment. This likely reflects cross-trial interference in the closed-set condition, where the same words recur across trials and become associated with multiple contexts, reducing effective item-specific memory strength. These results are consistent with the original findings by @oberauer2019bindings, who also found higher $a$ in the open-set experiment and a steeper decline of $c$ with set size. 
 
 ```{r}
 #| label: fig-t1-param-estimates
@@ -603,7 +608,7 @@ hypothesis(fit_m3_ss_softmax,
   "c_expopenset:ss_lin = c_expclosedset:ss_lin")
 ```
 
-The closed-set experiment yields strong evidence that $c > a$ (BF$_{10}$ = `r er_ca_closed_fmt`). However, there is moderate evidence is that set size reduces $a$ (BF$_{10}$ = `r er_ss_a_fmt`) and strong evidence for $c$ decreasing with larger set size (BF$_{10}$ = `r er_ss_c_fmt`). There is also strong evidence that the set size effect on $c$ is equal for the closed-set compared to the open-set experiment (BF$_{01}$ = `r er_exp_ss_c_fmt`). The companion script contains the full set of six hypothesis tests.
+The closed-set experiment yields strong evidence that $c > a$ (BF$_{10}$ = `r er_ca_closed_fmt`). However, there is moderate evidence that set size reduces $a$ (BF$_{10}$ = `r er_ss_a_fmt`) and strong evidence for $c$ decreasing with larger set size (BF$_{10}$ = `r er_ss_c_fmt`). There is also strong evidence that the set size effect on $c$ is equal for the closed-set compared to the open-set experiment (BF$_{01}$ = `r er_exp_ss_c_fmt`). The companion script contains the full set of six hypothesis tests.
 
 # Tutorial 2: Complex Span $M^3$
 
@@ -740,9 +745,9 @@ The standard `cs` version makes a simplifying assumption: distractor attenuation
 
 The previous tutorials used pre-built versions (`ss` and `cs`) that ship with fixed activation formulas. When a research question requires different assumptions about how activation sources combine — as in the filtering example at the end of Tutorial 2 — `bmm` allows defining a fully custom $M^3$ with user-specified response categories and activation formulas. This tutorial demonstrates how to define, fit, and compare a custom version using the same data as Tutorial 2. The companion script is `scripts/tutorial3_custom_filtering.R`.
 
-## When standard versions are too restrictive
+## From single $f$ to separate ratio parameters
 
-The `cs` version assumes that distractor attenuation is symmetric: both item memory and context binding are scaled by the single parameter $f$. @li2026filtering, however, hypothesized that item information and binding information may transfer to distractors at different rates. To test this, they replaced the single $f$ with two separate ratio parameters: $r_a$ for item memory and $r_c$ for context binding. This produces the following activation formulas:
+As noted at the end of Tutorial 2, the `cs` version constrains distractor attenuation to be symmetric. Replacing $f$ with two ratio parameters — $r_a$ for item memory and $r_c$ for context binding — produces the following activation formulas:
 
 $$
 \begin{aligned}
@@ -836,10 +841,6 @@ The Bayes factor strongly favored the custom version (median BF$_{10}$ = `r bf_c
 
 @fig-t3-param-estimates shows the posterior estimates. Item memory ($a$) and context binding ($c$) are similar to the `cs` estimates from Tutorial 2. The ratio parameters reveal an asymmetry: on the probability scale, $r_a$ is high in both conditions (pre-cue: $M$ = `r val_ra_pre_m`, 95% HDI [`r val_ra_pre_lo`, `r val_ra_pre_hi`]; retro-cue: $M$ = `r val_ra_retro_m`, 95% HDI [`r val_ra_retro_lo`, `r val_ra_retro_hi`]), meaning item memory transfers almost fully to distractors. $r_c$ is substantially lower (pre-cue: $M$ = `r val_rc_pre_m`, 95% HDI [`r val_rc_pre_lo`, `r val_rc_pre_hi`]; retro-cue: $M$ = `r val_rc_retro_m`, 95% HDI [`r val_rc_retro_lo`, `r val_rc_retro_hi`]), meaning context binding is more attenuated for distractors. This pattern matches the published findings of @li2026filtering.
 
-## Hypothesis tests
-
-As in Tutorial 2, we can test parameter differences formally. Within both the pre-cue (BF$_{10}$ = `r er_ra_rc_pre_fmt`) and retro-cue condition (BF$_{10}$ = `r er_ra_rc_retro_fmt`), there is strong evidence that $r_a > r_c$. Across conditions, $r_a$ does not differ between pre-cue and retro-cue (BF$_{01}$ = `r er_ra_pre_retro_fmt`), and the same holds for $r_c$ (BF$_{01}$ = `r er_rc_pre_retro_fmt`). Item memory transfers to distractors regardless of cue timing, while context binding is selectively attenuated, consistent with the view that filtering operates on binding rather than item activation.
-
 ```{r}
 #| label: fig-t3-param-estimates
 #| eval: true
@@ -848,6 +849,10 @@ As in Tutorial 2, we can test parameter differences formally. Within both the pr
 #| fig-alt: "Multi-panel figure. Left panels show point-range plots of item memory (a) and context binding (c) across control, pre-cue, and retro-cue conditions. Right panels show ratio parameters ra and rc on the probability scale, with ra near 1 and rc lower."
 knitr::include_graphics(here("figures", "tutorial3_param_estimates.pdf"))
 ```
+
+## Hypothesis tests
+
+As in Tutorial 2, we can test parameter differences formally. Within both the pre-cue (BF$_{10}$ = `r er_ra_rc_pre_fmt`) and retro-cue condition (BF$_{10}$ = `r er_ra_rc_retro_fmt`), there is strong evidence that $r_a > r_c$. Across conditions, $r_a$ does not differ between pre-cue and retro-cue (BF$_{01}$ = `r er_ra_pre_retro_fmt`), and the same holds for $r_c$ (BF$_{01}$ = `r er_rc_pre_retro_fmt`). Item memory transfers to distractors regardless of cue timing, while context binding is selectively attenuated, consistent with the view that filtering operates on binding rather than item activation.
 
 ## Going further: more complex custom versions
 
