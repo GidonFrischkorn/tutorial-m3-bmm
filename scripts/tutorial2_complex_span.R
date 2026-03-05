@@ -123,6 +123,7 @@ fit_m3_cs <- bmm(
   warmup       = warmup,
   iter         = iter,
   sample_prior = "yes",
+  save_pars    = save_pars(all = TRUE),
   backend      = "cmdstanr",
   file         = here("output", "fit_m3_cs")
 )
@@ -231,8 +232,8 @@ param_long_ac <- param_draws_ac %>%
     values_to = "activation"
   ) %>%
   mutate(
-    parameter = factor(parameter, levels = c("c", "a"),
-                       labels = c("c (context binding)", "a (item memory)")),
+    parameter = factor(parameter, levels = c("a", "c"),
+                       labels = c("a (item memory)", "c (context binding)")),
     condition = factor(condition, levels = c("control", "pre", "retro"))
   )
 
@@ -246,7 +247,7 @@ param_plot_ac <- ggplot(param_summary_ac,
   geom_point(size = 3) +
   geom_errorbar(aes(ymin = .lower, ymax = .upper),
                 width = 0.15) +
-  facet_wrap(~ parameter, scales = "free_y") +
+  facet_wrap(~ parameter) +
   scale_color_m3() +
   labs(x = "Condition", y = "Activation") +
   clean_plot(legend.position = "none")
