@@ -12,17 +12,17 @@ author:
   - name: Chenyu Li
     orcid: 0000-0001-8815-6189
     affiliations:
-      - name: University of Zurich
-        department: Department of Psychology
       - name: University of Chicago
         department: Department of Psychology
+      - name: University of Chicago
+        department: Institution for Mind and Biology, 
 author-note:
   disclosures:
     study-registration: "This study was not preregistered."
     data-sharing: "Data, analysis code, and companion R scripts for all four tutorials are available at [repository link]."
     conflict-of-interest: "The authors declare no conflicts of interest."
-    financial-support: "[FUNDING INFORMATION]"
-    gratitude: "[ACKNOWLEDGMENTS]"
+    financial-support: "This research was supported by a grant from the Swiss National Science Foundation (SNSF) awarded to Gidon T. Frischkorn (Grant No. 208828)."
+    gratitude: "We thank Isabel Courage for valuable feedback during the development of the M3 implementation in the bmm R package."
     authorship-agreements: |
       Gidon T. Frischkorn: Conceptualization, Methodology, Software, Formal Analysis, Visualization, Writing -- Original Draft.
       Chenyu Li: Software, Data Curation, Writing -- Review & Editing.
@@ -33,8 +33,8 @@ format:
 floatsintext: true
 output-dir: "."
 bibliography: references.bib
-abstract: |
-  The memory measurement model ($M^3$) decomposes categorical response data from memory tasks into latent activation parameters, separating item memory from context-specific binding via competitive retrieval. Fitting $M^3$ has so far required custom JAGS or Stan code for each task design. The bmm R package provides a standardized interface to specify, fit, and evaluate Bayesian hierarchical $M^3$ with minimal code. This tutorial demonstrates the bmm workflow through four worked examples: fitting a simple span $M^3$ to cued recall data, where Bayes factor model comparison favors the softmax over the simple choice rule; extending the workflow to a complex span task with distractor categories and a filtering parameter; defining a custom $M^3$ that relaxes assumptions of the standard version by separating item and binding transfer to distractors; and validating the custom specification through parameter recovery simulation. Complete R scripts accompany each tutorial. After completing the tutorials, readers will be able to fit standard and custom $M^3$ to their own data and validate new model specifications through simulation.
+abstract:
+  "The memory measurement model ($M^3$) decomposes categorical response data from memory tasks into latent activation parameters, separating item memory from context-specific binding via competitive retrieval. Fitting $M^3$ has so far required custom JAGS or Stan code for each task design. The bmm R package provides a standardized interface to specify, fit, and evaluate Bayesian hierarchical $M^3$ with minimal code. This tutorial demonstrates the bmm workflow through four worked examples: fitting a simple span $M^3$ to cued recall data, where Bayes factor model comparison favors the softmax over the simple choice rule; extending the workflow to a complex span task with distractor categories and a filtering parameter; defining a custom $M^3$ that relaxes assumptions of the standard version by separating item and binding transfer to distractors; and validating the custom specification through parameter recovery simulation. Complete R scripts accompany each tutorial. After completing the tutorials, readers will be able to fit standard and custom $M^3$ to their own data and validate new model specifications through simulation."
 keywords:
   - working memory
   - measurement model
@@ -311,7 +311,7 @@ if (file.exists(t4_file)) {
 
 # Introduction
 
-Observed performance in memory and decision tasks is often summarized by overall accuracy. Yet, for many tasks accuracy collapses across qualitatively distinct response categories and error types that may arise from different latent processes. In particular, different error types are diagnostically informative because different cognitive processes imply different conditional response probabilities over observable outcomes. Multinomial processing tree (MPT) models formalize this logic by treating categorical responses — including distinct error classes — as consequences of latent states such as successful retrieval, guessing, or source confusion [@batchelder1999theoretical; @erdfelder2009multinomial]. Similarly, process-dissociation approaches demonstrate that patterns of correct and incorrect responses across task constraints can separate the contributions of multiple processes within a single task [@jacoby1991process; @yonelinas2012process]. In sum, the full multinomial response distribution - not accuracy alone - carries more information about latent cognitive mechanisms than a single accuracy score.
+Observed performance in memory and decision tasks is often summarized by overall accuracy. Yet, for many tasks accuracy collapses across qualitatively distinct response categories and error types that may arise from different latent processes. In particular, different error types are diagnostically informative because different cognitive processes imply different conditional response probabilities over observable outcomes. Multinomial processing tree (MPT) models formalize this logic by treating categorical responses - including distinct error classes - as consequences of latent states such as successful retrieval, guessing, or source confusion [@batchelder1999theoretical; @erdfelder2009multinomial]. Similarly, process-dissociation approaches demonstrate that patterns of correct and incorrect responses across task constraints can separate the contributions of multiple processes within a single task [@jacoby1991process; @yonelinas2012process]. In sum, the full multinomial response distribution - not accuracy alone - carries more information about latent cognitive mechanisms than a single accuracy score.
 
 Working memory research frequently relies on tasks that inherently yield response frequencies across discrete outcome categories, such as correct responses, feature confusions, location errors, or intrusions [@oberauer2018benchmarks]. For discrete feature spaces (e.g., words, numbers, letters), these data are naturally multinomial: each retrieval produces one of several mutually exclusive response types. Thus, theoretical claims can often be evaluated by how experimental manipulations and individual differences redistribute probability mass across these categories.
 
