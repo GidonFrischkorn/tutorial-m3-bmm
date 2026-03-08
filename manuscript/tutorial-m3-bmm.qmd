@@ -19,7 +19,7 @@ author:
 author-note:
   disclosures:
     study-registration: "This study was not preregistered."
-    data-sharing: "Data, analysis code, and companion R scripts for all four tutorials are available at [repository link]."
+    data-sharing: "Data, analysis code, and companion R scripts for all four tutorials are available on [GitHub](https://github.com/GidonFrischkorn/tutorial-m3-bmm)."
     conflict-of-interest: "The authors declare no conflicts of interest."
     financial-support: "This research was supported by a grant from the Swiss National Science Foundation (SNSF) awarded to Gidon T. Frischkorn (Grant No. 208828)."
     gratitude: "We thank Isabel Courage for valuable feedback during the development of the M3 implementation in the bmm R package."
@@ -507,7 +507,7 @@ When using the softmax rule, $a$ and $c$ are estimated on the identity link (nat
 
 ## Model Fitting
 
-The `bmm()` function combines the model definition and formula, and passes them together with the data to `brms` and Stan, and returns a fitted model object. All models in this tutorial were estimated with the default setting of 4 chains of 2,000 iterations each (1,000 warmup), using `cmdstanr` as the backend. We set `sample_prior = "yes"` so that prior samples are available for later hypothesis tests. In addition, `save_pars = save_pars(all = TRUE)` specifies that all model parameters and likelihood results should be saved, which is necessary to perfrom model comparisons via Bayes Factors. The `file` argument caches the fitted model to disk; re-running the script loads the cached fit rather than re-fitting.[^6] 
+The `bmm()` function combines the model definition and formula, and passes them together with the data to `brms` and Stan, and returns a fitted model object. All models in this tutorial were estimated with the default setting of 4 chains of 2,000 iterations each (1,000 warmup), using `cmdstanr` as the backend. We set `sample_prior = "yes"` so that prior samples are available for later hypothesis tests. In addition, `save_pars = save_pars(all = TRUE)` specifies that all model parameters and likelihood results should be saved, which is necessary to perform model comparisons via Bayes Factors. The `file` argument caches the fitted model to disk; re-running the script loads the cached fit rather than re-fitting.[^6] 
 
 [^6]: These are all additional options that are passed to `brms` and can be modified as needed. For details on these additional arguments, please refer to `brm()` documentation.
 
@@ -934,7 +934,7 @@ We hope that the implementation of the $M^3$ framework in the `bmm` package and 
 ## Additional resources
 
 -   `bmm` package documentation and $M^3$ vignette: <https://venpopov.github.io/bmm/articles/bmm_m3.html>
--   Full companion scripts for all four tutorials: [repository link]
+-   Full companion scripts for all four tutorials on [GitHub](https://github.com/GidonFrischkorn/tutorial-m3-bmm)
 -   $M^3$ framework paper: @oberauer2019simple
 -   Systematic parameter recovery for $M^3$: @goettmann2025recovery
 -   Companion `bmm` tutorial for continuous-response mixture models: @frischkorn2025tutorial
