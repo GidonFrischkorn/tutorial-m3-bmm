@@ -29,7 +29,7 @@ p_encoding <- ggplot(enc_data) +
             fill = "white", color = "grey30", linewidth = 0.6) +
   # letters
   geom_text(aes(x = x, y = y, label = label),
-            size = 7, fontface = "bold") +
+            size = 6) +
   # position labels below
   geom_text(aes(x = x, y = y - 0.7),
             label = paste0("Pos ", positions),
@@ -37,7 +37,7 @@ p_encoding <- ggplot(enc_data) +
   # title
   annotate("text", x = 3.5, y = 0.85, label = "Encoding",
            size = 4.5, fontface = "bold") +
-  coord_fixed(ratio = 1, xlim = c(0.2, 6.8), ylim = c(-1.2, 1.3)) +
+  coord_fixed(ratio = 1, xlim = c(0.2, 6.8), ylim = c(-3.2, 1.1)) +
   theme_void()
 
 # ============================================================================
@@ -94,7 +94,7 @@ p_retrieval <- ggplot() +
   # title
   annotate("text", x = 3.5, y = 0.85, label = "Retrieval",
            size = 4.5, fontface = "bold") +
-  coord_fixed(ratio = 1, xlim = c(0.2, 7.8), ylim = c(-3.2, 1.3)) +
+  coord_fixed(ratio = 1, xlim = c(0.2, 7.8), ylim = c(-3.2, 1.1)) +
   theme_void()
 
 # ============================================================================
@@ -103,11 +103,12 @@ p_retrieval <- ggplot() +
 
 task_fig <- p_encoding + p_retrieval +
   plot_layout(widths = c(1, 1.2)) +
-  plot_annotation(tag_levels = "A")
+  plot_annotation(tag_levels = "A") &
+  theme(plot.margin = margin(0, 5, 0, 5))
 
 task_fig
 
 ggsave(here("figures", "task_example.pdf"),
-       task_fig, width = 6.5, height = 3)
+       task_fig, width = 6.5, height = 2.1)
 
 cat("Figure saved to figures/task_example.pdf\n")

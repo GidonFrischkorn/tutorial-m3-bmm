@@ -1,0 +1,213 @@
+---
+title: "Supplement: Parameter Recovery for a Custom $M^3$ — Memory Updating Example"
+shorttitle: "Supplement: $M^3$ Parameter Recovery"
+author:
+  - name: Gidon T. Frischkorn
+    orcid: 0000-0002-5055-9764
+    email: gidon.frischkorn@psychologie.uzh.ch
+    corresponding: true
+    affiliations:
+      - name: University of Zurich
+        department: Department of Psychology
+  - name: Chenyu Li
+    orcid: 0000-0001-8815-6189
+    affiliations:
+      - name: University of Chicago
+        department: Department of Psychology
+      - name: University of Chicago
+        department: Institution for Mind and Biology,
+format:
+  apaquarto-pdf:
+    keep-tex: true
+  apaquarto-docx: default
+floatsintext: true
+output-dir: "."
+bibliography: references.bib
+abstract:
+  "This supplement accompanies the tutorial on fitting the memory measurement model ($M^3$) with the bmm R package. It presents a complete parameter recovery simulation for a custom $M^3$ applied to a memory updating task with five response categories, five estimated parameters, and experimentally manipulated design variables. The walkthrough covers model definition, data simulation with `rm3()`, model fitting, and recovery evaluation at both the group and individual level. Results across a design grid varying sample size and trial count illustrate how data quantity affects recovery quality. Complete R scripts are available in the companion repository."
+keywords:
+  - working memory
+  - measurement model
+  - parameter recovery
+  - simulation
+  - R package
+execute:
+  echo: true
+  eval: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+pacman::p_load(here, bmm, brms, tidyverse, tidybayes, patchwork)
+source(here("functions", "clean_plot.R"))
+```
+
+# Overview
+
+This supplement demonstrates a complete parameter recovery simulation for a custom $M^3$ using a memory updating task as a worked example. The walkthrough follows the simplified companion script (`scripts/tutorial5_parameter_recovery_updating_simple.R`); design-grid results from multiple sample sizes and trial counts come from `scripts/tutorial5_parameter_recovery_updating.R`.
+
+The parameter recovery simulation workflow consists of four steps:
+
+1.  Define a custom $M^3$ with user-specified activation formulas.
+2.  Simulate data with known parameter values using `rm3()`.
+3.  Fit the model to the simulated data.
+4.  Compare recovered estimates to the true generating values.
+
+## Why parameter recovery
+
+Before applying a new or modified $M^3$ to empirical data, the model should be able to recover the parameters that generated the data. If recovery fails under ideal conditions (known generating values, no model misspecification), there are likely problems with the model specification or the design providing the data to identify the parameters. Recovery simulations are especially informative for custom models where the number of parameters and the functional form of the activation equations are chosen by the researcher [@wilson2019ten]. They are also useful for determining required sample size and the number of trials per condition during the design phase of a study.
+
+# Defining a Custom $M^3$ for Memory Updating
+
+For this simulation we use a memory updating task as a running example to illustrate a common situation: the task produces response categories and activation structures that do not match either the `ss` or `cs` versions of the $M^3$. Specifically, replaced (outdated) items create additional response categories, and two experimental timing variables modulate activations in ways that require custom formulas. The task design mimics the updating task from @oberauer2019simple. Participants memorize items at five positions, then positions are updated randomly. At test, one position is probed and the participant selects from a recognition set containing: the current target (1 option), other current items (4 options), the old item from the tested position (1 option), old items from other positions (4 options), and not-presented lures (5 options). This produces five response categories with the following activation formulas based on the model proposed by @oberauer2019simple:
+
+$$
+\begin{aligned}
+\text{A}_{\text{correct}}  &= b + (1 + e \cdot t_e) \cdot (a + c) \\
+\text{A}_{\text{other}}    &= b + (1 + e \cdot t_e) \cdot a \\
+\text{A}_{\text{oldinpos}} &= b + \exp(-r \cdot t_r) \cdot d \cdot (1 + e \cdot t_e) \cdot (a + c) \\
+\text{A}_{\text{otherold}} &= b + \exp(-r \cdot t_r) \cdot d \cdot (1 + e \cdot t_e) \cdot a \\
+\text{A}_{\text{NPL}}      &= b
+\end{aligned}
+$$ {#eq-act-updating}
+
+Beyond the familiar $a$ (item memory) and $c$ (context binding) parameters, three new parameters appear: $d$ captures the residual activation of replaced (outdated) items that represents instant *deletion* of outdated items independent of the time manipulations, $e$ scales the benefit of extended encoding time $t_e$, and $r$ governs how old-item activation is removed with removal time $t_r$. To understand the composite terms: $(1 + e \cdot t_e)$ scales all memory activations as a function of encoding time --- when encoding is brief the boost is minimal, when it is long activations are amplified. The term $\exp(-r \cdot t_r) \cdot d$ governs how much activation old items retain: $d$ sets the residual activation at the moment of replacement, and $r$ controls how quickly this residual is removed over time. Note that $t_e$ and $t_r$ are experimentally manipulated design variables (in our simulation each at 0.25, 0.5, and 1.0 s), not estimated parameters, producing a $3 \times 3$ within-subjects design with 9 conditions.
+
+## Model specification in bmm
+
+The model definition specifies the response categories and option counts. In addition, we specify link functions to match each parameter's theoretical constraints: identity for $a$ and $c$ because activations are unbounded; logit for $d$ because it represents a proportion of original activation retained after replacement (bounded between 0 and 1); and log for $e$ and $r$ because encoding benefit and decay rate must be positive:
+
+```{r}
+#| label: supp-model-spec
+m3_model_custom <- m3(
+  resp_cats = c("correct", "other", "oldinpos", "otherold", "npl"),
+  num_options = c(
+    "n_correct" = 1, "n_other" = 4, "n_oldinpos" = 1,
+    "n_otherold" = 4, "n_npl" = 5
+  ),
+  version     = "custom",
+  choice_rule = "softmax",
+  links = list(
+    a = "identity", c = "identity",
+    d = "logit", e = "log", r = "log"
+  )
+)
+```
+
+The activation formulas are specified separately using `bmf()`. For the simulation we do not need to add predictor formulas for the parameters, as data generating parameters will be passed directly to `rm3()`:
+
+```{r}
+#| label: supp-act-funs
+m3_act_funs <- bmf(
+  correct  ~ (1 + e * te) * (a + c) + b,
+  other    ~ (1 + e * te) * a + b,
+  oldinpos ~ exp(-r * tr) * d * (1 + e * te) * (a + c) + b,
+  otherold ~ exp(-r * tr) * d * (1 + e * te) * a + b,
+  npl      ~ b
+)
+```
+
+Note that `te` and `tr` appear in the formulas but are not estimated parameters --- they are data columns whose values vary across conditions. When `bmm` encounters variables in the activation formulas that are not listed as model parameters, it treats them as data columns and requires them to be present in the dataset. This allows custom models to incorporate any number of experimentally manipulated design variables directly into the activation equations.
+
+# Choosing Generating Parameter Values
+
+For the recovery simulation, we need group-level means and between-person standard deviations for each parameter. These are specified on the link scale (the scale on which the sampler operates), not the native scale, to respect the required bounds. The values were chosen to approximate empirical estimates from @li2025updating and to produce realistic individual differences. @tbl-gen-pars lists the generating values. The native range column shows the approximate span of individual differences ($\pm 2$ SD around the mean, transformed to native scale via the inverse link function).
+
+| Parameter | Link     | Mean (link) | SD (link) | Native range ($\pm 2$ SD) |
+|-----------|----------|-------------|-----------|---------------------------|
+| $c$       | identity | 2.0         | 0.50      | 1.0 -- 3.0               |
+| $a$       | identity | 1.0         | 0.50      | 0.0 -- 2.0               |
+| $d$       | logit    | 0.85        | 0.65      | 0.38 -- 0.89             |
+| $e$       | log      | 0.00        | 0.35      | 0.50 -- 2.01             |
+| $r$       | log      | $-$0.69     | 0.38      | 0.24 -- 1.04             |
+
+: Generating parameter values for the recovery simulation. Parameters are defined on the link scale; the native range is the approximate $\pm 2$ SD interval after applying the inverse link function. {#tbl-gen-pars}
+
+Individual parameters are drawn from $\mathcal{N}(\mu_{\text{link}}, \sigma_{\text{link}})$ independently for each person and parameter. We simulated $N = 50$ participants with 25 observations per condition (225 observations total across the $3 \times 3$ design). Because the task uses set size 5 and we assume that all positions within each trial are tested, each trial yields 5 responses, so 25 observations correspond to 5 trials per condition. With 9 conditions this amounts to 45 trials in total per participant, corresponding to roughly one hour of testing.
+
+# Simulating Data with `rm3()`
+
+The `bmm` package provides the random generation function `rm3()` as the data-generating counterpart to the model-fitting workflow. Given a set of parameter values on the native scale, the model definition, and the activation formulas, it computes category probabilities via the specified choice rule and draws random samples from the multinomial distribution. Here is an example call for simulating a single participant in one condition:
+
+```{r}
+#| label: supp-rm3-demo
+demo_data <- rm3(
+  n = 1, size = 25,
+  pars = c(a = 1.2, c = 2.3, d = 0.7, e = 1.1, r = 0.5,
+           b = 0, te = 0.25, tr = 0.25),
+  m3_model = m3_model_custom,
+  act_funs = m3_act_funs
+)
+```
+
+This returns a one-row data frame with response counts across the five categories. All variables that appear in the activation formulas must be included in the `pars` vector: estimated parameters ($a$, $c$, $d$, $e$, $r$), fixed parameters ($b = 0$ for the softmax choice rule), and design variables ($t_e$, $t_r$). To simulate a full dataset, we apply `rm3()` over all 50 participants and 9 conditions ($3$ encoding times $\times$ $3$ removal times), producing 450 rows of simulated data. The companion script contains the complete generation workflow and data inspection code.
+
+# Model Fitting
+
+We fit the simulated data with the same `bmm()` workflow shown in the main tutorial. For custom models, the prediction formula serves double duty: it repeats the activation equations (telling `bmm` how parameters combine into category activations) and appends regression formulas that specify how each parameter varies across participants (here, an intercept plus a random intercept per participant):
+
+```{r}
+#| label: supp-fit
+# Prediction formula: intercept + random intercept per participant
+m3_pred_funs <- bmf(
+  correct  ~ (1 + e * te) * (a + c) + b,
+  other    ~ (1 + e * te) * a + b,
+  oldinpos ~ exp(-r * tr) * d * (1 + e * te) * (a + c) + b,
+  otherold ~ exp(-r * tr) * d * (1 + e * te) * a + b,
+  npl      ~ b,
+  a ~ 1 + (1 | participant),
+  c ~ 1 + (1 | participant),
+  d ~ 1 + (1 | participant),
+  e ~ 1 + (1 | participant),
+  r ~ 1 + (1 | participant)
+)
+
+fit <- bmm(
+  formula = m3_pred_funs,
+  model   = m3_model_custom,
+  data    = sim_data,
+  cores   = 4,
+  backend = "cmdstanr",
+  file    = here("output", "fit_m3_custom_simple_N50_T25")
+)
+```
+
+# Recovery Evaluation
+
+Recovery can be evaluated at two levels. Group-level recovery asks whether the model recovers the true population means and between-person variability (i.e., standard deviation of the random intercepts). Individual-level recovery asks whether each participant's true parameter value is correctly estimated --- this is critical for researchers who plan to use $M^3$ parameter estimates as individual-difference measures, for example when correlating $a$ or $c$ with external variables.
+
+## Group-level recovery
+
+We compare the recovered fixed effects to the true generating means. For each parameter, we extract the posterior median and 95% credible interval from `fixef()` and check two things: (1) bias --- is the posterior median close to the true value? --- and (2) coverage --- does the 95% credible interval contain the true value? We also extract the between-person SDs from `brms::VarCorr()` and compare them to the generating SDs.
+
+## Individual-level recovery
+
+Individual-level recovery asks a similar question at the level of subject-level parameter estimates: for each participant, does the recovered estimate (fixed + random effect) match their true generating value? @fig-supp-indiv-scatter shows scatter plots of true versus recovered parameters for a single simulation cell ($N = 50$, 25 trials per condition). Points close to the diagonal indicate good recovery; the Pearson correlation ($r$) between true and estimated parameters is annotated in each panel.
+
+![Individual-level parameter recovery for the memory updating $M^3$ ($N = 50$, 25 trials per condition). Each panel shows the true generating value (x-axis) versus the recovered estimate (y-axis) for one parameter. The dashed diagonal represents perfect recovery; the annotation shows the Pearson correlation between true and recovered values.](../figures/tutorial5_simple_indiv_scatter.pdf){#fig-supp-indiv-scatter width="100%"}
+
+Parameters $a$ and $c$ show the strongest individual-level recovery ($r$ = .84 and .91, respectively). Parameters $d$ and $e$ show moderate recovery ($r$ = .74 and .70). Recovery is weakest for $r$ ($r$ = .43), which governs the exponential reduction of outdated item activation over removal time, making it harder to separate from the other parameters. This is in line with more comprehensive parameter recovery simulations using the simple choice rule by @goettmann2025recovery, who found that $r$ requires considerably more data to recover well.
+
+# Varying Sample Size and Trial Count
+
+The simplified simulation demonstrates the workflow for a single design cell. To understand how recovery depends on sample size and the number of trials per condition, the full simulation script (`tutorial5_parameter_recovery_updating.R`) varies both factors across a $3 \times 3$ grid: $N \in \{25, 50, 100\}$ and trials per condition $\in \{5, 10, 25\}$.
+
+@fig-supp-group-recovery shows group-level recovery across the design grid. Recovered estimates are close to the true values in most cells, with credible intervals narrowing as $N$ increases. With only 5 trials per condition, some parameters (particularly $e$ and $r$) show noticeable bias, but this improves substantially at 10 and 25 trials.
+
+![Group-level parameter recovery across sample sizes and trial counts. Each panel column represents one parameter; rows represent different trial counts per condition. Points and error bars show the recovered posterior median and 95% credible interval; dashed horizontal lines mark the true generating values. Black points indicate that the credible interval covers the true value.](../figures/tutorial5_group_recovery.pdf){#fig-supp-group-recovery width="100%"}
+
+@fig-supp-heatmap shows individual-level recovery (Pearson correlation between true and recovered values) for each parameter across the same design grid. Individual-level recovery is more demanding than group-level recovery: $e$ and $r$ require both a reasonable sample size and a sufficient number of trials per condition to reach correlations above .7.
+
+![Individual-level recovery heatmap. Cells show the Pearson correlation between true and recovered individual-level parameter values for each combination of sample size ($N$) and trials per condition. Darker shading indicates stronger recovery.](../figures/tutorial5_recovery_heatmap.pdf){#fig-supp-heatmap width="100%"}
+
+## Practical guidance
+
+These results are based on a single replication per design cell. A proper simulation study should replicate each cell many times to account for Monte Carlo variability [@talts2018validating]. Recovery quality also depends on the model structure itself. Parameters that appear in interaction terms or that are only weakly identified by the design may require more data. As a rule of thumb, if individual-level correlations fall below .7 for a parameter of interest, the design likely needs more trials or a larger sample before that parameter can support individual-differences analyses. Running a recovery check before collecting empirical data is therefore a practical necessity for custom models: it reveals whether the planned sample size and trial count are sufficient, or whether the design needs refinement.
+
+# References {.unnumbered}
+
+::: {#refs}
+:::

@@ -100,7 +100,7 @@ bf10_fmt <- if (bf10_med >= 10000) {
 # ---- Evidence ratios ----
 fmt_er <- function(x) {
   if (is.na(x)) return("NA")
-  if (is.infinite(x) || x >= 10000) return("> 10,000")
+  if (is.infinite(x) || x >= 10000) return("$\\geq$ 10,000")
   if (x >= 1000) return(format(round(x), big.mark = ","))
   if (x >= 10) return(sprintf("%.1f", x))
   sprintf("%.2f", x)
@@ -323,7 +323,7 @@ Because the $M^3$ framework can be applied to different paradigms — including 
 
 # The $M^3$ Framework
 
-Consider a cued recall task (e.g., remembering letters in serial positions or icons in spatial positions) in which a participant sees a retrieval cue and selects a response from a set containing the correct target, other studied items, and new lures. Each response falls into one of three categories: *correct* — the item associated with the probed position, *other-list intrusion* — a studied item from a different position, or *not-presented lure* (NPL) — an item not presented during the trial. @fig-task-example illustrates this task structure for a simple span paradigm. The $M^3$ framework explains each category's selection frequency by specifying activation formulas: different activation sources feed into each category, and response probabilities arise as the result of applying choice rules that implement competitive selection among all options.
+Consider a cued recall task (e.g., remembering letters in serial positions or icons in spatial positions) in which a participant sees a retrieval cue and selects a response from a set containing the correct target, other studied items, and new lures. @fig-task-example illustrates this task structure for a simple span paradigm. Each response falls into one of three categories: *correct* — the item associated with the probed position, *other-list intrusion* — a studied item from a different position, or *not-presented lure* (NPL) — an item not presented during the trial. The $M^3$ framework explains each category's selection frequency by specifying activation formulas: different activation sources feed into each category, and response probabilities arise as the result of applying choice rules that implement competitive selection among all options.
 
 ```{r}
 #| label: fig-task-example
@@ -385,7 +385,7 @@ Given these option counts, $M^3$ provides two choice rules that differ in how ac
 
 $$P(k) = \frac{n_k \cdot \text{A}_k}{\sum_{j=1}^{K} n_j \cdot \text{A}_j}$$
 
-where $\text{A}_k$ is the total activation for category $k$ and $n_k$ is the number of response options in that category. This rule requires all activations to be positive. To identify the scaling of activations, the baseline $b$ is fixed at a small positive value (0.1 by default).
+where $\text{A}_k$ is the total activation of an item for category $k$ and $n_k$ is the number of response options in that category. This rule requires all activations to be positive. To identify the scaling of activations, the baseline $b$ is fixed at a small positive value (0.1 by default).
 
 The *softmax* (or exponential) choice rule applies an exponential transformation before normalization:
 
@@ -526,7 +526,7 @@ fit_m3_ss_softmax <- bmm(
 )
 ```
 
-As for all Bayesian models we should check convergence after fitting. The summary contains `summary(fit_m3_ss_softmax)` convergence statistics $\hat{R}$ for all major model parameters. All $\hat{R}$ values [@gelman1992inference] should be below 1.01 and effective sample sizes should be adequate. For all models in this tutorial, these criteria were met ($\hat{R} \leq$ `r val_rhat_all`, bulk ESS $>$ `r val_ess_all`).[^7] Ocassionally, Stan may report warnings for divergent transitions, hitting the maximum tree depth, or low effective sample sizes. These issues can often be resolved by increasing the number of iterations, adjusting the `adapt_delta` parameter, or reparameterizing the model. For guidance on addressing convergence issues, see the `brms` documentation and resources on Bayesian modeling best practices. In cases where more samples and tuning do not resolve convergence issues, it may be necessary to simplify the model or reconsider the model specification.
+As for all Bayesian models we should check convergence after fitting. The summary contains `summary(fit_m3_ss_softmax)` convergence statistics $\hat{R}$ for all major model parameters. All $\hat{R}$ values [@gelman1992inference] should be below 1.01 and effective sample sizes should be adequate. For all models in this tutorial, these criteria were met ($\hat{R} \leq$ `r val_rhat_all`, bulk ESS $>$ `r val_ess_all`).[^7] Occasionally, Stan may report warnings for divergent transitions, hitting the maximum tree depth, or low effective sample sizes. These issues can often be resolved by increasing the number of iterations, adjusting the `adapt_delta` parameter, or reparametrizing the model. For guidance on addressing convergence issues, see the `brms` documentation and resources on Bayesian modeling best practices. In cases where more samples and tuning do not resolve convergence issues, it may be necessary to simplify the model or reconsider the model specification.
 
 [^7]: In principle, the measurement models implemented in `bmm` are similar to all other Bayesian generalized linear models and thus similar criteria for convergence apply. For guidance on Bayesian convergence diagnostics, see @gabry2019visualization and the `brms` documentation.
 
@@ -547,7 +547,7 @@ knitr::include_graphics(here("figures", "tutorial1_pp_check_softmax.pdf"))
 
 With the model validated, we can examine how item memory ($a$) and context binding ($c$) varied across set sizes and experiments. Under the softmax choice rule, both parameters are on the identity link, so the posterior draws are directly interpretable as activation values. To compute condition-specific estimates, we reconstructed the linear predictor from the fixed effects: for each set size $s$, $\hat{a}_{\text{exp}} = \beta_{a,\text{exp}} + \beta_{a,\text{exp:ss\_lin}} \cdot (s - \bar{s})$, and analogously for $c$. The companion script extracts draws using  `tidybayes::as_draws_df()` and computes 95% highest-density intervals [HDIs; @mcelreath2020statistical] via `tidybayes::mean_hdci()`.
 
-@fig-t1-param-estimates shows the resulting estimates. Context binding ($c$) is descriptively higher than item memory ($a$) across all set sizes in both experiments, with the gap being especially pronounced in the closed-set experiment. Both parameters decrease with set size, but the decline is substantially steeper for $c$ than for $a$, consistent with binding being more sensitive to memory load. The two experiments differ markedly in item activation: $a$ is notably higher in the open-set experiment than in the closed-set experiment. This likely reflects cross-trial interference in the closed-set condition, where the same words recur across trials and become associated with multiple contexts, reducing effective item-specific memory strength. These results are consistent with the original findings by @oberauer2019bindings, who also found higher $a$ in the open-set experiment and a steeper decline of $c$ with set size. 
+@fig-t1-param-estimates shows the resulting estimates. Context binding ($c$) is descriptively higher than item memory ($a$) across all set sizes in both experiments, with the gap being especially pronounced in the closed-set experiment. Both parameters decrease with set size, but the decline is substantially steeper for $c$ than for $a$, consistent with binding being more sensitive to memory load. The two experiments differ markedly in item activation: $a$ is notably higher in the open-set experiment than in the closed-set experiment. These results are consistent with the original findings by @oberauer2019bindings [see their discussion for theoretical interpretation of the experiment differences].
 
 ```{r}
 #| label: fig-t1-param-estimates
@@ -562,7 +562,7 @@ knitr::include_graphics(here("figures", "tutorial1_param_estimates_softmax.pdf")
 
 As introduced in the $M^3$ framework section, the choice rule determines how activations are converted to response probabilities. Because the choice rule affects both the parameter scale and the model's fit to data, selecting the appropriate rule is an important modeling decision. To compare the two options, we fit a second model with `choice_rule = "simple"` using the same formula and data. Under the simple rule, $a$ and $c$ are estimated on the log link, so the raw coefficients must be exponentiated to obtain activation values.
 
-The posterior predictive checks for both models are qualitatively similar, but the softmax rule tends to capture the tails of the response distribution more accurately, particularly for the NPL category at larger set sizes. The simple rule slightly overpredicts other-list intrusions in some conditions. The companion script contains the full posterior predictive figures for both models.
+The posterior predictive checks for both models are qualitatively similar, but the softmax rule tends to capture the tails of the response distribution more accurately, particularly for the NPL category at larger set sizes. The simple rule slightly overpredicts other-list intrusions in some conditions. The companion script generates the full posterior predictive figures for both models (available in the supplementary materials).
 
 For a formal comparison, we computed the marginal likelihood of each model via bridge sampling [@gronau2017bridge] and derive a Bayes factor. This requires `save_pars(all = TRUE)` during fitting (set in the `bmm()` call above):
 
@@ -578,32 +578,33 @@ The Bayes factor strongly favored the softmax rule (median *BF*~10~ = `r bf10_fm
 
 ## Hypothesis Testing
 
-Because we fitted the model with `sample_prior = "yes"`, we can use `brms::hypothesis()` to test directed hypotheses and obtain evidence ratios (Savage-Dickey density ratios comparing posterior to prior density at the hypothesis boundary). For example, to test whether context binding exceeds item memory within the open-set experiment:
+Because we fitted the model with `sample_prior = "yes"`, we can use `brms::hypothesis()` to test directed hypotheses and obtain evidence ratios (Savage-Dickey density ratios comparing posterior to prior density at the hypothesis boundary). For example, to test whether set size reduces context binding (averaged across experiments):
 
 ```{r}
 #| label: t1-hypothesis
 #| eval: false
-hypothesis(fit_m3_ss_softmax, "c_expopenset = a_expopenset")
+# Set size effect on context binding (averaged across experiments)
+hypothesis(fit_m3_ss_softmax,
+  "(c_expopenset:ss_lin + c_expclosedset:ss_lin) / 2 = 0")
 ```
 
-This returns a Savage-Dickey density ratio: the ratio of prior to posterior density at the point null $c = a$. Values substantially greater than 1 indicate that the data have shifted belief away from equality; values near 1 indicate inconclusive evidence. In the open-set experiment, the result is inconclusive (BF$_{10}$ = `r er_ca_fmt`), suggesting the data do not clearly distinguish whether $c$ and $a$ differ at the mean set size. We can similarly test whether set size reduces $c$ (averaged across experiments) and whether set size effects differ between experiments:
+This returns a Savage-Dickey density ratio: the ratio of prior to posterior density at the point null. Values substantially greater than 1 indicate that the data have shifted belief away from equality; values near 1 indicate inconclusive evidence. There is strong evidence for $c$ decreasing with larger set size (BF$_{10}$ = `r er_ss_c_fmt`). We can similarly test whether set size effects differ between experiments, and whether $c$ exceeds $a$ within each experiment:
 
 ```{r}
 #| label: t1-hypothesis-setsize
 #| eval: false
-# Comparion of c and a for the closed-set experiment
-hypothesis(fit_m3_ss_softmax, "c_expclosedset = a_expclosedset")
-
-# Set size effect on context binding (averaged across experiments)
-hypothesis(fit_m3_ss_softmax,
-  "(c_expopenset:ss_lin + c_expclosedset:ss_lin) / 2 = 0")
-
 # Experiment difference in set size effect on c
 hypothesis(fit_m3_ss_softmax,
   "c_expopenset:ss_lin = c_expclosedset:ss_lin")
+
+# Comparison of c and a for the open-set experiment
+hypothesis(fit_m3_ss_softmax, "c_expopenset = a_expopenset")
+
+# Comparison of c and a for the closed-set experiment
+hypothesis(fit_m3_ss_softmax, "c_expclosedset = a_expclosedset")
 ```
 
-The closed-set experiment yields strong evidence that $c > a$ (BF$_{10}$ = `r er_ca_closed_fmt`). However, there is moderate evidence that set size reduces $a$ (BF$_{10}$ = `r er_ss_a_fmt`) and strong evidence for $c$ decreasing with larger set size (BF$_{10}$ = `r er_ss_c_fmt`). There is also strong evidence that the set size effect on $c$ is equal for the closed-set compared to the open-set experiment (BF$_{01}$ = `r er_exp_ss_c_fmt`). The companion script contains the full set of six hypothesis tests.
+The set size effect on $c$ is equal for the closed-set compared to the open-set experiment (BF$_{01}$ = `r er_exp_ss_c_fmt`). There is also moderate evidence that set size reduces $a$ (BF$_{10}$ = `r er_ss_a_fmt`). Comparing $c$ and $a$ directly, the open-set experiment yields inconclusive evidence (BF$_{10}$ = `r er_ca_fmt`), while the closed-set experiment shows strong evidence that $c > a$ (BF$_{10}$ = `r er_ca_closed_fmt`). The companion script contains the full set of six hypothesis tests.
 
 # Tutorial 2: Complex Span $M^3$
 
@@ -611,7 +612,7 @@ This tutorial extends the workflow to tasks where distractors appear alongside m
 
 ## What makes complex span different
 
-The simple span model has three response categories. When distractors are present, and parameters capturing the effect of distractors should be estimated, two more categories are needed: the distractor paired with respect to the context of the tested target (*paired or close distractor*) and distractors from other positions (*other distractor*). The complex span (`cs`) model extends the activation formulas with a filtering parameter $f$ that determines how much activation distractors receive relative to memoranda. In the model for complex span tasks proposed by @oberauer2019simple it appears as a multiplier on item memory and context binding for distractor categories:
+Complex span tasks impose higher cognitive load than simple span tasks because they require participants to perform a processing task and a memory task simultaneously [for a detailed description, see @li2026filtering]. In these tasks, stimuli that only serve the processing task but not the memory task may be encoded into working memory and interfere with the maintenance of other items. These stimuli are referred to as distractors and may also be recalled at retrieval. Therefore, in addition to the three response categories used in simple span tasks, complex span tasks include two additional categories to account for distractor responses: *paired distractor*, which refers to the distractor associated with the context of the tested target, and *other distractor*, which refers to distractors from different contexts. In the complex span (`cs`) model, a filtering process (represented by parameter $f$) determines the extent to which a distractor is activated relative to a memorandum. In the model for complex span tasks proposed by @oberauer2019simple it appears as a multiplier on item memory and context binding for distractor categories:
 
 $$
 \begin{aligned}
@@ -642,7 +643,7 @@ head(data_agg)
 
 ## Model specification
 
-The model definition follows the same pattern as in Tutorial 1. As noted before, the `cs` version also assigns activation formulas by position: `resp_cats` must follow the order `corr, distc, other, disto, npl`. The model specification for the complex span version thus looks like this:
+The model definition follows the same pattern as in Tutorial 1. As noted before, the `cs` version assigns activation formulas by position: the `resp_cats` vector must follow the order `corr, distc, other, disto, npl`. The `num_options` entries should follow the same order as the names of the response categories passed to `resp_cats`. The model specification for the complex span version thus looks like this:
 
 ```{r}
 #| label: t2-model-spec
@@ -796,11 +797,11 @@ As in Tutorial 2, $r_a$ and $r_c$ are not identified in the control condition (n
 ```{r}
 #| label: t3-priors
 priors_custom <- c(
-  prior(constant(0), nlpar = "ra", coef = "conditioncontrol"),
-  prior(constant(0), class = "sd", nlpar = "ra",
+  prior(constant(-10), nlpar = "ra", coef = "conditioncontrol"),
+  prior(constant(0),   class = "sd", nlpar = "ra",
         coef = "conditioncontrol", group = "participant"),
-  prior(constant(0), nlpar = "rc", coef = "conditioncontrol"),
-  prior(constant(0), class = "sd", nlpar = "rc",
+  prior(constant(-10), nlpar = "rc", coef = "conditioncontrol"),
+  prior(constant(0),   class = "sd", nlpar = "rc",
         coef = "conditioncontrol", group = "participant")
 )
 ```
@@ -856,11 +857,11 @@ The filtering example modifies only the distractor categories, keeping the same 
 
 # Tutorial 4: Parameter Recovery
 
-Before applying a custom $M^3$ to empirical data, it is worth checking whether the planned design provides enough information to recover the parameters of interest. If recovery fails when the generating values are known and the model is correctly specified, the problem lies with the design or the specification, not the data. This tutorial demonstrates the recovery workflow using the custom filtering version from Tutorial 3. The companion script is `scripts/tutorial4_parameter_recovery.R`.
+The custom version of $M^3$ in `bmm` supports the flexibility of the $M^3$ framework because users can develop their own versions based on their research interests. However, before applying a custom $M^3$ to empirical data, it is worth checking whether the planned design provides enough information to recover the parameters of interest. If recovery fails when the generating values are known and the model is correctly specified, the problem lies with the design or the specification, not the data. This tutorial demonstrates the recovery workflow using the custom filtering version from Tutorial 3. The companion script is `scripts/tutorial4_parameter_recovery.R`.
 
 ## When to assess parameter recovery
 
-Parameter recovery is not mandatory for every analysis, but it is informative as part of a principled Bayesian workflow [@schad2021toward; @wilson2019ten] — particularly when using a custom specification for the first time, when the design has unusual trial counts, or when individual-level estimates will be used for correlations. Even a single recovery run is practically feasible (one to two hours of computation) and reveals how well the design can distinguish the parameters of interest [for a systematic treatment, see @goettmann2025recovery].
+Parameter recovery is not mandatory for every analysis, but it is informative as part of a principled Bayesian workflow [@schad2021toward; @wilson2019ten] — particularly when using a custom specification for the first time, when the design has unusual trial counts, or when individual-level estimates will be used for correlations. Beyond validating a given design, recovery simulations can also inform experimental planning: by systematically varying the number of participants or trials, researchers can determine the sample size and trial count needed to achieve acceptable recovery for their parameters of interest. Even a single recovery run is practically feasible (one to two hours of computation) and reveals how well the design can distinguish the parameters of interest [for a systematic treatment, see @goettmann2025recovery].
 
 ## Simulation workflow
 
@@ -875,7 +876,7 @@ We simulate data from the custom filtering version (Tutorial 3) with known param
 
 : Generating parameter values for the recovery simulation. All values are on the link scale. {#tbl-gen-pars}
 
-Individual parameters are drawn from $\mathcal{N}(\mu_\text{link}, \sigma_\text{link})$ independently for each person and parameter. We simulated $N = 50$ participants with 60 trials per participant. The `bmm` package provides `rm3()` as the data-generating counterpart to the fitting workflow:
+Individual parameters are drawn from $\mathcal{N}(\mu_\text{link}, \sigma_\text{link})$ independently for each person and parameter. We simulated $N = 50$ participants with 60 trials (i.e., 60 response observations) per participant. The `bmm` package provides `rm3()` as the data-generating counterpart to the fitting workflow:
 
 ```{r}
 #| label: t4-rm3-demo
@@ -987,7 +988,7 @@ m3_act_funs_updating <- bmf(
 
 Note that `te` and `tr` appear in the formulas but are not estimated parameters — they are data columns whose values vary across conditions. When `bmm` encounters variables in activation formulas that are not listed as model parameters, it treats them as data columns. This allows custom specifications to incorporate experimentally manipulated design variables directly into the activation equations.
 
-Complete parameter recovery simulations for this model — varying sample size ($N \in \{25, 50, 100\}$) and trials per condition ($\{5, 10, 25\}$) — are available in the companion scripts (`scripts/tutorial3_parameter_recovery_simple.R` for a single cell walkthrough, `scripts/tutorial3_parameter_recovery.R` for the full design grid). These scripts demonstrate how recovery quality depends on both the number of participants and the amount of data per participant, and can serve as templates for validating other custom specifications.
+Complete parameter recovery simulations for this model — varying sample size ($N \in \{25, 50, 100\}$) and trials per condition ($\{5, 10, 25\}$) — are available in the companion scripts (`scripts/tutorial5_parameter_recovery_updating_simple.R` for a single cell walkthrough, `scripts/tutorial5_parameter_recovery_updating.R` for the full design grid) and in the online supplement. These scripts demonstrate how recovery quality depends on both the number of participants and the amount of data per participant, and can serve as templates for validating other custom specifications.
 
 <!-- ====================================================================== -->
 

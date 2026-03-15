@@ -80,7 +80,7 @@ act_plot <- ggplot(act_data,
   geom_text(data = formula_data[formula_data$category == "Correct", ],
             aes(x = item, y = y, label = label),
             inherit.aes = FALSE, parse = TRUE, size = 3.2,
-            hjust = -0.1) +
+            hjust = 0.35) +
   facet_grid(~ category, scales = "free_x", space = "free_x",
              switch = "x") +
   scale_fill_manual(

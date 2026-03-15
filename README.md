@@ -1,6 +1,6 @@
 # Fitting the Memory Measurement Model (M3) with the bmm R Package: A Tutorial
 
-Companion repository for the tutorial paper on fitting M3 models (Oberauer & Lewandowsky, 2019) using the [bmm](https://venpopov.github.io/bmm/) R package. The paper demonstrates three progressively complex applications — simple span, complex span, and a fully custom model — covering everything from basic model fitting to parameter recovery simulation.
+Companion repository for the tutorial paper on fitting M3 (Oberauer & Lewandowsky, 2019) using the [bmm](https://venpopov.github.io/bmm/) R package. The paper demonstrates four progressively complex applications — simple span, complex span, a custom model with separate filtering parameters, and parameter recovery simulation.
 
 ## Repository Structure
 
@@ -12,9 +12,14 @@ Companion repository for the tutorial paper on fitting M3 models (Oberauer & Lew
 ├── scripts/             Standalone R scripts for each tutorial
 │   ├── tutorial1_simple_span.R              Simple span M3 (ss)
 │   ├── tutorial2_complex_span.R             Complex span M3 (cs)
-│   ├── tutorial3_parameter_recovery_simple.R Custom M3 — single-cell walkthrough
-│   ├── tutorial3_parameter_recovery.R       Custom M3 — full 9-cell simulation
-│   └── prepare_Li2026_data.R                Data preparation for Tutorial 2
+│   ├── tutorial3_custom_filtering.R         Custom M3 — separate ra/rc
+│   ├── tutorial4_parameter_recovery.R       Parameter recovery simulation
+│   ├── tutorial3_parameter_recovery_simple.R Appendix — memory updating (simple)
+│   ├── tutorial3_parameter_recovery.R       Appendix — memory updating (full)
+│   ├── prepare_Li2026_data.R                Data preparation for Tutorial 2
+│   ├── figure_task_example.R                Figure 1: task diagram
+│   ├── figure_m3_activations.R              Figure 2: activation decomposition
+│   └── figure_m3_schematic.R                M3 framework schematic
 │
 ├── data/                Experimental datasets
 │   ├── Oberauer_2019_SimpleSpan_Exp1.dat    Tutorial 1: trial-level data
@@ -36,7 +41,11 @@ Companion repository for the tutorial paper on fitting M3 models (Oberauer & Lew
 
 **Tutorial 2 — Complex Span** (`tutorial2_complex_span.R`): Extends the workflow to a task with distractors using data from Li, Frischkorn, & Oberauer (2026). Demonstrates `m3(version = "cs")`, the distractor filtering parameter `f`, handling non-identified parameters via constant priors, and condition-level hypothesis tests.
 
-**Tutorial 3 — Custom Model** (`tutorial3_parameter_recovery_simple.R` and `tutorial3_parameter_recovery.R`): Defines a fully custom M3 model for a memory updating task with 5 response categories and 5 estimated parameters. Instead of real data, this tutorial simulates data with known parameters using `rm3()`, fits the model, and evaluates parameter recovery at both group and individual levels. The simplified script walks through a single simulation cell; the full script varies sample size and trials per condition across a 3 x 3 design grid.
+**Tutorial 3 — Custom Filtering** (`tutorial3_custom_filtering.R`): Defines a custom M3 with separate ratio parameters for item memory (`ra`) and context binding (`rc`) filtering, using the same data as Tutorial 2. Demonstrates user-defined activation formulas, link functions for bounded parameters, and model comparison with the standard `cs` version via bridge sampling.
+
+**Tutorial 4 — Parameter Recovery** (`tutorial4_parameter_recovery.R`): Simulates data with known parameters using `rm3()`, fits the custom filtering model, and evaluates parameter recovery across a grid of sample sizes and trial counts. Demonstrates how to assess model identifiability and plan experimental designs.
+
+**Appendix — Memory Updating** (`tutorial3_parameter_recovery_simple.R` and `tutorial3_parameter_recovery.R`): Supplementary scripts defining a custom M3 for a memory updating task. The simplified script walks through a single simulation cell; the full script varies sample size and trials per condition across a 3 × 3 design grid.
 
 ## Getting Started
 

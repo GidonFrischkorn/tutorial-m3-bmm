@@ -1,0 +1,789 @@
+\documentclass[
+  man,
+  floatsintext,
+  longtable,
+  nolmodern,
+  notxfonts,
+  notimes,
+  colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{apa7}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+
+
+
+\RequirePackage{longtable}
+\RequirePackage{threeparttablex}
+
+\makeatletter
+\renewcommand{\paragraph}{\@startsection{paragraph}{4}{\parindent}%
+	{0\baselineskip \@plus 0.2ex \@minus 0.2ex}%
+	{-.5em}%
+	{\normalfont\normalsize\bfseries\typesectitle}}
+
+\renewcommand{\subparagraph}[1]{\@startsection{subparagraph}{5}{0.5em}%
+	{0\baselineskip \@plus 0.2ex \@minus 0.2ex}%
+	{-\z@\relax}%
+	{\normalfont\normalsize\bfseries\itshape\hspace{\parindent}{#1}\textit{\addperi}}{\relax}}
+\makeatother
+
+
+
+
+\usepackage{longtable, booktabs, multirow, multicol, colortbl, hhline, caption, array, float, xpatch}
+\usepackage{subcaption}
+
+
+\renewcommand\thesubfigure{\Alph{subfigure}}
+\setcounter{topnumber}{2}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0.85}
+\renewcommand{\textfraction}{0.15}
+\renewcommand{\floatpagefraction}{0.7}
+
+\usepackage{tcolorbox}
+\tcbuselibrary{listings,theorems, breakable, skins}
+\usepackage{fontawesome5}
+
+\definecolor{quarto-callout-color}{HTML}{909090}
+\definecolor{quarto-callout-note-color}{HTML}{0758E5}
+\definecolor{quarto-callout-important-color}{HTML}{CC1914}
+\definecolor{quarto-callout-warning-color}{HTML}{EB9113}
+\definecolor{quarto-callout-tip-color}{HTML}{00A047}
+\definecolor{quarto-callout-caution-color}{HTML}{FC5300}
+\definecolor{quarto-callout-color-frame}{HTML}{ACACAC}
+\definecolor{quarto-callout-note-color-frame}{HTML}{4582EC}
+\definecolor{quarto-callout-important-color-frame}{HTML}{D9534F}
+\definecolor{quarto-callout-warning-color-frame}{HTML}{F0AD4E}
+\definecolor{quarto-callout-tip-color-frame}{HTML}{02B875}
+\definecolor{quarto-callout-caution-color-frame}{HTML}{FD7E14}
+
+%\newlength\Oldarrayrulewidth
+%\newlength\Oldtabcolsep
+
+
+\usepackage{hyperref}
+
+
+
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{241,243,245}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.40,0.45,0.13}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\BuiltInTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\ExtensionTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.28,0.35,0.67}{#1}}
+\newcommand{\ImportTok}[1]{\textcolor[rgb]{0.00,0.46,0.62}{#1}}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.07,0.07,0.07}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+
+
+% definitions for citeproc citations
+\NewDocumentCommand\citeproctext{}{}
+\NewDocumentCommand\citeproc{mm}{%
+  \begingroup\def\citeproctext{#2}\cite{#1}\endgroup}
+\makeatletter
+ % allow citations to break across lines
+ \let\@cite@ofmt\@firstofone
+ % avoid brackets around text for \cite:
+ \def\@biblabel#1{}
+ \def\@cite#1#2{{#1\if@tempswa , #2\fi}}
+\makeatother
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newenvironment{CSLReferences}[2] % #1 hanging-indent, #2 entry-spacing
+ {\begin{list}{}{%
+  \setlength{\itemindent}{0pt}
+  \setlength{\leftmargin}{0pt}
+  \setlength{\parsep}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1
+   \setlength{\leftmargin}{\cslhangindent}
+   \setlength{\itemindent}{-1\cslhangindent}
+  \fi
+  % set entry spacing
+  \setlength{\itemsep}{#2\baselineskip}}}
+ {\end{list}}
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{\hfill\break\parbox[t]{\linewidth}{\strut\ignorespaces#1\strut}}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+
+
+
+
+
+\usepackage{newtx}
+
+\defaultfontfeatures{Scale=MatchLowercase}
+\defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+
+
+
+
+
+\title{Supplement: Parameter Recovery for a Custom \(M^3\) --- Memory
+Updating Example}
+
+
+\shorttitle{Supplement: \(M^3\) Parameter Recovery}
+
+
+\usepackage{etoolbox}
+
+
+
+
+
+
+
+
+
+\authorsnames[{1},{2,3}]{Gidon T. Frischkorn,Chenyu Li}
+
+
+
+
+
+
+
+\authorsaffiliations{
+{Department of Psychology, University of Zurich},{Department of
+Psychology, University of Chicago},{Institution for Mind and
+Biology,, University of Chicago}}
+
+
+
+
+\leftheader{Frischkorn and Li}
+
+
+
+\abstract{This supplement accompanies the tutorial on fitting the memory
+measurement model (\(M^3\)) with the bmm R package. It presents a
+complete parameter recovery simulation for a custom \(M^3\) applied to a
+memory updating task with five response categories, five estimated
+parameters, and experimentally manipulated design variables. The
+walkthrough covers model definition, data simulation with
+\texttt{rm3()}, model fitting, and recovery evaluation at both the group
+and individual level. Results across a design grid varying sample size
+and trial count illustrate how data quantity affects recovery quality.
+Complete R scripts are available in the companion repository. }
+
+\keywords{working memory, measurement model, parameter
+recovery, simulation, R package}
+
+\authornote{\par{\addORCIDlink{Gidon T.
+Frischkorn}{0000-0002-5055-9764}}\par{\addORCIDlink{Chenyu
+Li}{0000-0001-8815-6189}} 
+
+\par{       }
+\par{Correspondence concerning this article should be addressed to Gidon
+T.
+Frischkorn, Email: \href{mailto:gidon.frischkorn@psychologie.uzh.ch}{gidon.frischkorn@psychologie.uzh.ch}}
+}
+
+\makeatletter
+\let\endoldlt\endlongtable
+\def\endlongtable{
+\hline
+\endoldlt
+}
+\makeatother
+
+\urlstyle{same}
+
+
+
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\AtBeginDocument{%
+\ifdefined\contentsname
+  \renewcommand*\contentsname{Table of contents}
+\else
+  \newcommand\contentsname{Table of contents}
+\fi
+\ifdefined\listfigurename
+  \renewcommand*\listfigurename{List of Figures}
+\else
+  \newcommand\listfigurename{List of Figures}
+\fi
+\ifdefined\listtablename
+  \renewcommand*\listtablename{List of Tables}
+\else
+  \newcommand\listtablename{List of Tables}
+\fi
+\ifdefined\figurename
+  \renewcommand*\figurename{Figure}
+\else
+  \newcommand\figurename{Figure}
+\fi
+\ifdefined\tablename
+  \renewcommand*\tablename{Table}
+\else
+  \newcommand\tablename{Table}
+\fi
+}
+\@ifpackageloaded{float}{}{\usepackage{float}}
+\floatstyle{ruled}
+\@ifundefined{c@chapter}{\newfloat{codelisting}{h}{lop}}{\newfloat{codelisting}{h}{lop}[chapter]}
+\floatname{codelisting}{Listing}
+\newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
+\makeatother
+\makeatletter
+\makeatother
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
+\makeatother
+
+% From https://tex.stackexchange.com/a/645996/211326
+%%% apa7 doesn't want to add appendix section titles in the toc
+%%% let's make it do it
+\makeatletter
+\xpatchcmd{\appendix}
+  {\par}
+  {\addcontentsline{toc}{section}{\@currentlabelname}\par}
+  {}{}
+\makeatother
+
+%% Disable longtable counter
+%% https://tex.stackexchange.com/a/248395/211326
+
+\usepackage{etoolbox}
+
+\makeatletter
+\patchcmd{\LT@caption}
+  {\bgroup}
+  {\bgroup\global\LTpatch@captiontrue}
+  {}{}
+\patchcmd{\longtable}
+  {\par}
+  {\par\global\LTpatch@captionfalse}
+  {}{}
+\apptocmd{\endlongtable}
+  {\ifLTpatch@caption\else\addtocounter{table}{-1}\fi}
+  {}{}
+\newif\ifLTpatch@caption
+\makeatother
+
+\begin{document}
+
+\maketitle
+
+
+
+
+\setlength\LTleft{0pt}
+
+
+
+
+\section{Overview}\label{overview}
+
+This supplement demonstrates a complete parameter recovery simulation
+for a custom \(M^3\) using a memory updating task as a worked example.
+The walkthrough follows the simplified companion script
+(\texttt{scripts/tutorial5\_parameter\_recovery\_updating\_simple.R});
+design-grid results from multiple sample sizes and trial counts come
+from \texttt{scripts/tutorial5\_parameter\_recovery\_updating.R}.
+
+The parameter recovery simulation workflow consists of four steps:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Define a custom \(M^3\) with user-specified activation formulas.
+\item
+  Simulate data with known parameter values using \texttt{rm3()}.
+\item
+  Fit the model to the simulated data.
+\item
+  Compare recovered estimates to the true generating values.
+\end{enumerate}
+
+\subsection{Why parameter recovery}\label{why-parameter-recovery}
+
+Before applying a new or modified \(M^3\) to empirical data, the model
+should be able to recover the parameters that generated the data. If
+recovery fails under ideal conditions (known generating values, no model
+misspecification), there are likely problems with the model
+specification or the design providing the data to identify the
+parameters. Recovery simulations are especially informative for custom
+models where the number of parameters and the functional form of the
+activation equations are chosen by the researcher
+(\citeproc{ref-wilson2019ten}{Wilson \& Collins, 2019}). They are also
+useful for determining required sample size and the number of trials per
+condition during the design phase of a study.
+
+\section{\texorpdfstring{Defining a Custom \(M^3\) for Memory
+Updating}{Defining a Custom M\^{}3 for Memory Updating}}\label{defining-a-custom-m3-for-memory-updating}
+
+For this simulation we use a memory updating task as a running example
+to illustrate a common situation: the task produces response categories
+and activation structures that do not match either the \texttt{ss} or
+\texttt{cs} versions of the \(M^3\). Specifically, replaced (outdated)
+items create additional response categories, and two experimental timing
+variables modulate activations in ways that require custom formulas. The
+task design mimics the updating task from Oberauer and Lewandowsky
+(\citeproc{ref-oberauer2019simple}{2019}). Participants memorize items
+at five positions, then positions are updated randomly. At test, one
+position is probed and the participant selects from a recognition set
+containing: the current target (1 option), other current items (4
+options), the old item from the tested position (1 option), old items
+from other positions (4 options), and not-presented lures (5 options).
+This produces five response categories with the following activation
+formulas based on the model proposed by Oberauer and Lewandowsky
+(\citeproc{ref-oberauer2019simple}{2019}):
+
+\begin{equation}\phantomsection\label{eq-act-updating}{
+\begin{aligned}
+\text{A}_{\text{correct}}  &= b + (1 + e \cdot t_e) \cdot (a + c) \\
+\text{A}_{\text{other}}    &= b + (1 + e \cdot t_e) \cdot a \\
+\text{A}_{\text{oldinpos}} &= b + \exp(-r \cdot t_r) \cdot d \cdot (1 + e \cdot t_e) \cdot (a + c) \\
+\text{A}_{\text{otherold}} &= b + \exp(-r \cdot t_r) \cdot d \cdot (1 + e \cdot t_e) \cdot a \\
+\text{A}_{\text{NPL}}      &= b
+\end{aligned}
+}\end{equation}
+
+Beyond the familiar \(a\) (item memory) and \(c\) (context binding)
+parameters, three new parameters appear: \(d\) captures the residual
+activation of replaced (outdated) items that represents instant
+\emph{deletion} of outdated items independent of the time manipulations,
+\(e\) scales the benefit of extended encoding time \(t_e\), and \(r\)
+governs how old-item activation is removed with removal time \(t_r\). To
+understand the composite terms: \((1 + e \cdot t_e)\) scales all memory
+activations as a function of encoding time --- when encoding is brief
+the boost is minimal, when it is long activations are amplified. The
+term \(\exp(-r \cdot t_r) \cdot d\) governs how much activation old
+items retain: \(d\) sets the residual activation at the moment of
+replacement, and \(r\) controls how quickly this residual is removed
+over time. Note that \(t_e\) and \(t_r\) are experimentally manipulated
+design variables (in our simulation each at 0.25, 0.5, and 1.0 s), not
+estimated parameters, producing a \(3 \times 3\) within-subjects design
+with 9 conditions.
+
+\subsection{Model specification in
+bmm}\label{model-specification-in-bmm}
+
+The model definition specifies the response categories and option
+counts. In addition, we specify link functions to match each parameter's
+theoretical constraints: identity for \(a\) and \(c\) because
+activations are unbounded; logit for \(d\) because it represents a
+proportion of original activation retained after replacement (bounded
+between 0 and 1); and log for \(e\) and \(r\) because encoding benefit
+and decay rate must be positive:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{m3\_model\_custom }\OtherTok{\textless{}{-}} \FunctionTok{m3}\NormalTok{(}
+  \AttributeTok{resp\_cats =} \FunctionTok{c}\NormalTok{(}\StringTok{"correct"}\NormalTok{, }\StringTok{"other"}\NormalTok{, }\StringTok{"oldinpos"}\NormalTok{, }\StringTok{"otherold"}\NormalTok{, }\StringTok{"npl"}\NormalTok{),}
+  \AttributeTok{num\_options =} \FunctionTok{c}\NormalTok{(}
+    \StringTok{"n\_correct"} \OtherTok{=} \DecValTok{1}\NormalTok{, }\StringTok{"n\_other"} \OtherTok{=} \DecValTok{4}\NormalTok{, }\StringTok{"n\_oldinpos"} \OtherTok{=} \DecValTok{1}\NormalTok{,}
+    \StringTok{"n\_otherold"} \OtherTok{=} \DecValTok{4}\NormalTok{, }\StringTok{"n\_npl"} \OtherTok{=} \DecValTok{5}
+\NormalTok{  ),}
+  \AttributeTok{version     =} \StringTok{"custom"}\NormalTok{,}
+  \AttributeTok{choice\_rule =} \StringTok{"softmax"}\NormalTok{,}
+  \AttributeTok{links =} \FunctionTok{list}\NormalTok{(}
+    \AttributeTok{a =} \StringTok{"identity"}\NormalTok{, }\AttributeTok{c =} \StringTok{"identity"}\NormalTok{,}
+    \AttributeTok{d =} \StringTok{"logit"}\NormalTok{, }\AttributeTok{e =} \StringTok{"log"}\NormalTok{, }\AttributeTok{r =} \StringTok{"log"}
+\NormalTok{  )}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+The activation formulas are specified separately using \texttt{bmf()}.
+For the simulation we do not need to add predictor formulas for the
+parameters, as data generating parameters will be passed directly to
+\texttt{rm3()}:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{m3\_act\_funs }\OtherTok{\textless{}{-}} \FunctionTok{bmf}\NormalTok{(}
+\NormalTok{  correct  }\SpecialCharTok{\textasciitilde{}}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ e }\SpecialCharTok{*}\NormalTok{ te) }\SpecialCharTok{*}\NormalTok{ (a }\SpecialCharTok{+}\NormalTok{ c) }\SpecialCharTok{+}\NormalTok{ b,}
+\NormalTok{  other    }\SpecialCharTok{\textasciitilde{}}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ e }\SpecialCharTok{*}\NormalTok{ te) }\SpecialCharTok{*}\NormalTok{ a }\SpecialCharTok{+}\NormalTok{ b,}
+\NormalTok{  oldinpos }\SpecialCharTok{\textasciitilde{}} \FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{r }\SpecialCharTok{*}\NormalTok{ tr) }\SpecialCharTok{*}\NormalTok{ d }\SpecialCharTok{*}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ e }\SpecialCharTok{*}\NormalTok{ te) }\SpecialCharTok{*}\NormalTok{ (a }\SpecialCharTok{+}\NormalTok{ c) }\SpecialCharTok{+}\NormalTok{ b,}
+\NormalTok{  otherold }\SpecialCharTok{\textasciitilde{}} \FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{r }\SpecialCharTok{*}\NormalTok{ tr) }\SpecialCharTok{*}\NormalTok{ d }\SpecialCharTok{*}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ e }\SpecialCharTok{*}\NormalTok{ te) }\SpecialCharTok{*}\NormalTok{ a }\SpecialCharTok{+}\NormalTok{ b,}
+\NormalTok{  npl      }\SpecialCharTok{\textasciitilde{}}\NormalTok{ b}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+Note that \texttt{te} and \texttt{tr} appear in the formulas but are not
+estimated parameters --- they are data columns whose values vary across
+conditions. When \texttt{bmm} encounters variables in the activation
+formulas that are not listed as model parameters, it treats them as data
+columns and requires them to be present in the dataset. This allows
+custom models to incorporate any number of experimentally manipulated
+design variables directly into the activation equations.
+
+\section{Choosing Generating Parameter
+Values}\label{choosing-generating-parameter-values}
+
+For the recovery simulation, we need group-level means and
+between-person standard deviations for each parameter. These are
+specified on the link scale (the scale on which the sampler operates),
+not the native scale, to respect the required bounds. The values were
+chosen to approximate empirical estimates from Li et al.
+(\citeproc{ref-li2025updating}{2025}) and to produce realistic
+individual differences. Table~\ref{tbl-gen-pars} lists the generating
+values. The native range column shows the approximate span of individual
+differences (\(\pm 2\) SD around the mean, transformed to native scale
+via the inverse link function).
+
+\begin{table}
+
+{\caption{{Generating parameter values for the recovery simulation.
+Parameters are defined on the link scale; the native range is the
+approximate \(\pm 2\) SD interval after applying the inverse link
+function.}{\label{tbl-gen-pars}}}
+\vspace{-20pt}}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1528}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1389}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1806}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1528}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.3750}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Parameter
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Link
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Mean (link)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+SD (link)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Native range (\(\pm 2\) SD)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\(c\) & identity & 2.0 & 0.50 & 1.0 -- 3.0 \\
+\(a\) & identity & 1.0 & 0.50 & 0.0 -- 2.0 \\
+\(d\) & logit & 0.85 & 0.65 & 0.38 -- 0.89 \\
+\(e\) & log & 0.00 & 0.35 & 0.50 -- 2.01 \\
+\(r\) & log & \$-\$0.69 & 0.38 & 0.24 -- 1.04 \\
+\end{longtable}
+
+\end{table}
+
+Individual parameters are drawn from
+\(\mathcal{N}(\mu_{\text{link}}, \sigma_{\text{link}})\) independently
+for each person and parameter. We simulated \(N = 50\) participants with
+25 observations per condition (225 observations total across the
+\(3 \times 3\) design). Because the task uses set size 5 and we assume
+that all positions within each trial are tested, each trial yields 5
+responses, so 25 observations correspond to 5 trials per condition. With
+9 conditions this amounts to 45 trials in total per participant,
+corresponding to roughly one hour of testing.
+
+\section{\texorpdfstring{Simulating Data with
+\texttt{rm3()}}{Simulating Data with rm3()}}\label{simulating-data-with-rm3}
+
+The \texttt{bmm} package provides the random generation function
+\texttt{rm3()} as the data-generating counterpart to the model-fitting
+workflow. Given a set of parameter values on the native scale, the model
+definition, and the activation formulas, it computes category
+probabilities via the specified choice rule and draws random samples
+from the multinomial distribution. Here is an example call for
+simulating a single participant in one condition:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{demo\_data }\OtherTok{\textless{}{-}} \FunctionTok{rm3}\NormalTok{(}
+  \AttributeTok{n =} \DecValTok{1}\NormalTok{, }\AttributeTok{size =} \DecValTok{25}\NormalTok{,}
+  \AttributeTok{pars =} \FunctionTok{c}\NormalTok{(}\AttributeTok{a =} \FloatTok{1.2}\NormalTok{, }\AttributeTok{c =} \FloatTok{2.3}\NormalTok{, }\AttributeTok{d =} \FloatTok{0.7}\NormalTok{, }\AttributeTok{e =} \FloatTok{1.1}\NormalTok{, }\AttributeTok{r =} \FloatTok{0.5}\NormalTok{,}
+           \AttributeTok{b =} \DecValTok{0}\NormalTok{, }\AttributeTok{te =} \FloatTok{0.25}\NormalTok{, }\AttributeTok{tr =} \FloatTok{0.25}\NormalTok{),}
+  \AttributeTok{m3\_model =}\NormalTok{ m3\_model\_custom,}
+  \AttributeTok{act\_funs =}\NormalTok{ m3\_act\_funs}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+This returns a one-row data frame with response counts across the five
+categories. All variables that appear in the activation formulas must be
+included in the \texttt{pars} vector: estimated parameters (\(a\),
+\(c\), \(d\), \(e\), \(r\)), fixed parameters (\(b = 0\) for the softmax
+choice rule), and design variables (\(t_e\), \(t_r\)). To simulate a
+full dataset, we apply \texttt{rm3()} over all 50 participants and 9
+conditions (\(3\) encoding times \(\times\) \(3\) removal times),
+producing 450 rows of simulated data. The companion script contains the
+complete generation workflow and data inspection code.
+
+\section{Model Fitting}\label{model-fitting}
+
+We fit the simulated data with the same \texttt{bmm()} workflow shown in
+the main tutorial. For custom models, the prediction formula serves
+double duty: it repeats the activation equations (telling \texttt{bmm}
+how parameters combine into category activations) and appends regression
+formulas that specify how each parameter varies across participants
+(here, an intercept plus a random intercept per participant):
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Prediction formula: intercept + random intercept per participant}
+\NormalTok{m3\_pred\_funs }\OtherTok{\textless{}{-}} \FunctionTok{bmf}\NormalTok{(}
+\NormalTok{  correct  }\SpecialCharTok{\textasciitilde{}}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ e }\SpecialCharTok{*}\NormalTok{ te) }\SpecialCharTok{*}\NormalTok{ (a }\SpecialCharTok{+}\NormalTok{ c) }\SpecialCharTok{+}\NormalTok{ b,}
+\NormalTok{  other    }\SpecialCharTok{\textasciitilde{}}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ e }\SpecialCharTok{*}\NormalTok{ te) }\SpecialCharTok{*}\NormalTok{ a }\SpecialCharTok{+}\NormalTok{ b,}
+\NormalTok{  oldinpos }\SpecialCharTok{\textasciitilde{}} \FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{r }\SpecialCharTok{*}\NormalTok{ tr) }\SpecialCharTok{*}\NormalTok{ d }\SpecialCharTok{*}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ e }\SpecialCharTok{*}\NormalTok{ te) }\SpecialCharTok{*}\NormalTok{ (a }\SpecialCharTok{+}\NormalTok{ c) }\SpecialCharTok{+}\NormalTok{ b,}
+\NormalTok{  otherold }\SpecialCharTok{\textasciitilde{}} \FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{r }\SpecialCharTok{*}\NormalTok{ tr) }\SpecialCharTok{*}\NormalTok{ d }\SpecialCharTok{*}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{+}\NormalTok{ e }\SpecialCharTok{*}\NormalTok{ te) }\SpecialCharTok{*}\NormalTok{ a }\SpecialCharTok{+}\NormalTok{ b,}
+\NormalTok{  npl      }\SpecialCharTok{\textasciitilde{}}\NormalTok{ b,}
+\NormalTok{  a }\SpecialCharTok{\textasciitilde{}} \DecValTok{1} \SpecialCharTok{+}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{|}\NormalTok{ participant),}
+\NormalTok{  c }\SpecialCharTok{\textasciitilde{}} \DecValTok{1} \SpecialCharTok{+}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{|}\NormalTok{ participant),}
+\NormalTok{  d }\SpecialCharTok{\textasciitilde{}} \DecValTok{1} \SpecialCharTok{+}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{|}\NormalTok{ participant),}
+\NormalTok{  e }\SpecialCharTok{\textasciitilde{}} \DecValTok{1} \SpecialCharTok{+}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{|}\NormalTok{ participant),}
+\NormalTok{  r }\SpecialCharTok{\textasciitilde{}} \DecValTok{1} \SpecialCharTok{+}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{|}\NormalTok{ participant)}
+\NormalTok{)}
+
+\NormalTok{fit }\OtherTok{\textless{}{-}} \FunctionTok{bmm}\NormalTok{(}
+  \AttributeTok{formula =}\NormalTok{ m3\_pred\_funs,}
+  \AttributeTok{model   =}\NormalTok{ m3\_model\_custom,}
+  \AttributeTok{data    =}\NormalTok{ sim\_data,}
+  \AttributeTok{cores   =} \DecValTok{4}\NormalTok{,}
+  \AttributeTok{backend =} \StringTok{"cmdstanr"}\NormalTok{,}
+  \AttributeTok{file    =} \FunctionTok{here}\NormalTok{(}\StringTok{"output"}\NormalTok{, }\StringTok{"fit\_m3\_custom\_simple\_N50\_T25"}\NormalTok{)}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\section{Recovery Evaluation}\label{recovery-evaluation}
+
+Recovery can be evaluated at two levels. Group-level recovery asks
+whether the model recovers the true population means and between-person
+variability (i.e., standard deviation of the random intercepts).
+Individual-level recovery asks whether each participant's true parameter
+value is correctly estimated --- this is critical for researchers who
+plan to use \(M^3\) parameter estimates as individual-difference
+measures, for example when correlating \(a\) or \(c\) with external
+variables.
+
+\subsection{Group-level recovery}\label{group-level-recovery}
+
+We compare the recovered fixed effects to the true generating means. For
+each parameter, we extract the posterior median and 95\% credible
+interval from \texttt{fixef()} and check two things: (1) bias --- is the
+posterior median close to the true value? --- and (2) coverage --- does
+the 95\% credible interval contain the true value? We also extract the
+between-person SDs from \texttt{brms::VarCorr()} and compare them to the
+generating SDs.
+
+\subsection{Individual-level recovery}\label{individual-level-recovery}
+
+Individual-level recovery asks a similar question at the level of
+subject-level parameter estimates: for each participant, does the
+recovered estimate (fixed + random effect) match their true generating
+value? Figure~\ref{fig-supp-indiv-scatter} shows scatter plots of true
+versus recovered parameters for a single simulation cell (\(N = 50\), 25
+trials per condition). Points close to the diagonal indicate good
+recovery; the Pearson correlation (\(r\)) between true and estimated
+parameters is annotated in each panel.
+
+\begin{figure}
+
+\caption{\label{fig-supp-indiv-scatter}Individual-level parameter
+recovery for the memory updating \(M^3\) (\(N = 50\), 25 trials per
+condition). Each panel shows the true generating value (x-axis) versus
+the recovered estimate (y-axis) for one parameter. The dashed diagonal
+represents perfect recovery; the annotation shows the Pearson
+correlation between true and recovered values.}
+
+\centering{
+
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio]{../figures/tutorial5_simple_indiv_scatter.pdf}
+
+}
+
+\end{figure}%
+
+Parameters \(a\) and \(c\) show the strongest individual-level recovery
+(\(r\) = .84 and .91, respectively). Parameters \(d\) and \(e\) show
+moderate recovery (\(r\) = .74 and .70). Recovery is weakest for \(r\)
+(\(r\) = .43), which governs the exponential reduction of outdated item
+activation over removal time, making it harder to separate from the
+other parameters. This is in line with more comprehensive parameter
+recovery simulations using the simple choice rule by Göttmann et al.
+(\citeproc{ref-goettmann2025recovery}{2025}), who found that \(r\)
+requires considerably more data to recover well.
+
+\section{Varying Sample Size and Trial
+Count}\label{varying-sample-size-and-trial-count}
+
+The simplified simulation demonstrates the workflow for a single design
+cell. To understand how recovery depends on sample size and the number
+of trials per condition, the full simulation script
+(\texttt{tutorial5\_parameter\_recovery\_updating.R}) varies both
+factors across a \(3 \times 3\) grid: \(N \in \{25, 50, 100\}\) and
+trials per condition \(\in \{5, 10, 25\}\).
+
+Figure~\ref{fig-supp-group-recovery} shows group-level recovery across
+the design grid. Recovered estimates are close to the true values in
+most cells, with credible intervals narrowing as \(N\) increases. With
+only 5 trials per condition, some parameters (particularly \(e\) and
+\(r\)) show noticeable bias, but this improves substantially at 10 and
+25 trials.
+
+\begin{figure}
+
+\caption{\label{fig-supp-group-recovery}Group-level parameter recovery
+across sample sizes and trial counts. Each panel column represents one
+parameter; rows represent different trial counts per condition. Points
+and error bars show the recovered posterior median and 95\% credible
+interval; dashed horizontal lines mark the true generating values. Black
+points indicate that the credible interval covers the true value.}
+
+\centering{
+
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio]{../figures/tutorial5_group_recovery.pdf}
+
+}
+
+\end{figure}%
+
+Figure~\ref{fig-supp-heatmap} shows individual-level recovery (Pearson
+correlation between true and recovered values) for each parameter across
+the same design grid. Individual-level recovery is more demanding than
+group-level recovery: \(e\) and \(r\) require both a reasonable sample
+size and a sufficient number of trials per condition to reach
+correlations above .7.
+
+\begin{figure}
+
+\caption{\label{fig-supp-heatmap}Individual-level recovery heatmap.
+Cells show the Pearson correlation between true and recovered
+individual-level parameter values for each combination of sample size
+(\(N\)) and trials per condition. Darker shading indicates stronger
+recovery.}
+
+\centering{
+
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio]{../figures/tutorial5_recovery_heatmap.pdf}
+
+}
+
+\end{figure}%
+
+\subsection{Practical guidance}\label{practical-guidance}
+
+These results are based on a single replication per design cell. A
+proper simulation study should replicate each cell many times to account
+for Monte Carlo variability (\citeproc{ref-talts2018validating}{Talts et
+al., 2018}). Recovery quality also depends on the model structure
+itself. Parameters that appear in interaction terms or that are only
+weakly identified by the design may require more data. As a rule of
+thumb, if individual-level correlations fall below .7 for a parameter of
+interest, the design likely needs more trials or a larger sample before
+that parameter can support individual-differences analyses. Running a
+recovery check before collecting empirical data is therefore a practical
+necessity for custom models: it reveals whether the planned sample size
+and trial count are sufficient, or whether the design needs refinement.
+
+\section*{References}\label{references}
+\addcontentsline{toc}{section}{References}
+
+\phantomsection\label{refs}
+\begin{CSLReferences}{1}{0}
+\bibitem[\citeproctext]{ref-goettmann2025recovery}
+Göttmann, J., Frischkorn, G. T., Oberauer, K., Schaefer, S. B., \&
+Schubert, A.-L. (2025). \emph{Modeling individual differences in working
+memory: {S}ubject-level parameter recovery within the {M}emory
+{M}easurement {M}odel framework ({M3})}.
+\url{https://doi.org/10.31234/osf.io/945d2}
+
+\bibitem[\citeproctext]{ref-li2025updating}
+Li, C., Frischkorn, G. T., \& Oberauer, K. (2025). Updating of
+information in working memory: {T}ime course and consequences.
+\emph{Cognitive Psychology}, \emph{156}, 101702.
+\url{https://doi.org/10.1016/j.cogpsych.2024.101702}
+
+\bibitem[\citeproctext]{ref-oberauer2019simple}
+Oberauer, K., \& Lewandowsky, S. (2019). Simple measurement models for
+complex working-memory tasks. \emph{Psychological Review},
+\emph{126}(6), 880--932. \url{https://doi.org/10.1037/rev0000159}
+
+\bibitem[\citeproctext]{ref-talts2018validating}
+Talts, S., Betancourt, M., Simpson, D., Vehtari, A., \& Gelman, A.
+(2018). \emph{Validating {B}ayesian inference algorithms with
+simulation-based calibration}. \url{https://arxiv.org/abs/1804.06788}
+
+\bibitem[\citeproctext]{ref-wilson2019ten}
+Wilson, R. C., \& Collins, A. G. E. (2019). Ten simple rules for the
+computational modeling of behavioral data. \emph{eLife}, \emph{8},
+e49547. \url{https://doi.org/10.7554/eLife.49547}
+
+\end{CSLReferences}
+
+
+
+
+
+
+\end{document}

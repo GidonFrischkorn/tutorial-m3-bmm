@@ -86,6 +86,41 @@ clean_plot <- function(base_size = 11, base_family = "", ...) {
 }
 
 ###############################################################################!
+# Per-Facet Y-Axis Scaling -----------------------------------------------------
+###############################################################################!
+
+# Set individual y-axis limits for each facet panel in a facet_wrap plot.
+# Requires facet_wrap(scales = "free") to work. This function modifies the
+# ggproto object directly — call it on a completed ggplot object, not as a
+# ggplot layer.
+#
+# Usage:
+#   p <- ggplot(data, aes(x, y)) + geom_point() + facet_wrap(~cat, scales = "free")
+#   p <- scale_individual_facet_y_axes(p, ylims = list(c(0.4, 1), c(0, 0.3)))
+#
+# Adapted from: https://stackoverflow.com/questions/51735481
+scale_individual_facet_y_axes <- function(plot, ylims) {
+  init_scales_orig <- plot$facet$init_scales
+
+  init_scales_new <- function(...) {
+    r <- init_scales_orig(...)
+    y <- r$y
+    if (is.null(y)) return(r)
+    for (i in seq_along(y)) {
+      ylim <- ylims[[i]]
+      if (!is.null(ylim)) {
+        y[[i]]$limits <- ylim
+      }
+    }
+    r$y <- y
+    return(r)
+  }
+
+  plot$facet$init_scales <- init_scales_new
+  return(plot)
+}
+
+###############################################################################!
 # Figure Dimensions (reference) ------------------------------------------------
 ###############################################################################!
 

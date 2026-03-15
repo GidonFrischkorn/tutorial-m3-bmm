@@ -1,22 +1,14 @@
 #' Tutorial 4: Parameter Recovery for the Custom Filtering M3
-#'
-#' This script demonstrates parameter recovery as validation for the custom
-#' filtering M3 defined in Tutorial 3. We simulate data with known parameter
-#' values, fit the model, and check whether the generating values are recovered.
-#'
-#' The custom filtering M3 replaces the single f parameter from the cs version
-#' with two ratio parameters (ra, rc). Recovery focuses on all four parameters:
-#' a (item memory), c (context binding), ra (item ratio), rc (binding ratio).
-#'
-#' In this script, you will see:
-#'  1) How to choose generating parameter values on the link scale
-#'  2) How to simulate data with rm3()
-#'  3) How to evaluate group-level and individual-level recovery
-#'  4) How recovery quality informs study design decisions
 
 ###############################################################################!
 # 0) R Setup: Packages & Settings ---------------------------------------------
 ###############################################################################!
+
+# -- Download pre-fitted model objects from OSF (optional) --------------------
+# Set to TRUE to download all fitted model objects before running this script.
+# This avoids re-fitting models from scratch (which can take several hours).
+download_from_osf <- FALSE
+if (download_from_osf) source(here::here("scripts", "00_download_osf.R"))
 
 pacman::p_load(here, bmm, brms, tidyverse, tidybayes, patchwork)
 source(here("functions", "clean_plot.R"))
@@ -33,19 +25,6 @@ set.seed(2026)
 ###############################################################################!
 # 1) Model Specification -------------------------------------------------------
 ###############################################################################!
-
-# We use the same custom filtering M3 as in Tutorial 3.
-# Five response categories, four free parameters (a, c, ra, rc).
-#
-# Activation formulas:
-#   correct = b + a + c
-#   distc   = b + ra*a + rc*c
-#   other   = b + a
-#   disto   = b + ra*a
-#   npl     = b
-#
-# For simulation, the recovery uses a single condition (no experimental
-# manipulation), so ra and rc have a single group-level mean each.
 
 ## 1.1) Define the custom M3 object --------------------------------------------
 
@@ -117,50 +96,40 @@ sd_c  <- 0.50
 sd_ra <- 0.40
 sd_rc <- 0.40
 
-# Quick check: what do these look like on the native scale?
-cat("Parameter ranges (mean +/- 2 SD on native scale):\n")
-cat("  a: ", mean_a - 2*sd_a, "to", mean_a + 2*sd_a, "(identity)\n")
-cat("  c: ", mean_c - 2*sd_c, "to", mean_c + 2*sd_c, "(identity)\n")
-cat("  ra:", round(plogis(mean_ra - 2*sd_ra), 2), "to",
-    round(plogis(mean_ra + 2*sd_ra), 2), "(logit -> probability)\n")
-cat("  rc:", round(plogis(mean_rc - 2*sd_rc), 2), "to",
-    round(plogis(mean_rc + 2*sd_rc), 2), "(logit -> probability)\n")
-
 ## 2.2) Simulation settings ----------------------------------------------------
 
-N               <- 50    # number of participants
+n_participants  <- 50    # number of participants
 trials_per_cond <- 60    # trials in the single condition
 
 ## 2.3) Draw true individual parameters ----------------------------------------
 
 true_pars <- tibble(
-  participant = 1:N,
-  a_link  = rnorm(N, mean_a, sd_a),
-  c_link  = rnorm(N, mean_c, sd_c),
-  ra_link = rnorm(N, mean_ra, sd_ra),
-  rc_link = rnorm(N, mean_rc, sd_rc)
+  participant = 1:n_participants,
+  a_link  = rnorm(n_participants, mean_a, sd_a),
+  c_link  = rnorm(n_participants, mean_c, sd_c),
+  ra_link = rnorm(n_participants, mean_ra, sd_ra),
+  rc_link = rnorm(n_participants, mean_rc, sd_rc)
 )
 
 # Convert to native scale for use in rm3()
-true_pars <- true_pars %>%
+true_pars <- true_pars |>
   mutate(
     a_native  = a_link,          # identity
     c_native  = c_link,          # identity
-    ra_native = plogis(ra_link), # logit -> probability
-    rc_native = plogis(rc_link)  # logit -> probability
+    ra_native = plogis(ra_link), # logit to probability
+    rc_native = plogis(rc_link)  # logit to probability
   )
 
-cat("\nTrue parameter summary (native scale):\n")
-true_pars %>%
+true_pars |>
   summarise(
     across(ends_with("_native"),
            list(mean = mean, sd = sd, min = min, max = max),
            .names = "{.col}_{.fn}")
-  ) %>%
+  ) |>
   pivot_longer(everything(),
                names_to = c("parameter", "stat"),
-               names_pattern = "(.+)_native_(.+)") %>%
-  pivot_wider(names_from = stat, values_from = value) %>%
+               names_pattern = "(.+)_native_(.+)") |>
+  pivot_wider(names_from = stat, values_from = value) |>
   print()
 
 ## 2.4) Simulate the full dataset ----------------------------------------------
@@ -170,7 +139,7 @@ true_pars %>%
 #   1 correct, 1 paired distractor, 4 other, 4 other distractor, 5 NPL
 data_list <- list()
 
-for (i in seq_len(N)) {
+for (i in seq_len(n_participants)) {
 
   pars_i <- c(
     a  = true_pars$a_native[i],
@@ -197,27 +166,24 @@ for (i in seq_len(N)) {
 
   data_list[[i]] <- row_i
 
-  if (i %% 10 == 0) cat("  Simulated participant", i, "of", N, "\n")
+  if (i %% 10 == 0) {
+    cat("  Simulated participant", i, "of", n_participants, "\n")
+  }
 }
 
 sim_data <- bind_rows(data_list)
 
-cat("\nSimulated dataset:\n")
-cat("  Rows:", nrow(sim_data), "(expected:", N, ")\n")
-str(sim_data)
-
 ## 2.5) Inspect the simulated data ---------------------------------------------
 
-cat("\nMean response proportions:\n")
-sim_data %>%
-  mutate(total = corr + other + distc + disto + npl) %>%
+sim_data |>
+  mutate(total = corr + other + distc + disto + npl) |>
   summarise(
     corr  = mean(corr / total),
     distc = mean(distc / total),
     other = mean(other / total),
     disto = mean(disto / total),
     npl   = mean(npl / total)
-  ) %>%
+  ) |>
   print()
 
 ###############################################################################!
@@ -254,7 +220,6 @@ fit <- bmm(
 )
 
 ## 3.3) Convergence checks -----------------------------------------------------
-cat("\nModel summary:\n")
 summary(fit)
 
 ###############################################################################!
@@ -274,13 +239,12 @@ group_recovery <- tibble(
   recovered_mean  = fe[paste0(par_names, "_Intercept"), "Estimate"],
   recovered_lower = fe[paste0(par_names, "_Intercept"), "Q2.5"],
   recovered_upper = fe[paste0(par_names, "_Intercept"), "Q97.5"]
-) %>%
+) |>
   mutate(
     bias     = recovered_mean - true_mean,
     coverage = true_mean >= recovered_lower & true_mean <= recovered_upper
   )
 
-cat("\nGroup-level recovery:\n")
 print(group_recovery)
 
 ## 4.2) Group-level recovery plot ----------------------------------------------
@@ -322,13 +286,12 @@ for (k in seq_along(par_names)) {
   sd_recovery$sd_upper[k]     <- sd_est["Q97.5"]
 }
 
-sd_recovery <- sd_recovery %>%
+sd_recovery <- sd_recovery |>
   mutate(
     sd_bias     = recovered_sd - true_sd,
     sd_coverage = true_sd >= sd_lower & true_sd <= sd_upper
   )
-
-cat("\nSD recovery (between-person variability):\n")
+  
 print(sd_recovery)
 
 ## 4.4) Individual-level recovery ----------------------------------------------
@@ -341,30 +304,30 @@ for (p in par_names) {
   est <- co$participant[, , paste0(p, "_Intercept")]
 
   indiv_p <- tibble(
-    participant    = 1:N,
+    participant    = 1:n_participants,
     parameter      = p,
-    recovered_link = est[1:N, "Estimate"],
-    indiv_lower    = est[1:N, "Q2.5"],
-    indiv_upper    = est[1:N, "Q97.5"]
+    recovered_link = est[1:n_participants, "Estimate"],
+    indiv_lower    = est[1:n_participants, "Q2.5"],
+    indiv_upper    = est[1:n_participants, "Q97.5"]
   )
 
   indiv_recovery <- bind_rows(indiv_recovery, indiv_p)
 }
 
 # Add true link-scale values
-true_long <- true_pars %>%
+true_long <- true_pars |>
   select(participant,
-         a = a_link, c = c_link, ra = ra_link, rc = rc_link) %>%
+         a = a_link, c = c_link, ra = ra_link, rc = rc_link) |>
   pivot_longer(-participant, names_to = "parameter",
                values_to = "true_link")
 
-indiv_recovery <- indiv_recovery %>%
+indiv_recovery <- indiv_recovery |>
   left_join(true_long, by = c("participant", "parameter"))
 
 # Individual-level metrics
 cat("\nIndividual-level recovery metrics:\n")
-indiv_summary <- indiv_recovery %>%
-  group_by(parameter) %>%
+indiv_summary <- indiv_recovery |>
+  group_by(parameter) |>
   summarise(
     correlation = cor(true_link, recovered_link),
     mean_bias   = mean(recovered_link - true_link),
@@ -377,7 +340,7 @@ print(indiv_summary)
 
 ## 4.5) Individual-level scatter plots -----------------------------------------
 
-corr_labels <- indiv_summary %>%
+corr_labels <- indiv_summary |>
   mutate(label = paste0("r = ", sprintf("%.2f", correlation)))
 
 scatter_plot <- ggplot(indiv_recovery,

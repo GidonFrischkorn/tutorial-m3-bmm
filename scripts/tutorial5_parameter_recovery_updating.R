@@ -1,26 +1,14 @@
-#' Tutorial 3: Custom M3 — Parameter Recovery
-#'
-#' This script demonstrates how to define a fully custom M3 model using bmm
-#' and validates it through parameter recovery simulation. The custom model is
-#' the memory updating model from Oberauer & Lewandowsky (2019), with 5
-#' response categories and 5 estimated parameters.
-#'
-#' Instead of fitting real data, this tutorial:
-#'   1) Specifies a custom M3 model with user-defined activation formulas
-#'   2) Simulates data from the model with known generating parameters
-#'   3) Fits the model to recover the generating parameters
-#'   4) Evaluates recovery quality at the group and individual level
-#'
-#' The simulation varies sample size (N = 25, 50, 100) and trials per
-#' condition (5, 10, 25) to illustrate how data quantity affects recovery.
-#'
-#' Reference:
-#'   Oberauer, K., & Lewandowsky, S. (2019). Simple measurement models for
-#'   complex working memory tasks. Psychological Review, 126(6), 880–932.
+#' Tutorial 5: Custom M3 — Parameter Recovery
 
 ###############################################################################!
 # 0) R Setup: Packages & Settings ---------------------------------------------
 ###############################################################################!
+
+# -- Download pre-fitted model objects from OSF (optional) --------------------
+# Set to TRUE to download all fitted model objects before running this script.
+# This avoids re-fitting models from scratch (which can take several hours).
+download_from_osf <- FALSE
+if (download_from_osf) source(here::here("scripts", "00_download_osf.R"))
 
 pacman::p_load(here, bmm, brms, tidyverse, tidybayes, patchwork)
 source(here("functions", "clean_plot.R"))
@@ -38,40 +26,14 @@ set.seed(2025)
 # 1) Model Specification -------------------------------------------------------
 ###############################################################################!
 
-# The memory updating model uses 5 response categories and 5 estimated
-# parameters. The task presents set size 5 items, then updates each position
-# once. At test, participants identify the current target from a recognition
-# set containing current items, replaced items, and not-presented lures.
-#
-# Activation formulas (softmax choice rule, b fixed at 0):
-#
-#   correct  = b + (1 + e*te) * (a + c)
-#   other    = b + (1 + e*te) * a
-#   oldinpos = b + exp(-r*tr) * d * (1 + e*te) * (a + c)
-#   otherold = b + exp(-r*tr) * d * (1 + e*te) * a
-#   npl      = b
-#
-# Where:
-#   a = general item memory (identity link)
-#   c = context-specific binding (identity link)
-#   d = residual activation of replaced items, 0–1 (logit link)
-#   e = extended encoding strength per unit time (log link)
-#   r = removal rate of outdated items (log link)
-#   b = baseline activation (fixed at 0 for softmax)
-#   te = time available for extended encoding (data variable, seconds)
-#   tr = time available for removal (data variable, seconds)
-#
-# Cognitive interpretation:
-#   (1 + e*te) scales activation by encoding opportunity — longer encoding
-#   time boosts all non-baseline activation proportionally via e.
-#   exp(-r*tr) * d captures residual activation of replaced items — d is the
-#   base residual strength and exp(-r*tr) attenuates it over removal time.
-
 ## 1.1) Define the custom M3 model object --------------------------------------
 
 m3_model_custom <- m3(
   resp_cats   = c("correct", "other", "oldinpos", "otherold", "npl"),
-  num_options = c("n_correct" = 1, "n_other" = 4, "n_oldinpos" = 1, "n_otherold" = 4, "n_npl" = 5),
+  num_options = c(
+    "n_correct" = 1, "n_other" = 4, "n_oldinpos" = 1,
+    "n_otherold" = 4, "n_npl" = 5
+  ),
   version     = "custom",
   choice_rule = "softmax",
   links = list(
@@ -136,8 +98,8 @@ m3_formula_fit <- bmf(
 gen_pars <- tibble(
   parameter = c("c",    "a",    "d",     "e",     "r"),
   link      = c("identity", "identity", "logit", "log",   "log"),
-  mean_link = c( 2.0,   1.0,    0.85,    0.00,   -0.69),
-  sd_link   = c( 0.50,  0.50,   0.65,    0.35,    0.38)
+  mean_link = c(2.0,   1.0,    0.85,    0.00,   -0.69),
+  sd_link   = c(0.50,  0.50,   0.65,    0.35,    0.38)
 )
 
 gen_pars
@@ -156,7 +118,7 @@ for (i in seq_len(nrow(gen_pars))) {
 }
 
 # Convert to native scale for use in rm3()
-true_native <- true_link %>%
+true_native <- true_link |>
   mutate(
     c_native = c,                    # identity
     a_native = a,                    # identity
@@ -166,12 +128,12 @@ true_native <- true_link %>%
   )
 
 # Verify generating distributions look reasonable
-true_native %>%
-  select(participant, ends_with("_native")) %>%
-  pivot_longer(-participant, names_to = "parameter", values_to = "value") %>%
-  group_by(parameter) %>%
+true_native |>
+  select(participant, ends_with("_native")) |>
+  pivot_longer(-participant, names_to = "parameter", values_to = "value") |>
+  group_by(parameter) |>
   summarise(mean = mean(value), sd = sd(value),
-            min = min(value), max = max(value)) %>%
+            min = min(value), max = max(value)) |>
   print()
 
 ## 2.3) Experimental design grid ----------------------------------------------
@@ -184,7 +146,7 @@ design_grid <- expand_grid(
 )
 
 # Fixed response option counts (same for all conditions)
-design_grid <- design_grid %>%
+design_grid <- design_grid |>
   mutate(
     n_correct  = 1L,
     n_other    = 4L,
@@ -221,18 +183,18 @@ simulate_cell <- function(N, trials_per_cond, true_native,
       r = true_native$r_native[i]
     )
 
-    for(j in seq_len(n_conds)) {
+    for (j in seq_len(n_conds)) {
       cat(sprintf("Simulating participant %d, condition %d/%d\n",
                   i, j, n_conds))
 
       sim_ij <- rm3(
         n        = 1,
         size     = trials_per_cond,
-        pars     = pars_i,
+        pars     = c(pars_i, b = 0,
+                   te = design_grid$te[j],
+                   tr = design_grid$tr[j]),
         m3_model = m3_model,
-        act_funs = act_funs,
-        te       = design_grid$te[j],
-        tr       = design_grid$tr[j]
+        act_funs = act_funs
       )
 
       sim_ij <- data.frame(sim_ij)
@@ -266,11 +228,10 @@ recovery_grid <- expand_grid(
 
 # Simulate data for each cell. Each cell uses the first N participants
 # from the same set of true parameters, ensuring comparability.
-sim_data <- recovery_grid %>%
+sim_data <- recovery_grid |>
   mutate(
     cell_id = row_number(),
     data = map2(N, trials_per_cond, ~ {
-      cat(sprintf("  Simulating: N = %d, trials/cond = %d\n", .x, .y))
       simulate_cell(.x, .y, true_native, design_grid,
                     m3_model_custom, m3_act_funs)
     })
@@ -279,18 +240,17 @@ sim_data <- recovery_grid %>%
 ## 2.6) Verify simulated data -------------------------------------------------
 
 # Quick check: inspect one cell (N = 50, trials = 25)
-example_data <- sim_data %>%
-  filter(N == 50, trials_per_cond == 25) %>%
-  pull(data) %>%
-  .[[1]]
+example_data <- sim_data |>
+  filter(N == 50, trials_per_cond == 25) |>
+  pull(data)
+example_data <- example_data[[1]]
 
 # Should have 50 participants × 9 conditions = 450 rows
-cat("Example cell dimensions:", nrow(example_data), "rows\n")
 str(example_data)
 
 # Response proportions should show correct > other > oldinpos/otherold > npl
-example_data %>%
-  summarise(across(correct:npl, ~ mean(.x / 25))) %>%
+example_data |>
+  summarise(across(correct:npl, ~ mean(.x / 25))) |>
   print()
 
 ###############################################################################!
@@ -325,10 +285,13 @@ default_prior(m3_formula_fit, m3_model_custom_fit, data = example_data)
 #
 # Fitting progress is tracked by cell_id. On a multi-core machine, cells
 # could be parallelized across separate R sessions.
-fit_results <- sim_data %>%
+fit_results <- sim_data |>
   mutate(
-    fit = pmap(list(data, N, trials_per_cond, cell_id), function(d, n, t, id) {
-      cat("Fitting cell ", id, ": N = ", n, ", trials/cond = ", t, "\n", sep = "")
+    fit = pmap(
+      list(data, N, trials_per_cond, cell_id),
+      function(d, n, t, id) {
+      cat("Fitting cell ", id, ": N = ", n,
+          ", trials/cond = ", t, "\n", sep = "")
       bmm(
         formula = m3_formula_fit,
         model   = m3_model_custom_fit,
@@ -346,13 +309,13 @@ fit_results <- sim_data %>%
 ## 3.3) Convergence checks -----------------------------------------------------
 
 # Check Rhat and ESS for each cell. All Rhat should be < 1.01.
-convergence_summary <- fit_results %>%
+convergence_summary <- fit_results |>
   mutate(
     rhat_max = map_dbl(fit, ~ max(rhat(.x), na.rm = TRUE)),
     ess_min  = map_dbl(fit, ~ min(
       c(neff_ratio(.x) * ((iter - warmup) * chains)), na.rm = TRUE
     ))
-  ) %>%
+  ) |>
   select(cell_id, N, trials_per_cond, rhat_max, ess_min)
 
 print(convergence_summary)
@@ -365,31 +328,31 @@ print(convergence_summary)
 
 # For each cell, extract the fixed effects (group-level means on link scale)
 # and compare to the true generating means.
-group_recovery <- fit_results %>%
+group_recovery <- fit_results |>
   mutate(
     fixefs = map(fit, ~ {
       fe <- fixef(.x)
       tibble(
         parameter = c("a", "c", "d", "e", "r"),
         recovered_mean  = fe[paste0(c("a", "c", "d", "e", "r"),
-                                     "_Intercept"), "Estimate"],
+                                    "_Intercept"), "Estimate"],
         recovered_lower = fe[paste0(c("a", "c", "d", "e", "r"),
-                                     "_Intercept"), "Q2.5"],
+                                    "_Intercept"), "Q2.5"],
         recovered_upper = fe[paste0(c("a", "c", "d", "e", "r"),
-                                     "_Intercept"), "Q97.5"]
+                                    "_Intercept"), "Q97.5"]
       )
     })
-  ) %>%
-  select(cell_id, N, trials_per_cond, fixefs) %>%
+  ) |>
+  select(cell_id, N, trials_per_cond, fixefs) |>
   unnest(fixefs)
 
 # Add true generating means (on link scale)
-group_recovery <- group_recovery %>%
-  left_join(gen_pars %>% select(parameter, true_mean = mean_link),
+group_recovery <- group_recovery |>
+  left_join(gen_pars |> select(parameter, true_mean = mean_link),
             by = "parameter")
 
 # Compute recovery metrics
-group_recovery <- group_recovery %>%
+group_recovery <- group_recovery |>
   mutate(
     bias     = recovered_mean - true_mean,
     coverage = true_mean >= recovered_lower & true_mean <= recovered_upper
@@ -400,7 +363,8 @@ group_recovery <- group_recovery %>%
 group_plot <- ggplot(group_recovery,
                      aes(x = factor(N), y = recovered_mean,
                          color = coverage)) +
-  geom_hline(aes(yintercept = true_mean), linetype = "dashed", color = "grey50") +
+  geom_hline(aes(yintercept = true_mean),
+             linetype = "dashed", color = "grey50") +
   geom_pointrange(aes(ymin = recovered_lower, ymax = recovered_upper),
                   size = 0.4) +
   facet_grid(trials_per_cond ~ parameter, scales = "free_y",
@@ -415,12 +379,12 @@ group_plot <- ggplot(group_recovery,
 
 group_plot
 
-ggsave(here("figures", "tutorial3_group_recovery.pdf"),
+ggsave(here("figures", "tutorial5_group_recovery.pdf"),
        group_plot, width = 6.5, height = 6)
 
 # Group-level recovery summary table
-group_summary <- group_recovery %>%
-  group_by(N, trials_per_cond) %>%
+group_summary <- group_recovery |>
+  group_by(N, trials_per_cond) |>
   summarise(
     mean_bias     = mean(bias),
     mean_abs_bias = mean(abs(bias)),
@@ -433,7 +397,7 @@ print(group_summary)
 ## 4.3) Extract group-level SD estimates ---------------------------------------
 
 # Compare recovered random effect SDs to the true generating SDs.
-sd_recovery <- fit_results %>%
+sd_recovery <- fit_results |>
   mutate(
     sd_ests = map(fit, ~ {
       vc <- VarCorr(.x)
@@ -449,18 +413,18 @@ sd_recovery <- fit_results %>%
         )
       })
     })
-  ) %>%
-  select(cell_id, N, trials_per_cond, sd_ests) %>%
-  unnest(sd_ests) %>%
-  left_join(gen_pars %>% select(parameter, true_sd = sd_link),
-            by = "parameter") %>%
+  ) |>
+  select(cell_id, N, trials_per_cond, sd_ests) |>
+  unnest(sd_ests) |>
+  left_join(gen_pars |> select(parameter, true_sd = sd_link),
+            by = "parameter") |>
   mutate(
     sd_bias    = recovered_sd - true_sd,
     sd_coverage = true_sd >= sd_lower & true_sd <= sd_upper
   )
 
-sd_summary <- sd_recovery %>%
-  group_by(N, trials_per_cond) %>%
+sd_summary <- sd_recovery |>
+  group_by(N, trials_per_cond) |>
   summarise(
     mean_sd_bias  = mean(sd_bias),
     sd_coverage   = mean(sd_coverage),
@@ -476,7 +440,7 @@ print(sd_summary)
 #
 # coef() returns the total estimate per participant: fixed effect + random
 # effect deviation. These are on the link scale.
-indiv_recovery <- fit_results %>%
+indiv_recovery <- fit_results |>
   mutate(
     indiv = map2(fit, N, function(fit_obj, n) {
       par_names <- c("a", "c", "d", "e", "r")
@@ -494,22 +458,22 @@ indiv_recovery <- fit_results %>%
         )
       })
     })
-  ) %>%
-  select(cell_id, N, trials_per_cond, indiv) %>%
+  ) |>
+  select(cell_id, N, trials_per_cond, indiv) |>
   unnest(indiv)
 
 # Add true individual link-scale values
-true_long <- true_native %>%
-  select(participant, a = a, c = c, d = d, e = e, r = r) %>%
+true_long <- true_native |>
+  select(participant, a = a, c = c, d = d, e = e, r = r) |>
   pivot_longer(-participant, names_to = "parameter",
                values_to = "true_link")
 
-indiv_recovery <- indiv_recovery %>%
+indiv_recovery <- indiv_recovery |>
   left_join(true_long, by = c("participant", "parameter"))
 
 # Compute individual-level recovery metrics per cell × parameter
-indiv_summary <- indiv_recovery %>%
-  group_by(cell_id, N, trials_per_cond, parameter) %>%
+indiv_summary <- indiv_recovery |>
+  group_by(cell_id, N, trials_per_cond, parameter) |>
   summarise(
     correlation = cor(true_link, recovered_link),
     mean_bias   = mean(recovered_link - true_link),
@@ -523,13 +487,13 @@ print(indiv_summary, n = 45)
 ## 4.5) Individual-level scatter plots -----------------------------------------
 
 # Show true vs. recovered for each parameter in the N=100, trials=25 cell
-indiv_best <- indiv_recovery %>%
+indiv_best <- indiv_recovery |>
   filter(N == 100, trials_per_cond == 25)
 
 # Correlation labels for each panel
-corr_labels <- indiv_best %>%
-  group_by(parameter) %>%
-  summarise(correlation = cor(true_link, recovered_link), .groups = "drop") %>%
+corr_labels <- indiv_best |>
+  group_by(parameter) |>
+  summarise(correlation = cor(true_link, recovered_link), .groups = "drop") |>
   mutate(label = paste0("r = ", sprintf("%.2f", correlation)))
 
 scatter_plot <- ggplot(indiv_best,
@@ -546,7 +510,7 @@ scatter_plot <- ggplot(indiv_best,
 
 scatter_plot
 
-ggsave(here("figures", "tutorial3_indiv_recovery_scatter.pdf"),
+ggsave(here("figures", "tutorial5_indiv_recovery_scatter.pdf"),
        scatter_plot, width = 6.5, height = 5)
 
 ## 4.6) Recovery across cells: correlation heatmap -----------------------------
@@ -566,7 +530,7 @@ corr_plot <- ggplot(indiv_summary,
 
 corr_plot
 
-ggsave(here("figures", "tutorial3_recovery_heatmap.pdf"),
+ggsave(here("figures", "tutorial5_recovery_heatmap.pdf"),
        corr_plot, width = 6.5, height = 3.5)
 
 ## 4.7) Note on simulation design ---------------------------------------------

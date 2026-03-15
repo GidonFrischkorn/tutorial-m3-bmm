@@ -70,21 +70,30 @@ create_m3_schematic <- function() {
   formula_w <- 0.18
   formula_h <- 0.10
 
-  # Correct: b + a + c
-  grid.roundrect(x = col_formula, y = row1, width = formula_w, height = formula_h,
-                 gp = gpar(fill = "white", col = "grey40"))
+  # Correct category (b + a + c)
+  grid.roundrect(
+    x = col_formula, y = row1,
+    width = formula_w, height = formula_h,
+    gp = gpar(fill = "white", col = "grey40")
+  )
   grid.text(expression(A[correct] == b + a + c),
             x = col_formula, y = row1, gp = gpar(fontsize = 9))
 
-  # Other: b + a
-  grid.roundrect(x = col_formula, y = row2, width = formula_w, height = formula_h,
-                 gp = gpar(fill = "white", col = "grey40"))
+  # Other category (b + a)
+  grid.roundrect(
+    x = col_formula, y = row2,
+    width = formula_w, height = formula_h,
+    gp = gpar(fill = "white", col = "grey40")
+  )
   grid.text(expression(A[other] == b + a),
             x = col_formula, y = row2, gp = gpar(fontsize = 9))
 
-  # NPL: b
-  grid.roundrect(x = col_formula, y = row3, width = formula_w, height = formula_h,
-                 gp = gpar(fill = "white", col = "grey40"))
+  # NPL category (b only)
+  grid.roundrect(
+    x = col_formula, y = row3,
+    width = formula_w, height = formula_h,
+    gp = gpar(fill = "white", col = "grey40")
+  )
   grid.text(expression(A[NPL] == b),
             x = col_formula, y = row3, gp = gpar(fontsize = 9))
 
@@ -93,21 +102,21 @@ create_m3_schematic <- function() {
   arr <- arrow(length = unit(0.08, "inches"), type = "closed")
 
   # b -> all formulas
-  grid.lines(x = c(param_col + box_w/2, col_formula - formula_w/2),
+  grid.lines(x = c(param_col + box_w / 2, col_formula - formula_w / 2),
              y = c(row3, row3), gp = arrow_gp, arrow = arr)
-  grid.lines(x = c(param_col + box_w/2, col_formula - formula_w/2),
+  grid.lines(x = c(param_col + box_w / 2, col_formula - formula_w / 2),
              y = c(row3, row2), gp = arrow_gp, arrow = arr)
-  grid.lines(x = c(param_col + box_w/2, col_formula - formula_w/2),
+  grid.lines(x = c(param_col + box_w / 2, col_formula - formula_w / 2),
              y = c(row3, row1), gp = arrow_gp, arrow = arr)
 
   # a -> correct and other
-  grid.lines(x = c(param_col + box_w/2, col_formula - formula_w/2),
+  grid.lines(x = c(param_col + box_w / 2, col_formula - formula_w / 2),
              y = c(row2, row2), gp = arrow_gp, arrow = arr)
-  grid.lines(x = c(param_col + box_w/2, col_formula - formula_w/2),
+  grid.lines(x = c(param_col + box_w / 2, col_formula - formula_w / 2),
              y = c(row2, row1), gp = arrow_gp, arrow = arr)
 
   # c -> correct only
-  grid.lines(x = c(param_col + 0.12 + box_w/2, col_formula - formula_w/2),
+  grid.lines(x = c(param_col + 0.12 + box_w / 2, col_formula - formula_w / 2),
              y = c(row1, row1), gp = arrow_gp, arrow = arr)
 
   # --- Choice rule box ---
@@ -119,11 +128,11 @@ create_m3_schematic <- function() {
             gp = gpar(fontsize = 9))
 
   # --- Arrows: formulas -> choice rule ---
-  grid.lines(x = c(col_formula + formula_w/2, col_rule - rule_w/2),
+  grid.lines(x = c(col_formula + formula_w / 2, col_rule - rule_w / 2),
              y = c(row1, row1 - 0.05), gp = arrow_gp, arrow = arr)
-  grid.lines(x = c(col_formula + formula_w/2, col_rule - rule_w/2),
+  grid.lines(x = c(col_formula + formula_w / 2, col_rule - rule_w / 2),
              y = c(row2, row2), gp = arrow_gp, arrow = arr)
-  grid.lines(x = c(col_formula + formula_w/2, col_rule - rule_w/2),
+  grid.lines(x = c(col_formula + formula_w / 2, col_rule - rule_w / 2),
              y = c(row3, row3 + 0.05), gp = arrow_gp, arrow = arr)
 
   # --- Response probability labels ---
@@ -146,11 +155,11 @@ create_m3_schematic <- function() {
             gp = gpar(fontsize = 9))
 
   # --- Arrows: choice rule -> probabilities ---
-  grid.lines(x = c(col_rule + rule_w/2, col_prob - prob_w/2),
+  grid.lines(x = c(col_rule + rule_w / 2, col_prob - prob_w / 2),
              y = c(row1 - 0.05, row1), gp = arrow_gp, arrow = arr)
-  grid.lines(x = c(col_rule + rule_w/2, col_prob - prob_w/2),
+  grid.lines(x = c(col_rule + rule_w / 2, col_prob - prob_w / 2),
              y = c(row2, row2), gp = arrow_gp, arrow = arr)
-  grid.lines(x = c(col_rule + rule_w/2, col_prob - prob_w/2),
+  grid.lines(x = c(col_rule + rule_w / 2, col_prob - prob_w / 2),
              y = c(row3 + 0.05, row3), gp = arrow_gp, arrow = arr)
 
   # --- Option counts annotation ---
