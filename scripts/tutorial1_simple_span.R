@@ -1,21 +1,4 @@
 #' Tutorial 1: Simple Span M3 Model with bmm
-#'
-#' This script demonstrates the complete M3 workflow using data from:
-#' Oberauer, K. (2019). Working Memory Capacity Limits Memory for Bindings.
-#' Journal of Cognition, 2(1), 40. https://doi.org/10/gf8p8c
-#' Data available at: https://osf.io/qy5sd/
-#'
-#' The paper contains two between-subjects experiments that differ in stimulus
-#' set type:
-#'  - Experiment 1 ("open set"): new word pairs on each trial
-#'  - Experiment 2 ("closed set"): same small set of words reused across trials
-#' Set size (2, 4, 6, 8) is a within-subjects factor in both experiments.
-#'
-#' In this script, you will see:
-#'  1) How to prepare trial-level data for the M3 simple span model
-#'  2) How to specify and fit the M3 model with bmm (simple and softmax rules)
-#'  3) How to evaluate model fit with posterior predictive checks
-#'  4) How to extract, interpret, and plot parameter estimates
 
 ###############################################################################!
 # 0) R Setup: Packages & Data -------------------------------------------------
