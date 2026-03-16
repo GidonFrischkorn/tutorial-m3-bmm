@@ -19,7 +19,7 @@ author:
 author-note:
   disclosures:
     study-registration: "This study was not preregistered."
-    data-sharing: "Data, analysis code, and companion R scripts for all four tutorials are available on [GitHub](https://github.com/GidonFrischkorn/tutorial-m3-bmm)."
+    data-sharing: "Data, analysis code, and companion R scripts for all four tutorials are available on [OSF](https://osf.io/yb7wm/) and [GitHub](https://github.com/GidonFrischkorn/tutorial-m3-bmm)."
     conflict-of-interest: "The authors declare no conflicts of interest."
     financial-support: "This research was supported by a grant from the Swiss National Science Foundation (SNSF) awarded to Gidon T. Frischkorn (Grant No. 208828)."
     gratitude: "We thank Isabel Courage for valuable feedback during the development of the M3 implementation in the bmm R package."
@@ -323,7 +323,7 @@ Because the $M^3$ framework can be applied to different paradigms — including 
 
 # The $M^3$ Framework
 
-Consider a cued recall task (e.g., remembering letters in serial positions or icons in spatial positions) in which a participant sees a retrieval cue and selects a response from a set containing the correct target, other studied items, and new lures. @fig-task-example illustrates this task structure for a simple span paradigm. Each response falls into one of three categories: *correct* — the item associated with the probed position, *other-list intrusion* — a studied item from a different position, or *not-presented lure* (NPL) — an item not presented during the trial. The $M^3$ framework explains each category's selection frequency by specifying activation formulas: different activation sources feed into each category, and response probabilities arise as the result of applying choice rules that implement competitive selection among all options.
+Consider a cued recall task in which a participant studies a sequence of items (e.g., letters at serial positions or icons at spatial locations) and later sees a retrieval cue and selects a response from a set of alternatives. @fig-task-example illustrates this task structure for a simple span paradigm. As shown in the figure, each response falls into one of three categories: *correct* — the item associated with the probed position, *other-list intrusion* — a studied item from a different position, or *not-presented lure* (NPL) — an item not presented during the trial. The $M^3$ framework explains each category's selection frequency by specifying activation formulas: different activation sources feed into each category, and response probabilities arise as the result of applying choice rules that implement competitive selection among all options.
 
 ```{r}
 #| label: fig-task-example
@@ -562,7 +562,7 @@ knitr::include_graphics(here("figures", "tutorial1_param_estimates_softmax.pdf")
 
 As introduced in the $M^3$ framework section, the choice rule determines how activations are converted to response probabilities. Because the choice rule affects both the parameter scale and the model's fit to data, selecting the appropriate rule is an important modeling decision. To compare the two options, we fit a second model with `choice_rule = "simple"` using the same formula and data. Under the simple rule, $a$ and $c$ are estimated on the log link, so the raw coefficients must be exponentiated to obtain activation values.
 
-The posterior predictive checks for both models are qualitatively similar, but the softmax rule tends to capture the tails of the response distribution more accurately, particularly for the NPL category at larger set sizes. The simple rule slightly overpredicts other-list intrusions in some conditions. The companion script generates the full posterior predictive figures for both models (available in the supplementary materials).
+The posterior predictive checks for both models are qualitatively similar, but the softmax rule tends to capture the tails of the response distribution more accurately, particularly for the NPL category at larger set sizes. The simple rule slightly overpredicts other-list intrusions in some conditions. The companion script (`scripts/tutorial1_simple_span.R`) generates posterior predictive figures for both models; readers can inspect these in the online supplement to compare the fit of both choice rules across all conditions.
 
 For a formal comparison, we computed the marginal likelihood of each model via bridge sampling [@gronau2017bridge] and derive a Bayes factor. This requires `save_pars(all = TRUE)` during fitting (set in the `bmm()` call above):
 
@@ -588,23 +588,21 @@ hypothesis(fit_m3_ss_softmax,
   "(c_expopenset:ss_lin + c_expclosedset:ss_lin) / 2 = 0")
 ```
 
-This returns a Savage-Dickey density ratio: the ratio of prior to posterior density at the point null. Values substantially greater than 1 indicate that the data have shifted belief away from equality; values near 1 indicate inconclusive evidence. There is strong evidence for $c$ decreasing with larger set size (BF$_{10}$ = `r er_ss_c_fmt`). We can similarly test whether set size effects differ between experiments, and whether $c$ exceeds $a$ within each experiment:
+This returns a Savage-Dickey density ratio: the ratio of prior to posterior density at the point null. Values substantially greater than 1 indicate that the data have shifted belief away from equality; values near 1 indicate inconclusive evidence. There is strong evidence for $c$ decreasing with larger set size (BF$_{10}$ = `r er_ss_c_fmt`). We can similarly test whether set size reduces item memory and whether the set size effects differ between experiments:
 
 ```{r}
 #| label: t1-hypothesis-setsize
 #| eval: false
+# Set size effect on item memory (averaged across experiments)
+hypothesis(fit_m3_ss_softmax,
+  "(a_expopenset:ss_lin + a_expclosedset:ss_lin) / 2 = 0")
+
 # Experiment difference in set size effect on c
 hypothesis(fit_m3_ss_softmax,
   "c_expopenset:ss_lin = c_expclosedset:ss_lin")
-
-# Comparison of c and a for the open-set experiment
-hypothesis(fit_m3_ss_softmax, "c_expopenset = a_expopenset")
-
-# Comparison of c and a for the closed-set experiment
-hypothesis(fit_m3_ss_softmax, "c_expclosedset = a_expclosedset")
 ```
 
-The set size effect on $c$ is equal for the closed-set compared to the open-set experiment (BF$_{01}$ = `r er_exp_ss_c_fmt`). There is also moderate evidence that set size reduces $a$ (BF$_{10}$ = `r er_ss_a_fmt`). Comparing $c$ and $a$ directly, the open-set experiment yields inconclusive evidence (BF$_{10}$ = `r er_ca_fmt`), while the closed-set experiment shows strong evidence that $c > a$ (BF$_{10}$ = `r er_ca_closed_fmt`). The companion script contains the full set of six hypothesis tests.
+There is also moderate evidence that set size reduces $a$ (BF$_{10}$ = `r er_ss_a_fmt`). The set size effect on $c$ is comparable across experiments (BF$_{01}$ = `r er_exp_ss_c_fmt`). The companion script contains the full set of hypothesis tests.
 
 # Tutorial 2: Complex Span $M^3$
 
@@ -612,7 +610,7 @@ This tutorial extends the workflow to tasks where distractors appear alongside m
 
 ## What makes complex span different
 
-Complex span tasks impose higher cognitive load than simple span tasks because they require participants to perform a processing task and a memory task simultaneously [for a detailed description, see @li2026filtering]. In these tasks, stimuli that only serve the processing task but not the memory task may be encoded into working memory and interfere with the maintenance of other items. These stimuli are referred to as distractors and may also be recalled at retrieval. Therefore, in addition to the three response categories used in simple span tasks, complex span tasks include two additional categories to account for distractor responses: *paired distractor*, which refers to the distractor associated with the context of the tested target, and *other distractor*, which refers to distractors from different contexts. In the complex span (`cs`) model, a filtering process (represented by parameter $f$) determines the extent to which a distractor is activated relative to a memorandum. In the model for complex span tasks proposed by @oberauer2019simple it appears as a multiplier on item memory and context binding for distractor categories:
+Complex span tasks impose higher cognitive load than simple span tasks because they require participants to perform a processing task and a memory task simultaneously [for a detailed description and task illustration, see @li2026filtering, Figure 1]. In these tasks, stimuli that only serve the processing task but not the memory task may be encoded into working memory and interfere with the maintenance of other items. These stimuli are referred to as distractors and may also be recalled at retrieval. Therefore, in addition to the three response categories used in simple span tasks, complex span tasks include two additional categories to account for distractor responses: *paired distractor*, which refers to the distractor associated with the context of the tested target, and *other distractor*, which refers to distractors from different contexts. In the complex span (`cs`) model, a filtering process (represented by parameter $f$) determines the extent to which a distractor is activated relative to a memorandum. In the model for complex span tasks proposed by @oberauer2019simple it appears as a multiplier on item memory and context binding for distractor categories:
 
 $$
 \begin{aligned}
@@ -808,7 +806,7 @@ priors_custom <- c(
 
 ## Model fitting and evaluation
 
-Fitting follows the same `bmm()` call as in the previous tutorials. The model converged without issues ($\hat{R} \leq$ `r val_rhat_t3`, bulk ESS $>$ `r val_ess_t3`, no divergent transitions). @fig-t3-pp-check shows the posterior predictive check. Predicted proportions closely match the observed data across all conditions and categories, comparable to the `cs` fit in Tutorial 2.
+Fitting follows the same `bmm()` call as in the previous tutorials. The model converged without issues ($\hat{R} \leq$ `r val_rhat_t3`, bulk ESS $>$ `r val_ess_t3`, no divergent transitions). @fig-t3-pp-check shows the posterior predictive check. Predicted proportions closely match the observed data across all conditions and categories. Compared to the `cs` fit in Tutorial 2, the custom version captures the error categories (distractor and other intrusions) more precisely, reflecting the additional flexibility of separate ratio parameters for item memory and context binding.
 
 ```{r}
 #| label: fig-t3-pp-check
@@ -935,6 +933,7 @@ We hope that the implementation of the $M^3$ framework in the `bmm` package and 
 ## Additional resources
 
 -   `bmm` package documentation and $M^3$ vignette: <https://venpopov.github.io/bmm/articles/bmm_m3.html>
+-   OSF repository with data, code, and materials: <https://osf.io/yb7wm/>
 -   Full companion scripts for all four tutorials on [GitHub](https://github.com/GidonFrischkorn/tutorial-m3-bmm)
 -   $M^3$ framework paper: @oberauer2019simple
 -   Systematic parameter recovery for $M^3$: @goettmann2025recovery

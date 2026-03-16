@@ -1,22 +1,4 @@
 #' Tutorial 3: Custom M3 — Filtering with Separate Ratio Parameters
-#'
-#' This script demonstrates how to define and fit a custom M3 using
-#' the same data as Tutorial 2 (Li, Frischkorn, & Oberauer, 2026).
-#'
-#' The standard cs version uses a single f parameter that attenuates both item
-#' memory and context binding equally for distractors. The custom version here
-#' replaces f with two separate ratio parameters:
-#'   - ra: proportion of item memory activation transferred to distractors
-#'   - rc: proportion of context binding activation transferred to distractors
-#'
-#' This allows testing whether filtering operates differently on item memory
-#' vs. context binding — the key research question in Li et al. (2026).
-#'
-#' In this script, you will see:
-#'  1) How to define a custom M3 with user-specified activation formulas
-#'  2) How to specify link functions for bounded parameters
-#'  3) How to handle non-identified parameters in the control condition
-#'  4) How to compare the custom version with the standard cs version
 
 ###############################################################################!
 # 0) R Setup: Packages & Data -------------------------------------------------

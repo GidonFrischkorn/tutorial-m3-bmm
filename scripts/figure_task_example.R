@@ -37,7 +37,7 @@ p_encoding <- ggplot(enc_data) +
   # title
   annotate("text", x = 3.5, y = 0.85, label = "Encoding",
            size = 4.5, fontface = "bold") +
-  coord_fixed(ratio = 1, xlim = c(0.2, 6.8), ylim = c(-3.2, 1.1)) +
+  coord_fixed(ratio = 1, xlim = c(0.2, 7.8), ylim = c(-3.2, 1.1)) +
   theme_void()
 
 # ============================================================================
@@ -102,7 +102,7 @@ p_retrieval <- ggplot() +
 # ============================================================================
 
 task_fig <- p_encoding + p_retrieval +
-  plot_layout(widths = c(1, 1.2)) +
+  plot_layout(widths = c(1, 1)) +
   plot_annotation(tag_levels = "A") &
   theme(plot.margin = margin(0, 5, 0, 5))
 

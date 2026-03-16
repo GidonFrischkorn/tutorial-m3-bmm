@@ -65,6 +65,10 @@ Open the RStudio project (`tutorial-m3-bmm.Rproj`) and run any script from `scri
 - **Oberauer (2019)**: Oberauer, K. (2019). Working memory capacity limits memory for bindings. *Journal of Cognition, 2*(1), 40. https://doi.org/10.5334/joc.86. Data: [https://osf.io/vekpd/](https://osf.io/vekpd/)
 - **Li et al. (2026)**: Li, C., Frischkorn, G. T., & Oberauer, K. (2026). Can we process information without encoding it into working memory? *Journal of Experimental Psychology: Learning, Memory, and Cognition*. https://doi.org/10.1037/xlm0001585. Data: [https://osf.io/wpcx5/](https://osf.io/wpcx5/)
 
+## OSF Repository
+
+All data, code, and materials are also archived on OSF: [https://osf.io/yb7wm/](https://osf.io/yb7wm/)
+
 ## References
 
 - Oberauer, K., & Lewandowsky, S. (2019). Simple measurement models for complex working-memory tasks. *Psychological Review, 126*(6), 880–932. https://doi.org/10.1037/rev0000159
