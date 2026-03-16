@@ -251,6 +251,7 @@ Li}{0000-0001-8815-6189}}
 
 \par{This study was not preregistered. Data, analysis code, and
 companion R scripts for all four tutorials are available on
+\href{https://osf.io/yb7wm/}{OSF} and
 \href{https://github.com/GidonFrischkorn/tutorial-m3-bmm}{GitHub}.  The
 authors declare no conflicts of interest. This research was supported by
 a grant from the Swiss National Science Foundation (SNSF) awarded to
@@ -437,20 +438,19 @@ validation.
 \section{\texorpdfstring{The \(M^3\)
 Framework}{The M\^{}3 Framework}}\label{the-m3-framework}
 
-Consider a cued recall task (e.g., remembering letters in serial
-positions or icons in spatial positions) in which a participant sees a
-retrieval cue and selects a response from a set containing the correct
-target, other studied items, and new lures.
-Figure~\ref{fig-task-example} illustrates this task structure for a
-simple span paradigm. Each response falls into one of three categories:
-\emph{correct} --- the item associated with the probed position,
-\emph{other-list intrusion} --- a studied item from a different
-position, or \emph{not-presented lure} (NPL) --- an item not presented
-during the trial. The \(M^3\) framework explains each category's
-selection frequency by specifying activation formulas: different
-activation sources feed into each category, and response probabilities
-arise as the result of applying choice rules that implement competitive
-selection among all options.
+Consider a cued recall task in which a participant studies a sequence of
+items (e.g., letters at serial positions or icons at spatial locations)
+and later sees a retrieval cue and selects a response from a set of
+alternatives. Figure~\ref{fig-task-example} illustrates this task
+structure for a simple span paradigm. As shown in the figure, each
+response falls into one of three categories: \emph{correct} --- the item
+associated with the probed position, \emph{other-list intrusion} --- a
+studied item from a different position, or \emph{not-presented lure}
+(NPL) --- an item not presented during the trial. The \(M^3\) framework
+explains each category's selection frequency by specifying activation
+formulas: different activation sources feed into each category, and
+response probabilities arise as the result of applying choice rules that
+implement competitive selection among all options.
 
 \begin{figure}
 
@@ -987,9 +987,11 @@ The posterior predictive checks for both models are qualitatively
 similar, but the softmax rule tends to capture the tails of the response
 distribution more accurately, particularly for the NPL category at
 larger set sizes. The simple rule slightly overpredicts other-list
-intrusions in some conditions. The companion script generates the full
-posterior predictive figures for both models (available in the
-supplementary materials).
+intrusions in some conditions. The companion script
+(\texttt{scripts/tutorial1\_simple\_span.R}) generates posterior
+predictive figures for both models; readers can inspect these in the
+online supplement to compare the fit of both choice rules across all
+conditions.
 
 For a formal comparison, we computed the marginal likelihood of each
 model via bridge sampling (\citeproc{ref-gronau2017bridge}{Gronau et
@@ -1034,30 +1036,25 @@ posterior density at the point null. Values substantially greater than 1
 indicate that the data have shifted belief away from equality; values
 near 1 indicate inconclusive evidence. There is strong evidence for
 \(c\) decreasing with larger set size (BF\(_{10}\) = \(\geq\) 10,000).
-We can similarly test whether set size effects differ between
-experiments, and whether \(c\) exceeds \(a\) within each experiment:
+We can similarly test whether set size reduces item memory and whether
+the set size effects differ between experiments:
 
 \begin{Shaded}
 \begin{Highlighting}[]
+\CommentTok{\# Set size effect on item memory (averaged across experiments)}
+\FunctionTok{hypothesis}\NormalTok{(fit\_m3\_ss\_softmax,}
+  \StringTok{"(a\_expopenset:ss\_lin + a\_expclosedset:ss\_lin) / 2 = 0"}\NormalTok{)}
+
 \CommentTok{\# Experiment difference in set size effect on c}
 \FunctionTok{hypothesis}\NormalTok{(fit\_m3\_ss\_softmax,}
   \StringTok{"c\_expopenset:ss\_lin = c\_expclosedset:ss\_lin"}\NormalTok{)}
-
-\CommentTok{\# Comparison of c and a for the open{-}set experiment}
-\FunctionTok{hypothesis}\NormalTok{(fit\_m3\_ss\_softmax, }\StringTok{"c\_expopenset = a\_expopenset"}\NormalTok{)}
-
-\CommentTok{\# Comparison of c and a for the closed{-}set experiment}
-\FunctionTok{hypothesis}\NormalTok{(fit\_m3\_ss\_softmax, }\StringTok{"c\_expclosedset = a\_expclosedset"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
-The set size effect on \(c\) is equal for the closed-set compared to the
-open-set experiment (BF\(_{01}\) = 62.3). There is also moderate
-evidence that set size reduces \(a\) (BF\(_{10}\) = 5.85). Comparing
-\(c\) and \(a\) directly, the open-set experiment yields inconclusive
-evidence (BF\(_{10}\) = 2.32), while the closed-set experiment shows
-strong evidence that \(c > a\) (BF\(_{10}\) = \(\geq\) 10,000). The
-companion script contains the full set of six hypothesis tests.
+There is also moderate evidence that set size reduces \(a\) (BF\(_{10}\)
+= 5.41). The set size effect on \(c\) is comparable across experiments
+(BF\(_{01}\) = 59.7). The companion script contains the full set of
+hypothesis tests.
 
 \section{\texorpdfstring{Tutorial 2: Complex Span
 \(M^3\)}{Tutorial 2: Complex Span M\^{}3}}\label{tutorial-2-complex-span-m3}
@@ -1075,20 +1072,21 @@ different}\label{what-makes-complex-span-different}
 
 Complex span tasks impose higher cognitive load than simple span tasks
 because they require participants to perform a processing task and a
-memory task simultaneously (for a detailed description, see
-\citeproc{ref-li2026filtering}{Li et al., 2026}). In these tasks,
-stimuli that only serve the processing task but not the memory task may
-be encoded into working memory and interfere with the maintenance of
-other items. These stimuli are referred to as distractors and may also
-be recalled at retrieval. Therefore, in addition to the three response
-categories used in simple span tasks, complex span tasks include two
-additional categories to account for distractor responses: \emph{paired
-distractor}, which refers to the distractor associated with the context
-of the tested target, and \emph{other distractor}, which refers to
-distractors from different contexts. In the complex span (\texttt{cs})
-model, a filtering process (represented by parameter \(f\)) determines
-the extent to which a distractor is activated relative to a memorandum.
-In the model for complex span tasks proposed by Oberauer and Lewandowsky
+memory task simultaneously (for a detailed description and task
+illustration, see \citeproc{ref-li2026filtering}{Li et al., 2026, Figure
+1}). In these tasks, stimuli that only serve the processing task but not
+the memory task may be encoded into working memory and interfere with
+the maintenance of other items. These stimuli are referred to as
+distractors and may also be recalled at retrieval. Therefore, in
+addition to the three response categories used in simple span tasks,
+complex span tasks include two additional categories to account for
+distractor responses: \emph{paired distractor}, which refers to the
+distractor associated with the context of the tested target, and
+\emph{other distractor}, which refers to distractors from different
+contexts. In the complex span (\texttt{cs}) model, a filtering process
+(represented by parameter \(f\)) determines the extent to which a
+distractor is activated relative to a memorandum. In the model for
+complex span tasks proposed by Oberauer and Lewandowsky
 (\citeproc{ref-oberauer2019simple}{2019}) it appears as a multiplier on
 item memory and context binding for distractor categories:
 
@@ -1285,11 +1283,11 @@ formally using \texttt{brms::hypothesis()}:
 \end{Shaded}
 
 The evidence ratio for the \(f\) comparison indicated that filtering is
-equivalent between cue conditions (BF\(_{01}\) = 10.2). There is
+equivalent between cue conditions (BF\(_{01}\) = 9.81). There is
 inconclusive evidence for item memory \(a\) comparing the distractor
-conditions to the control (BF\(_{10}\) = 0.42); however, context
+conditions to the control (BF\(_{10}\) = 0.44); however, context
 activation \(c\) is lower in the distractor conditions (BF\(_{10}\) =
-7.54).
+7.66).
 
 \subsection{Comparison with the published
 model}\label{comparison-with-the-published-model}
@@ -1415,8 +1413,10 @@ tutorials. The model converged without issues (\(\hat{R} \leq\) 1.007,
 bulk ESS \(>\) 794, no divergent transitions).
 Figure~\ref{fig-t3-pp-check} shows the posterior predictive check.
 Predicted proportions closely match the observed data across all
-conditions and categories, comparable to the \texttt{cs} fit in Tutorial
-2.
+conditions and categories. Compared to the \texttt{cs} fit in Tutorial
+2, the custom version captures the error categories (distractor and
+other intrusions) more precisely, reflecting the additional flexibility
+of separate ratio parameters for item memory and context binding.
 
 \begin{figure}
 
@@ -1488,8 +1488,8 @@ As in Tutorial 2, we can test parameter differences formally. Within
 both the pre-cue (BF\(_{10}\) = \(\geq\) 10,000) and retro-cue condition
 (BF\(_{10}\) = \(\geq\) 10,000), there is strong evidence that
 \(r_a > r_c\). Across conditions, \(r_a\) does not differ between
-pre-cue and retro-cue (BF\(_{01}\) = 6.51), and the same holds for
-\(r_c\) (BF\(_{01}\) = 7.35). Item memory transfers to distractors
+pre-cue and retro-cue (BF\(_{01}\) = 6.23), and the same holds for
+\(r_c\) (BF\(_{01}\) = 7.33). Item memory transfers to distractors
 regardless of cue timing, while context binding is selectively
 attenuated, consistent with the view that filtering operates on binding
 rather than item activation.
@@ -1720,6 +1720,9 @@ tool.
 \item
   \texttt{bmm} package documentation and \(M^3\) vignette:
   \url{https://venpopov.github.io/bmm/articles/bmm_m3.html}
+\item
+  OSF repository with data, code, and materials:
+  \url{https://osf.io/yb7wm/}
 \item
   Full companion scripts for all four tutorials on
   \href{https://github.com/GidonFrischkorn/tutorial-m3-bmm}{GitHub}
