@@ -1,11 +1,25 @@
+# R
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
-.DS_Store
 Rplots.pdf
 
-/local
-/output
+# Rendered Quarto outputs (regenerable from .qmd source)
+manuscript/*.html
+manuscript/*.pdf
+manuscript/*.docx
+manuscript/*_files/
+manuscript/*.tex
+manuscript/*.fff
 
+# Simulation output (large files)
+/output
+/figures
+
+# Local files (working docs)
+/local
+
+# OS
+.DS_Store
 /.luarc.json
