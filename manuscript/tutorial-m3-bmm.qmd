@@ -34,7 +34,7 @@ floatsintext: true
 output-dir: "."
 bibliography: references.bib
 abstract:
-  "The memory measurement model ($M^3$) decomposes categorical response data from memory tasks into latent activation parameters, separating item memory from context-specific binding via competitive retrieval. This tutorial introduces the $M^3$ framework and demonstrates how to apply it to empirical data, covering model selection, parameter interpretation, custom model specification, and simulation-based validation. We use the bmm R package, which provides a standardized interface for fitting Bayesian hierarchical $M^3$. Four worked examples build progressively: fitting a simple span $M^3$ to cued recall data, where Bayes factor comparison favors the softmax over the simple choice rule; extending the analysis to a complex span task with distractor categories and a filtering parameter; defining a custom $M^3$ that relaxes assumptions of the standard version by separating item and binding transfer to distractors; and validating the custom specification through parameter recovery simulation. Complete R scripts accompany each tutorial. After completing the tutorials, readers will be able to apply standard and custom $M^3$ to their own data and validate new model specifications through simulation."
+  "The memory measurement model ($M^3$) decomposes categorical response data from memory tasks into latent activation parameters, separating item memory from context-specific binding via competitive retrieval. This tutorial introduces the $M^3$ framework and demonstrates how to apply it to empirical data using the bmm R package, which provides a standardized interface for fitting Bayesian hierarchical $M^3$. Four worked examples build progressively: In Tutorials 1 and 2, we fit $M^3$ to two common working memory paradigms — simple span and complex span — demonstrating how different choice rules can be applied and how distractor categories extend the basic model. In Tutorial 3, we use the complex span data to illustrate how to build a custom specification based on different theoretical assumptions. Tutorial 4 provides a simulation-based workflow for validating custom specifications through parameter recovery. Complete R scripts accompany each tutorial. After completing the tutorials, readers will be able to apply standard and custom $M^3$ to their own data and validate new model specifications through simulation."
 keywords:
   - working memory
   - measurement model
@@ -315,11 +315,11 @@ Observed performance in memory and decision tasks is often summarized by overall
 
 Working memory research frequently relies on tasks that inherently yield response frequencies across discrete outcome categories, such as correct responses, feature confusions, location errors, or intrusions [@oberauer2018benchmarks]. For discrete feature spaces (e.g., words, numbers, letters), these data are naturally multinomial: each retrieval produces one of several mutually exclusive response types. Thus, theoretical claims can often be evaluated by how experimental manipulations and individual differences redistribute probability mass across these categories.
 
-The recently proposed memory measurement model [$M^3$; @oberauer2019simple] framework provides one such decomposition. Its core assumptions are that (a) multiple activation sources contribute to each response category and that (b) selection among categories follows a competitive retrieval rule [@luce1959individual]. Although the $M^3$ framework was introduced for working memory tasks, the general architecture is domain-general: whenever a task yields categorical responses that can be traced to distinct latent activation sources driving competitive selection, the framework applies.[^1]
+The recently proposed memory measurement model $M^3$ [@oberauer2019simple] framework provides one such decomposition. Its core assumptions are that (a) multiple activation sources contribute to each response category and that (b) selection among categories follows a competitive retrieval rule [@luce1959individual]. Although the $M^3$ framework was introduced for working memory tasks, the general architecture is domain-general: whenever a task yields categorical responses that can be traced to distinct latent activation sources driving competitive selection, the framework applies.[^1]
 
 [^1]: Readers familiar with multinomial processing tree (MPT) models will note similarities: both frameworks decompose categorical response distributions into latent process parameters. However, whereas MPT models use discrete processing trees with binary branching probabilities [@batchelder1999theoretical; e.g., @heck2018treebugs for Bayesian hierarchical implementations], $M^3$ uses continuous activation values with competitive selection, making it particularly suited for theories emphasizing graded memory strength [for a detailed comparison, see @oberauer2019simple].
 
-Because the $M^3$ framework can be applied to different paradigms — including simple span, complex span, and memory updating tasks — and can incorporate varied processes such as distractor filtering or removal of outdated information, the activation formulas that drive response selection typically vary across tasks and response categories. Beyond these existing applications, researchers can develop their own model specifications tailored to their paradigm and theoretical questions. Each new application, however, has so far required translating the model into custom JAGS or Stan code, making implementations error-prone and hard to reuse. The `bmm` R package [@bmm2025] addresses this limitation by providing a standardized, low-code workflow for specifying, fitting, and evaluating Bayesian hierarchical $M^3$, shifting the burden of routine implementation details away from users and toward theory-driven model development and interpretation. In this tutorial, we illustrate this approach with four worked examples covering the standard simple span (ss) and complex span (cs) tasks, a custom extension, and parameter recovery as model validation.
+Because the $M^3$ framework can be applied to different paradigms — including simple span [e.g., @oberauer2019bindings; @loaiza2024active], complex span [@schubert2023working; @li2026filtering], and memory updating tasks [@li2025updating; @li2025benefit] — and can incorporate varied processes such as distractor filtering or removal of outdated information, the activation formulas that drive response selection typically vary across tasks and response categories. Beyond these existing applications, researchers can develop their own model specifications tailored to their paradigm and theoretical questions. Each new application, however, has so far required translating the model into custom JAGS, Stan, or `brms` code using advanced non-linear formula syntax, making implementations error-prone and hard to reuse. The `bmm` R package [@bmm2025] addresses this limitation by providing a standardized, low-code workflow for specifying, fitting, and evaluating Bayesian hierarchical $M^3$, shifting the burden of routine implementation details away from users and toward theory-driven model development and interpretation. In this tutorial, we illustrate this approach with four worked examples covering the standard simple span (ss) and complex span (cs) tasks, a custom extension, and parameter recovery as model validation.
 
 # The $M^3$ Framework
 
@@ -401,7 +401,7 @@ The softmax rule is formally equivalent to an $n$-alternative forced-choice sign
 
 The **simple span** (`ss`) version implements $M^3$ for cued recall tasks separating three response categories (correct response, other, lures) with two free parameters ($a$, $c$). It implements the additive activation formula proposed by @oberauer2019simple.
 
-The **complex span** (`cs`) version extends the simple span to tasks that interleave distractor processing with memorization. It requires that memoranda and distractors are drawn from the same material so that distractors can plausibly intrude during retrieval [for examples, see @oberauer2019simple; @li2026filtering]. The `cs` version separates five response categories (correct, paired distractor, other memorandum, other distractor, and NPL) with three free parameters ($a$, $c$, $f$). The additional parameter $f$ captures distractor filtering efficiency on a scale from 0 to 1: $f = 0$ indicates perfect filtering (distractors receive only baseline activation), while $f = 1$ indicates no filtering (distractors are activated as strongly as memoranda).
+The **complex span** (`cs`) version extends the simple span to tasks that interleave distractor processing with memorization. It requires that memoranda and distractors are drawn from the same material so that distractors can plausibly intrude during retrieval [@li2026filtering; for examples, see @oberauer2019simple]. The `cs` version separates five response categories (correct, paired distractor, other memorandum, other distractor, and NPL) with three free parameters ($a$, $c$, $f$). The additional parameter $f$ captures distractor filtering efficiency on a scale from 0 to 1: $f = 0$ indicates perfect filtering (distractors receive only baseline activation), while $f = 1$ indicates no filtering (distractors are activated as strongly as memoranda).
 
 The **custom** version allows user-defined response categories, activation formulas, and parameters. Researchers can specify $M^3$ of arbitrary complexity for novel task designs, as long as the model remains identified. The only requirement is that all activation formulas include the baseline activation $b$, which reflects random guessing if no other activations were included. Tutorial 3 demonstrates how to define and fit a custom version, and Tutorial 4 shows how to validate custom specifications through parameter recovery simulations.
 
@@ -672,7 +672,7 @@ In the control condition, no distractors are presented, so $f$ does not influenc
 #| label: t2-priors
 priors_cs <- c(
   prior(constant(0), nlpar = "f", coef = "conditioncontrol"),
-  prior(constant(0),  class = "sd", nlpar = "f",
+  prior(constant(0), class = "sd", nlpar = "f",
         coef = "conditioncontrol", group = "participant")
 )
 ```
@@ -713,7 +713,7 @@ f_retro <- plogis(draws$b_f_conditionretro)
 knitr::include_graphics(here("figures", "tutorial2_param_estimates.pdf"))
 ```
 
-On the probability scale, $f$ is around 0.65 in both conditions (pre-cue: $M$ = `r val_f_pre_m`, 95% HDI [`r val_f_pre_lo`, `r val_f_pre_hi`]; retro-cue: $M$ = `r val_f_retro_m`, 95% HDI [`r val_f_retro_lo`, `r val_f_retro_hi`]), indicating some filtering. This matches the conclusion of @li2026filtering: once distractors are processed, they are encoded into working memory regardless of whether participants knew in advance which items were distractors.
+On the probability scale, $f$ is around 0.65 in both conditions (pre-cue: $M$ = `r val_f_pre_m`, 95% HDI [`r val_f_pre_lo`, `r val_f_pre_hi`]; retro-cue: $M$ = `r val_f_retro_m`, 95% HDI [`r val_f_retro_lo`, `r val_f_retro_hi`]), indicating some filtering (see @fig-t2-param-estimates). This matches the conclusion of @li2026filtering: once distractors are processed, they are encoded into working memory regardless of whether participants knew in advance which items were distractors.
 
 ## Hypothesis tests
 
@@ -728,6 +728,13 @@ hypothesis(fit_m3_cs, "f_conditionpre - f_conditionretro = 0")
 # Do a and c differ between control and distractor conditions?
 hypothesis(fit_m3_cs,
   "a_conditioncontrol - (a_conditionpre + a_conditionretro) / 2 = 0")
+```
+
+```{r}
+#| label: t2-hypothesis-c
+#| eval: false
+hypothesis(fit_m3_cs,
+  "c_conditioncontrol - (c_conditionpre + c_conditionretro) / 2 = 0")
 ```
 
 The evidence ratio for the $f$ comparison indicated that filtering is equivalent between cue conditions ($BF_{01} = `r er_f_fmt`$). There is inconclusive evidence for item memory $a$ comparing the distractor conditions to the control ($BF_{10} = `r er_a_dist_fmt`$); however, context activation $c$ is lower in the distractor conditions ($BF_{10} = `r er_c_dist_fmt`$).
