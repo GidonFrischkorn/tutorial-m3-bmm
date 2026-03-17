@@ -15,7 +15,7 @@ author:
       - name: University of Chicago
         department: Department of Psychology
       - name: University of Chicago
-        department: Institution for Mind and Biology, 
+        department: Institution for Mind and Biology
 author-note:
   disclosures:
     study-registration: "This study was not preregistered."
@@ -375,7 +375,7 @@ These two examples illustrate how distinct theoretical perspectives can be encod
 knitr::include_graphics(here("figures", "m3_activations.pdf"))
 ```
 
-[^2]: Although the $M^3$ framework was concieved as a measurement tool, it can thus be used to implement and test specific theoretical assumptions. For example, similarity between spatial positions could be implemented by other list items getting a partial boost from context binding dependent on their distance to the currently cued position. Thereby the $M^3$ framework sits at the intersection of measurement and process models, it can account for the interplay of different processes, but does not provide any implementation of the activation sources and why they might differ in strength.
+[^2]: Although the $M^3$ framework was conceived as a measurement tool, it can thus be used to implement and test specific theoretical assumptions. For example, similarity between spatial positions could be implemented by other list items getting a partial boost from context binding dependent on their distance to the currently cued position. Thereby the $M^3$ framework sits at the intersection of measurement and process models, it can account for the interplay of different processes, but does not provide any implementation of the activation sources and why they might differ in strength.
 
 ## Competitive Selection and Choice Rules
 
@@ -914,13 +914,13 @@ knitr::include_graphics(here("figures", "tutorial4_indiv_scatter.pdf"))
 
 ## Practical guidance
 
-As a rule of thumb, if individual-level correlations fall below .7 for a parameter, the design likely needs more trials or a larger sample before that parameter can support individual-differences analyses. The present simulation uses a single replication; a full simulation study should vary sample size and trial count systematically [see @goettmann2025recovery for a systematic approach, @chalmers2020simdesign for implementation tools, and @talts2018validating for a complementary calibration-based approach].
+As a rule of thumb, if individual-level correlations fall below .7 for a parameter, the design likely needs more trials or a larger sample before that parameter can support individual-differences analyses. The present simulation uses a single replication; a full simulation study should vary sample size and trial count systematically [for a systematic approach, see @goettmann2025recovery; for implementation tools, see @chalmers2020simdesign; for a complementary calibration-based approach, see @talts2018validating].
 
 ## Going further: more complex custom versions
 
 The filtering example in Tutorial 3 modifies only the activation formulas of the distractor categories, keeping the same five-category structure as the `cs` version. Custom specifications can go much further: entirely new response categories, nonlinear activation formulas with design variables, and additional parameters with different link functions. Two considerations are important when designing custom specifications. First, the activation formulas should be theoretically motivated — each parameter should correspond to a meaningful cognitive process, and the way parameters combine into category activations should reflect plausible assumptions about the task. Second, all parameters must be identifiable given the data structure. Identification requires that the number of response categories and experimental conditions jointly provide enough constraints to distinguish each parameter. When parameters are not identified, the posterior will reflect the prior rather than the data, and parameter recovery (as in this tutorial) will fail. 
 
-The Appendix presents a more complex example — a memory updating task from @oberauer2019simple with five estimated parameters and experimentally manipulated timing variables — to illustrate how design variables can provide the additional constraints needed for more complex specifications. The accompanying scripts (`scripts/tutorial3_parameter_recovery_simple.R` and `scripts/tutorial3_parameter_recovery.R`) provide the complete code for this advanced example.
+The Appendix presents a more complex example — a memory updating task from @oberauer2019simple with five estimated parameters and experimentally manipulated timing variables — to illustrate how design variables can provide the additional constraints needed for more complex specifications. The accompanying scripts (`scripts/tutorial5_parameter_recovery_updating_simple.R` and `scripts/tutorial5_parameter_recovery_updating.R`) provide the complete code for this advanced example.
 
 # Summary and Additional Resources
 
