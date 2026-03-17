@@ -17,9 +17,9 @@ This GitHub repository contains the source code and data needed to reproduce all
 │   ├── tutorial1_simple_span.R              Simple span M3 (ss)
 │   ├── tutorial2_complex_span.R             Complex span M3 (cs)
 │   ├── tutorial3_custom_filtering.R         Custom M3 — separate ra/rc
-│   ├── tutorial4_parameter_recovery.R       Parameter recovery simulation
-│   ├── tutorial3_parameter_recovery_simple.R Appendix — memory updating (simple)
-│   ├── tutorial3_parameter_recovery.R       Appendix — memory updating (full)
+│   ├── tutorial4_parameter_recovery.R                  Parameter recovery simulation
+│   ├── tutorial5_parameter_recovery_updating_simple.R  Appendix — memory updating (simple)
+│   ├── tutorial5_parameter_recovery_updating.R         Appendix — memory updating (full)
 │   ├── prepare_Li2026_data.R                Data preparation for Tutorial 2
 │   ├── figure_task_example.R                Figure 1: task diagram
 │   ├── figure_m3_activations.R              Figure 2: activation decomposition
@@ -58,7 +58,7 @@ To reproduce locally, run the scripts in `scripts/` — fitted models will be ca
 
 **Tutorial 4 — Parameter Recovery** (`tutorial4_parameter_recovery.R`): Simulates data with known parameters using `rm3()`, fits the custom filtering model, and evaluates parameter recovery across a grid of sample sizes and trial counts. Demonstrates how to assess model identifiability and plan experimental designs.
 
-**Appendix — Memory Updating** (`tutorial3_parameter_recovery_simple.R` and `tutorial3_parameter_recovery.R`): Supplementary scripts defining a custom M3 for a memory updating task. The simplified script walks through a single simulation cell; the full script varies sample size and trials per condition across a 3 × 3 design grid.
+**Appendix — Memory Updating** (`tutorial5_parameter_recovery_updating_simple.R` and `tutorial5_parameter_recovery_updating.R`): Supplementary scripts defining a custom M3 for a memory updating task. The simplified script walks through a single simulation cell; the full script varies sample size and trials per condition across a 3 × 3 design grid.
 
 ## Getting Started
 
