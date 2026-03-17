@@ -11,6 +11,7 @@ This GitHub repository contains the source code and data needed to reproduce all
 ```text
 ├── manuscript/          Quarto manuscript source (.qmd) and references
 │   ├── tutorial-m3-bmm.qmd
+│   ├── supplement-parameter-recovery.qmd
 │   └── references.bib
 │
 ├── scripts/             Standalone R scripts for each tutorial
@@ -23,7 +24,8 @@ This GitHub repository contains the source code and data needed to reproduce all
 │   ├── prepare_Li2026_data.R                Data preparation for Tutorial 2
 │   ├── figure_task_example.R                Figure 1: task diagram
 │   ├── figure_m3_activations.R              Figure 2: activation decomposition
-│   └── figure_m3_schematic.R                M3 framework schematic
+│   ├── figure_m3_schematic.R                M3 framework schematic
+│   └── 00_download_osf.R                    Download fitted models from OSF
 │
 ├── data/                Experimental datasets
 │   ├── Oberauer_2019_SimpleSpan_Exp1.dat    Tutorial 1: trial-level data
@@ -71,7 +73,7 @@ pacman::p_load(here, bmm, brms, cmdstanr, tidyverse, tidybayes, patchwork, gghal
 
 [cmdstanr](https://mc-stan.org/cmdstanr/) requires a working CmdStan installation. See `cmdstanr::install_cmdstan()`.
 
-Open the RStudio project (`tutorial-m3-bmm.Rproj`) and run any script from `scripts/`. Fitted models are cached in `output/` via the `file` argument in `bmm()`, so re-running a script will load cached fits rather than re-fitting.
+Open the RStudio project (`tutorial-m3-bmm.Rproj`). To use pre-fitted models without re-running the analyses, first run `scripts/00_download_osf.R` to download cached model objects from OSF into `output/`. The tutorial scripts use the `file` argument in `bmm()`, so they will automatically load cached fits when available.
 
 ## Data Sources
 

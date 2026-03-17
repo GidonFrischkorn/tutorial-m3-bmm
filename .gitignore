@@ -12,6 +12,7 @@ manuscript/*.docx
 manuscript/*_files/
 manuscript/*.tex
 manuscript/*.fff
+manuscript/*.ttt
 
 # Simulation output (large files)
 /output
