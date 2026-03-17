@@ -4,8 +4,12 @@ Companion repository for the tutorial paper on fitting M3 (Oberauer & Lewandowsk
 
 ## Repository Structure
 
-```
-├── manuscript/          Quarto manuscript and references
+This GitHub repository contains the source code and data needed to reproduce all analyses. Rendered outputs (fitted models, figures, manuscript PDFs) are available on [OSF](https://osf.io/yb7wm/).
+
+### Included in the GitHub repository
+
+```text
+├── manuscript/          Quarto manuscript source (.qmd) and references
 │   ├── tutorial-m3-bmm.qmd
 │   └── references.bib
 │
@@ -28,12 +32,21 @@ Companion repository for the tutorial paper on fitting M3 (Oberauer & Lewandowsk
 │   ├── Li_2026_ComplexSpan_Exp1.csv         Tutorial 2: trial-level data
 │   └── Li_2026_ComplexSpan_Exp1_agg.csv     Tutorial 2: aggregated
 │
-├── output/              Cached model fits (.rds)
-├── figures/             Generated figures (.pdf)
-├── functions/           Shared plotting utilities
-│   └── clean_plot.R
-└── local/               Planning documents (not part of the paper)
+└── functions/           Shared plotting utilities
+    └── clean_plot.R
 ```
+
+### Available on OSF only
+
+The following directories are excluded from the GitHub repository because they contain large binary files. They are archived on [OSF](https://osf.io/yb7wm/):
+
+```text
+├── output/              Cached model fits (.rds) — fitted brms/bmm objects
+├── figures/             Generated figures (.pdf) — all manuscript figures
+└── manuscript/*.pdf     Rendered manuscript (PDF, DOCX)
+```
+
+To reproduce locally, run the scripts in `scripts/` — fitted models will be cached in `output/` via the `file` argument in `bmm()`.
 
 ## Tutorials
 
