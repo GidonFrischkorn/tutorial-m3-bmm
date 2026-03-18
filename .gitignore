@@ -24,3 +24,4 @@ manuscript/*.ttt
 # OS
 .DS_Store
 /.luarc.json
+.positai

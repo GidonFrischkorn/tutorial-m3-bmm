@@ -1,5 +1,5 @@
 # ============================================================================
-# Download fitted model objects from OSF
+# Download fitted model objects, figures, and data from OSF
 # ============================================================================
 
 pacman::p_load(osfr, here)
@@ -90,13 +90,44 @@ if (!is.null(osf_data)) {
 }
 
 # ---------------------------------------------------------------------------
+# Download figures/ files
+# ---------------------------------------------------------------------------
+osf_figures <- get_osf_folder(project, "figures")
+
+if (!is.null(osf_figures)) {
+  figures_dir <- here("figures")
+  if (!dir.exists(figures_dir)) dir.create(figures_dir, recursive = TRUE)
+
+  figures_files <- osf_ls_files(osf_figures)
+  n_files <- nrow(figures_files)
+
+  message("\n--- Downloading figures (figures/) ---")
+  message("  Found ", n_files, " files on OSF\n")
+
+  for (i in seq_len(n_files)) {
+    fname <- figures_files$name[i]
+    local_path <- file.path(figures_dir, fname)
+
+    if (file.exists(local_path)) {
+      message("  SKIP (already exists): ", fname)
+      next
+    }
+
+    message("  Downloading: ", fname, " (", i, "/", n_files, ")")
+    osf_download(figures_files[i, ], path = figures_dir, conflicts = "skip")
+  }
+}
+
+# ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
 output_files_local <- list.files(here("output"), pattern = "\\.rds$",
                                  full.names = TRUE)
-total_mb <- round(sum(file.size(output_files_local)) / 1e6, 1)
+figures_local <- list.files(here("figures"), pattern = "\\.pdf$",
+                            full.names = TRUE)
+total_mb <- round(sum(file.size(c(output_files_local, figures_local))) / 1e6, 1)
 
 message("\nDone. Local output/ contains ", length(output_files_local),
-        " .rds files (", total_mb, " MB total).")
-message("You can now run the tutorial scripts and render the manuscript ",
-        "without re-fitting models.")
+        " .rds files; figures/ contains ", length(figures_local), " .pdf files",
+        " (", total_mb, " MB total).")
+message("You can now render the manuscript without re-fitting models.")

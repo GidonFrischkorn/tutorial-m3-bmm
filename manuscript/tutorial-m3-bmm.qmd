@@ -23,9 +23,9 @@ author-note:
     conflict-of-interest: "The authors declare no conflicts of interest."
     financial-support: "This research was supported by a grant from the Swiss National Science Foundation (SNSF) awarded to Gidon T. Frischkorn (Grant No. 208828)."
     gratitude: "We thank Isabel Courage for valuable feedback during the development of the M3 implementation in the bmm R package."
-    authorship-agreements: |
-      Gidon T. Frischkorn: Conceptualization, Methodology, Software, Formal Analysis, Visualization, Writing -- Original Draft.
-      Chenyu Li: Software, Data Curation, Writing -- Review & Editing.
+    authorship-agreements: 
+      "Gidon T. Frischkorn: Conceptualization, Methodology, Software, Formal Analysis, Visualization, Writing -- Original Draft.
+      Chenyu Li: Software, Data Curation, Writing -- Review & Editing."
 format:
   apaquarto-docx: default
   apaquarto-pdf:
@@ -34,7 +34,7 @@ floatsintext: true
 output-dir: "."
 bibliography: references.bib
 abstract:
-  "The memory measurement model ($M^3$) decomposes categorical response data from memory tasks into latent activation parameters, separating item memory from context-specific binding via competitive retrieval. This tutorial introduces the $M^3$ framework and demonstrates how to apply it to empirical data using the bmm R package, which provides a standardized interface for fitting Bayesian hierarchical $M^3$. Four worked examples build progressively: In Tutorials 1 and 2, we fit $M^3$ to two common working memory paradigms — simple span and complex span — demonstrating how different choice rules can be applied and how distractor categories extend the basic model. In Tutorial 3, we use the complex span data to illustrate how to build a custom specification based on different theoretical assumptions. Tutorial 4 provides a simulation-based workflow for validating custom specifications through parameter recovery. Complete R scripts accompany each tutorial. After completing the tutorials, readers will be able to apply standard and custom $M^3$ to their own data and validate new model specifications through simulation."
+  "The memory measurement model ($M^3$) decomposes categorical response data from memory tasks into latent activation parameters, separating item memory from context-specific binding via competitive retrieval. This tutorial introduces the $M^3$ framework and demonstrates how to apply it to empirical data using the bmm R package, which provides a standardized interface for fitting Bayesian hierarchical measurement models. Four tutorial examples build progressively: In Tutorials 1 and 2, we fit $M^3$ to two common working memory paradigms — simple span and complex span — demonstrating how different choice rules can be applied and how distractor categories extend the basic model. In Tutorial 3, we use the complex span data to illustrate how to build a custom specification based on different theoretical assumptions. Tutorial 4 provides a simulation-based workflow for validating custom specifications through parameter recovery. Complete R scripts accompany each tutorial. After completing the tutorials, readers will be able to apply standard and custom $M^3$ to their own data and validate new model specifications through simulation."
 keywords:
   - working memory
   - measurement model
