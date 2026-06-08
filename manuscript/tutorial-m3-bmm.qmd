@@ -389,7 +389,7 @@ The **simple span** (`ss`) version implements $M^3$ for cued recall tasks separa
 
 The **complex span** (`cs`) version extends the simple span to tasks that interleave distractor processing with memorization. It requires that memoranda and distractors are drawn from the same material so that distractors can plausibly intrude during retrieval [@li2026filtering; for examples, see @oberauer2019simple]. The `cs` version separates five response categories (correct, paired distractor, other memorandum, other distractor, and NPL) with three free parameters ($a$, $c$, $f$). The additional parameter $f$ captures distractor filtering efficiency on a scale from 0 to 1: $f = 0$ indicates perfect filtering (distractors receive only baseline activation), while $f = 1$ indicates no filtering (distractors are activated as strongly as memoranda).
 
-The **custom** version allows user-defined response categories, activation formulas, and parameters. Researchers can specify $M^3$ of arbitrary complexity for novel task designs, as long as the model remains identified. The only requirement is that all activation formulas include the baseline activation $b$, which reflects random guessing if no other activations were included. Tutorial 3 demonstrates how to define and fit a custom version, and Tutorial 4 shows how to validate custom specifications through parameter recovery simulations.
+The **custom** version allows user-defined response categories, activation formulas, and parameters. Researchers can specify $M^3$ of arbitrary complexity for novel task designs, as long as the model remains identified. The only requirement is that all activation formulas include the baseline activation $b$, which reflects random guessing if no other activations were included. Tutorial 3 demonstrates how to define and fit a custom version, and Tutorial 4 shows how to validate custom specifications through parameter recovery simulations (see @callout-validation for what recovery does and does not establish about a specification's validity).
 
 ## The bmm Workflow
 
@@ -770,16 +770,6 @@ The previous tutorials used the `ss` and `cs` specifications proposed by @oberau
 
 The original analysis by @li2026filtering tested this distinction using a custom specification with two separate ratio parameters, $r_a$ and $r_c$, and found that item memory transfers almost fully to distractors while context binding is more attenuated. When a research question requires this kind of flexibility — or when the task design does not map onto the simple or complex span versions — the $M^3$ framework supports fully custom specifications with user-defined response categories and activation formulas. This tutorial demonstrates how to define, fit, and compare such custom specifications using the same data as Tutorial 2. The companion script is `scripts/tutorial3_custom_filtering.R`.
 
-::: {.callout-important}
-**Custom $M^3$: What parameter recovery does — and does not — establish**
-
-Parameter recovery (Tutorial 4) confirms that the fitting algorithm can recover known values from data generated under the model's own assumptions. That is a computational check, not a psychological one. It does not establish that the parameters measure what they are assumed to represent.
-
-Establishing psychological validity requires additional evidence: (1) theoretical grounding — each activation formula should be derived from a mechanistic account of how the task engages memory, not reverse-engineered from empirical fit; (2) identifiability — each parameter should have a unique empirical signature that no combination of other parameters can reproduce (see below); (3) selective influence — experimental manipulations expected to target a specific process should affect its parameter while leaving others unchanged; and (4) convergent validity — parameter estimates should correlate meaningfully with independent measures of the same construct.
-
-The `bmm` package provides the infrastructure for fitting custom $M^3$; the theoretical adequacy of any custom specification is the responsibility of the researchers proposing it and the research community evaluating it. See Supplement Section 4 for a structured five-criterion validation checklist.
-:::
-
 ## From single $f$ to separate ratio parameters
 
 Replacing $f$ with two ratio parameters - $r_a$ for item memory and $r_c$ for context binding - produces the following activation formulas:
@@ -899,6 +889,16 @@ As in Tutorial 2, we can test parameter differences formally. Within both the pr
 # Tutorial 4: Parameter Recovery
 
 The $M^3$ framework allows researchers to develop custom versions tailored to their research questions. However, before applying a custom $M^3$ to empirical data, it is worth checking whether the planned design provides enough information to recover the parameters of interest. If recovery fails when the generating values are known and the model is correctly specified, the problem lies with the design or the specification, not the data. This tutorial demonstrates the recovery workflow using the custom filtering version from Tutorial 3. The companion script is `scripts/tutorial4_parameter_recovery.R`.
+
+::: {.callout-important #callout-validation}
+**Custom $M^3$: What parameter recovery does — and does not — establish**
+
+Parameter recovery confirms that the fitting algorithm can recover known values from data generated under the model's own assumptions. That is a computational check, not a psychological one. It does not establish that the parameters measure what they are assumed to represent.
+
+Establishing psychological validity requires additional evidence: (1) theoretical grounding — each activation formula should be derived from a mechanistic account of how the task engages memory, not reverse-engineered from empirical fit; (2) identifiability — each parameter should have a unique empirical signature that no combination of other parameters can reproduce (see below); (3) selective influence — experimental manipulations expected to target a specific process should affect its parameter while leaving others unchanged; and (4) convergent validity — parameter estimates should correlate meaningfully with independent measures of the same construct.
+
+The `bmm` package provides the infrastructure for fitting custom $M^3$; the theoretical adequacy of any custom specification is the responsibility of the researchers proposing it and the research community evaluating it. See Supplement Section 4 for a structured five-criterion validation checklist.
+:::
 
 ## When to assess parameter recovery
 
