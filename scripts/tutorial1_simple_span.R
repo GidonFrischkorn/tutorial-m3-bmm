@@ -216,7 +216,41 @@ fit_m3_ss_simple <- bmm(
   file         = here("output", "fit_m3_ss_simple")
 )
 
-## 2.3) Convergence checks -----------------------------------------------------
+## 2.3) Long-run fits for bridge sampling stability comparison -----------------
+
+# Bridge sampling is sensitive to the number of posterior samples. We refit
+# both models with 20,000 post-warmup iterations per chain (80,000 total)
+# for stable marginal likelihood estimates. See Section 3.4 for the comparison.
+
+fit_m3_ss_softmax_longrun <- bmm(
+  formula      = m3_formula,
+  model        = m3_model_softmax,
+  data         = data_agg,
+  chains       = chains,
+  cores        = cores,
+  warmup       = warmup,
+  iter         = 21000,
+  sample_prior = "yes",
+  save_pars    = save_pars(all = TRUE),
+  backend      = "cmdstanr",
+  file         = here("output", "fit_m3_ss_softmax_longrun")
+)
+
+fit_m3_ss_simple_longrun <- bmm(
+  formula      = m3_formula,
+  model        = m3_model_simple,
+  data         = data_agg,
+  chains       = chains,
+  cores        = cores,
+  warmup       = warmup,
+  iter         = 21000,
+  sample_prior = "yes",
+  save_pars    = save_pars(all = TRUE),
+  backend      = "cmdstanr",
+  file         = here("output", "fit_m3_ss_simple_longrun")
+)
+
+## 2.4) Convergence checks -----------------------------------------------------
 # All Rhat values should be < 1.01 and ESS should be adequate
 summary(fit_m3_ss_softmax)
 summary(fit_m3_ss_simple)
@@ -225,6 +259,85 @@ summary(fit_m3_ss_simple)
 ###############################################################################!
 # 3) Model Evaluation ----------------------------------------------------------
 ###############################################################################!
+
+## 3.0) Prior Predictive Checks ------------------------------------------------
+
+# Prior parameter draws are saved by sample_prior = "yes" as columns named
+# prior_b_PARAM_COEFF in the draws data frame. We extract the intercept draws
+# (at ss_lin = 0, the mean set size) for one representative experiment.
+
+prior_draws_softmax <- as_draws_df(fit_m3_ss_softmax) |>
+  as_tibble() |>
+  select(prior_b_a_expopenset, prior_b_c_expopenset) |>
+  rename(a = prior_b_a_expopenset, c = prior_b_c_expopenset)
+
+prior_draws_simple <- as_draws_df(fit_m3_ss_simple) |>
+  as_tibble() |>
+  select(prior_b_a_expopenset, prior_b_c_expopenset) |>
+  rename(a = prior_b_a_expopenset, c = prior_b_c_expopenset)
+
+# Compute implied response proportions for a representative condition
+# (n_other = 2, n_npl = 3; midpoint of the recognition set sizes in the data).
+n_other_rep <- 2
+n_npl_rep   <- 3
+
+# Softmax: a and c are on identity scale (activation space); b = 0.
+# P(corr)  = exp(a + c) / [exp(a + c) + n_other * exp(a) + n_npl * exp(0)]
+pp_prior_softmax <- prior_draws_softmax |>
+  mutate(
+    denom   = exp(a + c) + n_other_rep * exp(a) + n_npl_rep,
+    p_corr  = exp(a + c) / denom,
+    p_other = n_other_rep * exp(a) / denom,
+    p_npl   = n_npl_rep / denom,
+    model   = "Softmax"
+  ) |>
+  select(model, p_corr, p_other, p_npl)
+
+# Simple: a and c are on log scale; b = 0.1 (fixed baseline).
+# act_corr = b + exp(a) + exp(c); act_other = b + exp(a); act_npl = b.
+# P(corr)  = act_corr / [act_corr + n_other * act_other + n_npl * act_npl]
+pp_prior_simple <- prior_draws_simple |>
+  mutate(
+    act_corr  = 0.1 + exp(a) + exp(c),
+    act_other = 0.1 + exp(a),
+    act_npl   = 0.1,
+    denom     = act_corr + n_other_rep * act_other + n_npl_rep * act_npl,
+    p_corr    = act_corr / denom,
+    p_other   = n_other_rep * act_other / denom,
+    p_npl     = n_npl_rep * act_npl / denom,
+    model     = "Simple"
+  ) |>
+  select(model, p_corr, p_other, p_npl)
+
+pp_prior_combined <- bind_rows(pp_prior_softmax, pp_prior_simple) |>
+  pivot_longer(
+    cols      = c(p_corr, p_other, p_npl),
+    names_to  = "category",
+    values_to = "proportion"
+  ) |>
+  mutate(
+    model    = factor(model, levels = c("Softmax", "Simple")),
+    category = factor(category,
+                      levels = c("p_corr", "p_other", "p_npl"),
+                      labels = c("Correct", "Other", "NPL"))
+  )
+
+pp_prior_plot <- ggplot(pp_prior_combined,
+                        aes(x = model, y = proportion, fill = model)) +
+  geom_violin(alpha = 0.7, scale = "width", trim = FALSE) +
+  geom_boxplot(width = 0.12, fill = "white", outlier.size = 0.4,
+               outlier.alpha = 0.3) +
+  facet_wrap(~ category) +
+  scale_fill_m3() +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(x = "Choice Rule", y = "Implied Response Proportion",
+       fill = NULL) +
+  clean_plot(legend.position = "none")
+
+pp_prior_plot
+
+ggsave(here("figures", "tutorial1_prior_predictive.pdf"),
+       pp_prior_plot, width = 6.5, height = 4)
 
 ## 3.1) Posterior Predictive Checks --------------------------------------------
 
@@ -531,8 +644,7 @@ h_a_ss_exp
 
 ## 3.4) Choice Rule Comparison -------------------------------------------------
 
-# Bayes factor via bridge sampling
-# (requires save_pars(all = TRUE) from Section 2).
+# Bridge sampling with default samples (4,000 post-warmup per chain).
 # 10 repetitions quantify variability of the marginal likelihood estimates.
 bridge_file_softmax <- here("output", "bridge_m3_ss_softmax.rds")
 bridge_file_simple  <- here("output", "bridge_m3_ss_simple.rds")
@@ -548,5 +660,25 @@ if (file.exists(bridge_file_softmax) && file.exists(bridge_file_simple)) {
 }
 
 # bf() with repetitions > 1 reports median BF and range across repetitions.
-bf_choice_rule <- bf(bridge_softmax, bridge_simple)
-bf_choice_rule
+bf_choice_rule_default <- bf(bridge_softmax, bridge_simple)
+cat("BF (default, ~4k post-warmup samples):\n")
+print(bf_choice_rule_default)
+
+# Bridge sampling with long-run samples (20,000 post-warmup per chain).
+# Reports median BF and range to illustrate the stability gain.
+bridge_file_softmax_lr <- here("output", "bridge_m3_ss_softmax_longrun.rds")
+bridge_file_simple_lr  <- here("output", "bridge_m3_ss_simple_longrun.rds")
+
+if (file.exists(bridge_file_softmax_lr) && file.exists(bridge_file_simple_lr)) {
+  bridge_softmax_lr <- readRDS(bridge_file_softmax_lr)
+  bridge_simple_lr  <- readRDS(bridge_file_simple_lr)
+} else {
+  bridge_softmax_lr <- bridge_sampler(fit_m3_ss_softmax_longrun, repetitions = 10)
+  bridge_simple_lr  <- bridge_sampler(fit_m3_ss_simple_longrun,  repetitions = 10)
+  saveRDS(bridge_softmax_lr, bridge_file_softmax_lr)
+  saveRDS(bridge_simple_lr,  bridge_file_simple_lr)
+}
+
+bf_choice_rule_longrun <- bf(bridge_softmax_lr, bridge_simple_lr)
+cat("BF (long-run, ~80k post-warmup samples):\n")
+print(bf_choice_rule_longrun)

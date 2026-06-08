@@ -121,6 +121,59 @@ fit_m3_custom <- bmm(
 ## 2.1) Convergence checks -----------------------------------------------------
 summary(fit_m3_custom)
 
+## 2.2) Long-run fits for bridge sampling stability comparison -----------------
+
+# The cs model is defined here to fit the long-run version within this script.
+# (It is identical to the model fitted in Tutorial 2.)
+m3_model_cs <- m3(
+  resp_cats   = c("corr", "distc", "other", "disto", "npl"),
+  num_options = c("n_corr", "n_distc", "n_other", "n_disto", "n_npl"),
+  version     = "cs",
+  choice_rule = "softmax"
+)
+
+m3_formula_cs <- bmf(
+  c ~ 0 + condition + (0 + condition || participant),
+  a ~ 0 + condition + (0 + condition || participant),
+  f ~ 0 + condition + (0 + condition || participant)
+)
+
+priors_cs <- c(
+  prior(constant(-10), nlpar = "f", coef = "conditioncontrol"),
+  prior(constant(0), class = "sd", nlpar = "f",
+        coef = "conditioncontrol", group = "participant")
+)
+
+fit_m3_cs_longrun <- bmm(
+  formula      = m3_formula_cs,
+  model        = m3_model_cs,
+  data         = data_agg,
+  prior        = priors_cs,
+  chains       = chains,
+  cores        = cores,
+  warmup       = warmup,
+  iter         = 21000,
+  sample_prior = "yes",
+  save_pars    = save_pars(all = TRUE),
+  backend      = "cmdstanr",
+  file         = here("output", "fit_m3_cs_longrun")
+)
+
+fit_m3_custom_longrun <- bmm(
+  formula      = m3_formula_custom,
+  model        = m3_model_custom,
+  data         = data_agg,
+  prior        = priors_custom,
+  chains       = chains,
+  cores        = cores,
+  warmup       = warmup,
+  iter         = 21000,
+  sample_prior = "yes",
+  save_pars    = save_pars(all = TRUE),
+  backend      = "cmdstanr",
+  file         = here("output", "fit_m3_custom_filtering_longrun")
+)
+
 ###############################################################################!
 # 3) Model Evaluation ----------------------------------------------------------
 ###############################################################################!
@@ -308,17 +361,43 @@ ggsave(here("figures", "tutorial3_param_estimates.pdf"),
 
 # Compare the standard cs version (Tutorial 2) with the custom filtering
 # version using bridge sampling (requires save_pars(all = TRUE) in both fits).
+# Bridge sampling with default samples (~4,000 post-warmup per chain).
+bridge_file_cs     <- here("output", "bridge_m3_cs.rds")
+bridge_file_custom <- here("output", "bridge_m3_custom_filtering.rds")
+
 fit_m3_cs <- readRDS(here("output", "fit_m3_cs.rds"))
 
-bridge_cs     <- bridgesampling::bridge_sampler(fit_m3_cs, repetitions = 10)
-bridge_custom <- bridgesampling::bridge_sampler(fit_m3_custom, repetitions = 10)
+if (file.exists(bridge_file_cs) && file.exists(bridge_file_custom)) {
+  bridge_cs     <- readRDS(bridge_file_cs)
+  bridge_custom <- readRDS(bridge_file_custom)
+} else {
+  bridge_cs     <- bridgesampling::bridge_sampler(fit_m3_cs,     repetitions = 10)
+  bridge_custom <- bridgesampling::bridge_sampler(fit_m3_custom, repetitions = 10)
+  saveRDS(bridge_cs,     bridge_file_cs)
+  saveRDS(bridge_custom, bridge_file_custom)
+}
 
-bf_result <- bridgesampling::bf(bridge_custom, bridge_cs)
-bf_result
+bf_default <- bridgesampling::bf(bridge_custom, bridge_cs)
+cat("BF (default, ~4k post-warmup samples):\n")
+print(bf_default)
 
-# Save bridge sampling results for inline reporting
-saveRDS(bridge_cs, here("output", "bridge_m3_cs.rds"))
-saveRDS(bridge_custom, here("output", "bridge_m3_custom_filtering.rds"))
+# Bridge sampling with long-run samples (20,000 post-warmup per chain).
+bridge_file_cs_lr     <- here("output", "bridge_m3_cs_longrun.rds")
+bridge_file_custom_lr <- here("output", "bridge_m3_custom_filtering_longrun.rds")
+
+if (file.exists(bridge_file_cs_lr) && file.exists(bridge_file_custom_lr)) {
+  bridge_cs_lr     <- readRDS(bridge_file_cs_lr)
+  bridge_custom_lr <- readRDS(bridge_file_custom_lr)
+} else {
+  bridge_cs_lr     <- bridgesampling::bridge_sampler(fit_m3_cs_longrun,     repetitions = 10)
+  bridge_custom_lr <- bridgesampling::bridge_sampler(fit_m3_custom_longrun, repetitions = 10)
+  saveRDS(bridge_cs_lr,     bridge_file_cs_lr)
+  saveRDS(bridge_custom_lr, bridge_file_custom_lr)
+}
+
+bf_longrun <- bridgesampling::bf(bridge_custom_lr, bridge_cs_lr)
+cat("BF (long-run, ~80k post-warmup samples):\n")
+print(bf_longrun)
 
 ## 3.4) Hypothesis Tests -------------------------------------------------------
 

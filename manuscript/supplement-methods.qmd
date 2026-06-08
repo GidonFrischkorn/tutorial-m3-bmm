@@ -1,0 +1,285 @@
+---
+title: "Supplement: Methodological Background for Applying $M^3$"
+shorttitle: "Supplement: $M^3$ Methodological Background"
+author:
+  - name: Gidon T. Frischkorn
+    orcid: 0000-0002-5055-9764
+    email: gidon.frischkorn@psychologie.uzh.ch
+    corresponding: true
+    affiliations:
+      - name: University of Zurich
+        department: Department of Psychology
+  - name: Chenyu Li
+    orcid: 0000-0001-8815-6189
+    affiliations:
+      - name: University of Chicago
+        department: Department of Psychology
+      - name: University of Chicago
+        department: Institution for Mind and Biology
+format:
+  apaquarto-pdf:
+    keep-tex: true
+  apaquarto-docx: default
+floatsintext: true
+output-dir: "."
+bibliography: references.bib
+abstract: |
+  This supplement accompanies the tutorial on fitting the Memory Measurement Model ($M^3$) with the bmm R package. It provides methodological background on four topics that arise naturally in the tutorial but extend beyond its practical scope: (1) how different choice rules translate parameter-space priors into prior predictions on the scale of observable responses, and what conditions are required to achieve equal prior predictives across choice rules; (2) when bridge sampling versus the Savage--Dickey density ratio is the appropriate tool for Bayes factor estimation, and what cell-means coding implies for priors on condition differences; (3) the theoretical derivation of the softmax choice rule as a signal detection framework with Gumbel-distributed noise, and what this implies for applied practice; and (4) a structured checklist for validating custom $M^3$ specifications beyond parameter recovery. Each section is self-contained and can be read independently.
+keywords:
+  - working memory
+  - measurement model
+  - prior predictive check
+  - Bayes factor
+  - signal detection theory
+  - model validation
+execute:
+  echo: true
+  eval: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+pacman::p_load(here, bmm, brms, tidyverse, tidybayes, patchwork)
+source(here("functions", "clean_plot.R"))
+```
+
+# Overview
+
+This supplement addresses four methodological questions that arise naturally when applying $M^3$ but are too detailed to develop fully in a practical tutorial. Each section is self-contained.
+
+Section 1 takes up the concern about prior specification for non-nested Bayes factor comparisons. When two specifications share the same parameters but pass them through different likelihoods — as the simple and softmax choice rules do — identical-looking prior specifications can imply very different predictions on the scale of observed responses. We show why this happens analytically, what conditions would be required to achieve equal prior predictives, and where the equivalence breaks down in hierarchical settings.
+
+Section 2 addresses Bayes factor estimation. We distinguish the Savage--Dickey density ratio, which applies to nested comparisons and scales well with model complexity, from bridge sampling, which handles non-nested comparisons but requires substantially more posterior samples to produce stable estimates. We also work through the arithmetic of cell-means coding to clarify what the default priors imply on the scale of condition differences.
+
+Section 3 provides the theoretical derivation of the softmax choice rule as an $n$-alternative forced-choice signal detection framework with Gumbel-distributed noise. This derivation explains why softmax yields closed-form likelihoods for any number of response alternatives — a computational advantage that does not depend on settling the empirical question of whether Gumbel or Gaussian noise better describes human choice behavior.
+
+Section 4 proposes a structured checklist for validating custom $M^3$ specifications. Parameter recovery — covered in the companion supplement — establishes that the fitting algorithm can recover known parameters from simulated data. That is a computational check. Psychological validity requires additional evidence: theoretical grounding of the activation formulas, identifiability, selective influence demonstrations, and convergent validity across task variants and samples.
+
+# Prior Predictive Calibration Across Choice Rules
+
+## Why Identical Parameter Priors Imply Different Predictions
+
+The prior predictive check in Tutorial 1 reveals a consequence of the simple-versus-softmax comparison that is easy to overlook: the two choice rules imply very different distributions over response proportions even when the same nominal prior is placed on the shared parameters $a$ and $c$. Under the softmax specification, the default prior implies a median correct-response proportion near 89%, with a 90% credible interval spanning 60--98%. Under the simple choice rule with the same nominal prior, the implied median is 55%, with a 90% credible interval of 42--73%. The two specifications are not predicting the same behavior before seeing any data.
+
+The reason is the link function. Parameters in the simple choice rule represent memory activation strengths, which must be positive. The bmm package therefore uses a log link: the quantity estimated by the sampler is $\beta = \log(a)$ on the unrestricted real line, and the activation entering the probability formula is $\exp(\beta)$. In the softmax choice rule, parameters represent log-activations — utilities, in the language of discrete-choice theory — and no positivity constraint is needed. The bmm package uses an identity link: the quantity estimated by the sampler is the utility $u$ directly.
+
+The probability formulas for the two choice rules are:
+
+$$
+P_k^{\text{simple}} = \frac{A_k}{\displaystyle\sum_j n_j \cdot A_j}
+\qquad \text{and} \qquad
+P_k^{\text{softmax}} = \frac{n_k \cdot \exp(u_k)}{\displaystyle\sum_j n_j \cdot \exp(u_j)}
+$$
+
+where $A_k$ denotes the raw activation of response category $k$, $u_k$ denotes its log-activation, and $n_k$ is the count of available options in category $k$. For the simple span $M^3$ with three response categories — correct, list intrusion, and non-list lure — the activations are $A_\text{corr} = 0.1 + \exp(c)$, $A_\text{intr} = 0.1 + \exp(a)$, and $A_\text{npl} = 0.1$, where $0.1$ is the fixed baseline. For softmax, the log-activations are $u_\text{corr} = c$, $u_\text{intr} = a$, and $u_\text{npl} = 0$, where $0$ is the fixed utility baseline corresponding to a baseline activation of $\exp(0) = 1$.
+
+Concretely, placing the same $\mathcal{N}(1,\, 0.5^2)$ prior on the context-binding parameter gives:
+
+- **Simple (log link):** The raw activation entering the formula is $\exp(\beta_c)$ where $\beta_c \sim \mathcal{N}(1, 0.5^2)$, so $\exp(\beta_c) \sim \text{LogNormal}(1, 0.5^2)$ with median $e^1 \approx 2.72$.
+- **Softmax (identity link):** The utility is $u_c \sim \mathcal{N}(1, 0.5^2)$, and the formula uses $\exp(u_c) \sim \text{LogNormal}(1, 0.5^2)$ with median $e^1 \approx 2.72$.
+
+At this level, the two specifications imply the same distribution of effective activations. However, the fixed baseline differs: the simple rule uses $b = 0.1$ as the baseline activation, whereas the softmax rule uses a baseline utility of $0$, corresponding to a baseline activation of $\exp(0) = 1$. This single difference shifts the denominator of the probability formula and produces markedly different implied correct-response proportions under identical priors on $a$ and $c$.
+
+## The Bijection Between Choice Rules
+
+Despite appearing structurally different, the simple and softmax choice rules implement the same computation when parameters are expressed on a common scale. To see this, suppose the simple-rule activations are written as exponentials: $A_k = \exp(v_k)$ for some log-activation $v_k$. The simple probability then becomes
+
+$$
+P_k^{\text{simple}} = \frac{\exp(v_k)}{\displaystyle\sum_j \exp(v_j)}
+$$
+
+which is identical to the softmax formula with $v_k$ in place of $u_k$. The bijection is simply $v = \log(A)$, or equivalently $A = \exp(v)$. Because the log link in the simple specification already transforms the model parameter $\beta$ to an activation via $A = \exp(\beta)$, the effective computation in both choice rules is $\exp(\text{model parameter})$ in both numerator and denominator. Setting $v_k = u_k$ — using the same model parameter value in both specifications — makes the two computations mathematically identical for any number of response alternatives and any experimental design.
+
+This equivalence holds for all list lengths simultaneously. The simple and softmax choice rules differ structurally in how they define "activation" — as a raw positive quantity versus a log-transformed utility — but the mathematical operation translating activations into probabilities is the same.
+
+The implication for prior specification is direct: equal prior predictives across choice rules require that the prior on $\beta$ (simple, log link) equals the prior on $u$ (softmax, identity link), and that the fixed baselines are handled on the same scale. Placing the same $\mathcal{N}(\mu, \sigma^2)$ prior on both model parameters achieves the first condition automatically. Achieving the second condition requires setting the softmax baseline utility to $\log(0.1) \approx -2.3$ rather than $0$, so that the baseline activation is $0.1$ in both specifications.
+
+In the tutorial we do not make this adjustment, because the goal is to illustrate a realistic applied workflow rather than to construct an artificially balanced comparison. The prior predictive check makes the resulting imbalance transparent, and both the posterior predictive check and the long-run Bayes factor provide convergent evidence for the softmax specification regardless of the baseline choice.
+
+## The Hierarchical Complication
+
+A subtler issue arises in hierarchical specifications, even when individual-level prior predictives are matched. In hierarchical $M^3$, individual parameters $\theta_i$ are drawn from a population distribution with hyperparameters governing the mean and spread. When this population distribution is normal — as is standard with bmm's log-link parameterization — the implied distribution of the raw activations $\exp(\theta_i)$ across participants is log-normal, not normal.
+
+The mean of a log-normal distribution is not the exponent of the normal mean. If individual log-activations follow $\theta_i \sim \mathcal{N}(\mu, \sigma^2)$, then the expected raw activation across individuals is:
+
+$$
+\mathbb{E}\!\left[\exp(\theta_i)\right] = \exp\!\left(\mu + \frac{\sigma^2}{2}\right)
+$$
+
+The term $\exp(\sigma^2 / 2)$ is always greater than one, and it grows with the variance of individual differences. For typical variability in working memory research — individual-difference standard deviations between 0.3 and 0.7 on the log scale — this correction ranges from $\exp(0.045) \approx 1.05$ to $\exp(0.245) \approx 1.28$, a 5--28% upward shift in the implied average activation.
+
+This matters for the hierarchical prior predictive because the hyperprior on $\mu$ encodes expectations about the population mean log-activation, not the population mean activation. Two specifications with the same hyperprior on $\mu$ but different hyperpriors on $\sigma$ will imply different average behavior across participants, even if their individual-level prior predictives look similar. An individual-level prior predictive check — which integrates over only one simulated participant at a time — cannot detect this hierarchical discrepancy.
+
+In other words, equal marginal prior predictives at the individual level do not guarantee equal prior predictives over the full hierarchical structure when the model-parameter-to-activation mapping is nonlinear. The degree of discrepancy scales with the between-person variance $\sigma^2$, which is itself uncertain and governed by a hyperprior. As a result, there is no static correction to the hyperprior mean that achieves equal hierarchical prior predictives across specifications — the adjustment would need to depend on the realized value of $\sigma$.
+
+The practical implication is that hyperpriors in hierarchical $M^3$ should always be specified on the model-parameter scale — on the log-activation scale for both choice rules, given bmm's link functions. Specifying a hyperprior mean by reasoning about average raw activations (for example, setting $\mu_0 = 2$ because "the average activation is about 2") introduces an implicit scale mismatch that cannot be detected from individual-level prior predictive checks.
+
+## Practical Guidance
+
+Three recommendations follow from the analysis above.
+
+First, run a prior predictive check before fitting any specifications that will be compared via Bayes factors. The check should examine response proportions by category and condition on the observable scale — not the model-parameter scale. The R code for the Tutorial 1 prior predictive check in `scripts/tutorial1_simple_span.R` (Section 3.0) provides a complete implementation adaptable to any $M^3$ configuration.
+
+Second, when comparing specifications that use different link functions, inspect whether the implied prior predictives are plausible and comparable in breadth. If one specification assigns near-zero prior probability to the observed data range before any data are collected, the Bayes factor will penalize that specification in ways that reflect prior misspecification rather than likelihood differences.
+
+Third, specify hyperpriors on the model-parameter scale. In hierarchical $M^3$, this means specifying the hyperprior on the log-activation scale for both the simple and softmax choice rules. Doing so ensures that the interpretation of the hyperprior is consistent with the link function and that the hierarchical prior predictive faithfully captures expectations about the distribution of individual differences.
+
+# Bayes Factor Estimation in Hierarchical $M^3$
+
+## Bridge Sampling and the Savage--Dickey Density Ratio
+
+The tutorial uses two Bayes factor estimation methods that serve different purposes and impose different computational demands. Confusing them — or applying one where the other is required — produces either unnecessary computational cost or mathematically invalid estimates.
+
+The **Savage--Dickey density ratio** applies to nested model comparisons, where the constrained specification is obtained by fixing one or more parameters of the full specification to a specific value, typically zero [@wagenmakersBayesianHypothesisTesting2010]. The Bayes factor for the constrained versus unconstrained specification equals the ratio of the posterior density to the prior density, evaluated at the constrained value:
+
+$$
+\text{BF}_{01} = \frac{p(\theta = 0 \mid \text{data})}{p(\theta = 0)}
+$$
+
+In words: if the data have moved the distribution of $\theta$ away from zero — making zero less plausible a posteriori than a priori — the Bayes factor favors the unconstrained specification. If the data have not updated beliefs about $\theta$ near zero, the Bayes factor favors the null. Both densities are estimated directly from the MCMC samples, so no additional computation is required beyond what is already produced by the standard fitting routine. The Savage--Dickey ratio is available in brms via `hypothesis()`, and it scales well as the number of parameters increases, because the ratio is evaluated only at the constrained point rather than integrated over the full posterior.
+
+The tutorial uses `hypothesis()` for within-specification hypothesis tests: whether the context-binding activation $c$ differs from item activation $a$, and whether set-size effects on $c$ and $a$ differ across experimental conditions. These are nested comparisons — the null is obtained by constraining a specific parameter combination to zero — and the Savage--Dickey ratio is the appropriate tool.
+
+**Bridge sampling** handles non-nested comparisons, where neither specification is a special case of the other [@gronau2017bridge]. The simple and softmax choice rules are not nested: no parameter constraint on the softmax specification produces the simple choice rule, because the two differ in their likelihood function. Bridge sampling estimates the marginal likelihood of each specification — the probability of the observed data averaged over the prior — and the Bayes factor is the ratio of these marginal likelihoods. Estimating the marginal likelihood requires numerical integration over the full posterior, implemented in the `bridgesampling` package via `bridge_sampler()`. The accuracy of this integration increases with the number of posterior samples.
+
+## Sample Size Requirements for Bridge Sampling
+
+Bridge sampling is considerably more sample-intensive than the Savage--Dickey ratio, and the required sample size scales with model complexity. @oberauerReliabilityBiasComputational2026 demonstrate that hierarchical specifications of the type used in this tutorial require approximately 72,000 posterior samples to produce stable marginal likelihood estimates. The default bmm settings produce 4,000 post-warmup samples (4 chains $\times$ 1,000 iterations) — roughly 18 times fewer than needed for reliable estimation.
+
+The tutorial illustrates this directly by refitting the choice rule comparison (Tutorial 1) and the custom versus standard specification comparison (Tutorial 3) with 80,000 post-warmup samples (4 chains $\times$ 20,000 post-warmup iterations). The results, summarized in Table 1, show the practical consequences of the sample size difference.
+
+For the Tutorial 1 choice rule comparison, the short-run median Bayes factor (4,000 samples, 10 repetitions) was $\text{BF}_{10} = 4.8 \times 10^7$, with a range of $[3.2 \times 10^7,\, 7.0 \times 10^7]$ — a factor of approximately 2.2 between the minimum and maximum. The long-run median (80,000 samples) was $\text{BF}_{10} = 6.2 \times 10^7$, with a range of $[5.7 \times 10^7,\, 6.4 \times 10^7]$. The qualitative conclusion is unchanged across both regimes, but the estimate is far more stable with the larger sample.
+
+The Tutorial 3 comparison shows a more consequential instability. The short-run range spans more than three orders of magnitude — $[2.1 \times 10^{16},\, 7.0 \times 10^{19}]$ — and the short-run median ($8.1 \times 10^{17}$) is approximately 1,600 times larger than the long-run median ($5.2 \times 10^{14}$). Reporting only the short-run estimate here would have given a misleading impression of the order of magnitude, even though the qualitative conclusion — that the custom filtering specification is overwhelmingly preferred — is robust across both regimes.
+
+Taken together, these results translate into two recommendations. When using bridge sampling for non-nested $M^3$ comparisons, run at least 40,000 post-warmup samples and report the median and full range across at least 10 repetitions. A range spanning more than one order of magnitude indicates that more samples are needed before drawing conclusions. When computation time is a constraint, reconsider whether bridge sampling is necessary: for most substantive questions about parameters within a single fitted specification, `hypothesis()` with the Savage--Dickey ratio suffices and requires no additional computation.
+
+## Implied Priors Under Cell-Means Coding
+
+The tutorial uses cell-means coding throughout: each experimental condition receives its own intercept rather than a deviation from a reference condition. This is a natural choice for factorial designs where no condition is theoretically privileged as the baseline. However, it has an implication for hypothesis tests via `hypothesis()` that is easy to miss: no prior is placed directly on condition differences. The prior on the difference is implied by the priors on the condition-specific intercepts.
+
+To see why, suppose the specification includes two condition intercepts $\mu_1$ and $\mu_2$, each with an independent prior. The hypothesis test concerns whether $\Delta = \mu_1 - \mu_2 = 0$. The prior on $\Delta$ is determined by the priors on $\mu_1$ and $\mu_2$ through probability theory: the difference of two independent random variables has a distribution equal to the convolution of their individual distributions. For two independent normal priors with the same mean and variance,
+
+$$
+\text{if } \mu_1,\, \mu_2 \overset{\text{iid}}{\sim} \mathcal{N}(\text{loc},\, \text{scale}^2), \text{ then } \mu_1 - \mu_2 \sim \mathcal{N}\!\left(0,\, 2 \cdot \text{scale}^2\right)
+$$
+
+In words: the implied prior on the condition difference is centered at zero — as expected for a hypothesis test — and its standard deviation is $\sqrt{2} \approx 1.41$ times the standard deviation of each individual intercept prior.
+
+For the bmm default prior of $\mathcal{N}(1, 0.5^2)$ on each condition intercept, the implied prior on the condition difference is $\mathcal{N}(0, 0.5)$ — that is, a standard deviation of $\sqrt{2 \times 0.25} \approx 0.5$. On the log-activation scale, a difference of 0.5 log-units corresponds to an activation ratio of $\exp(0.5) \approx 1.65$ between conditions. For most applied comparisons in working memory research, this is a reasonable prior: it assigns substantial mass to condition differences up to about one log-unit while not ruling out larger effects. Researchers with strong prior expectations about effect sizes should inspect the implied prior via prior predictive checking, or place priors directly on condition differences using contrast coding.
+
+# The Softmax Choice Rule as Signal Detection Theory
+
+The softmax choice rule is not simply a convenient mathematical device — it follows from two independent theoretical frameworks that converge on the same functional form. Understanding either derivation clarifies what the softmax choice rule assumes about the cognitive process generating responses and why it has the computational properties that make it tractable in hierarchical Bayesian estimation.
+
+## Luce's Choice Axiom
+
+The first derivation begins with a behavioral regularity. @luce1959individual proposed the choice axiom: the odds of choosing option $i$ over option $j$ should not depend on what other options are available in the choice set. Formally, for any choice sets $\mathcal{S}' \subset \mathcal{S}$ containing both $i$ and $j$,
+
+$$
+\frac{P(i \mid \mathcal{S})}{P(j \mid \mathcal{S})} = \frac{P(i \mid \mathcal{S}')}{P(j \mid \mathcal{S}')}
+$$
+
+This is the independence of irrelevant alternatives. Luce proved that this property holds if and only if there exist positive scale values $v_k > 0$ — one for each response option — such that the probability of choosing option $k$ from set $\mathcal{S}$ is $P(k \mid \mathcal{S}) = v_k / \sum_{j \in \mathcal{S}} v_j$. Writing $v_k = \exp(u_k)$ for some real-valued utility $u_k$ immediately yields the softmax formula. The scale values $v_k$ correspond directly to the raw activations in the simple choice rule; the utilities $u_k$ correspond to the log-activations in the softmax rule. This is precisely the bijection established in Section 1: the two choice rules implement the same axiom, differing only in whether scale values are parameterized as activations directly or as exponentials of utilities.
+
+## Yellott's Uniqueness Theorem: Why Gumbel Noise?
+
+The second derivation comes from signal detection theory and provides a mechanistic interpretation the axiomatic approach does not. Suppose each response category $k$ has an underlying activation strength $u_k$, and at the moment of retrieval each activation is perturbed by independent noise $\epsilon_k$. The observed activation for category $k$ is $u_k + \epsilon_k$, and the response with the highest observed activation is selected:
+
+$$
+\text{Response} = \arg\max_k \left(u_k + \epsilon_k\right)
+$$
+
+The probability of each response depends on the distribution of the noise. For Gaussian noise $\epsilon_k \sim \mathcal{N}(0, 1)$, computing the probability that category $k$ achieves the highest observed activation requires evaluating a $(n-1)$-dimensional multivariate normal integral. This integral has no closed form for $n > 2$ alternatives, it is not natively evaluable within Stan, and per-iteration numerical integration makes hierarchical MCMC estimation computationally impractical for the response-set sizes common in working memory research.
+
+For noise following the Gumbel distribution — also known as the Type I extreme-value distribution, with cumulative distribution function $F(\epsilon) = \exp(-\exp(-\epsilon))$ — the probability reduces to a closed form. When independent Gumbel noise is added to each category's activation, the probability that category $k$ achieves the highest observed value is:
+
+$$
+P\!\left(\text{Response} = k\right) = \frac{\exp(u_k)}{\displaystyle\sum_j \exp(u_j)}
+$$
+
+This is the softmax formula. @yellott1977relationship established a uniqueness result that closes the connection between Luce's axiom and the Gumbel distribution: the Gumbel is the *only* noise distribution for which the resulting choice probabilities satisfy the independence of irrelevant alternatives for all numbers of alternatives $n \geq 3$. For $n = 2$, any symmetric noise distribution produces IIA-consistent choice probabilities, because binary probabilities depend only on the difference in activations and any symmetric distribution yields a monotone function of this difference. Yellott's uniqueness result is specific to the $n \geq 3$ case — precisely the situation $M^3$ is designed for, with three to five response categories.
+
+## Gaussian SDT and the Limits of Closed-Form Solutions
+
+The mechanistic attractiveness of Gaussian noise is genuine. Gaussian distributions arise naturally from central-limit arguments about aggregated neural variability, the Gaussian is symmetric and well-characterized, and Gaussian signal detection theory has a long history in psychophysics [@decarlo1998signal]. The question is not whether Gaussian noise is theoretically preferable, but whether it is computationally feasible for the $M^3$ use case.
+
+For two-alternative tasks, the Gaussian probability reduces to the probit function — $\Phi(\Delta u / \sqrt{2})$ for discriminability $\Delta u = u_1 - u_2$ — and estimation is straightforward. For three or more alternatives, no such simplification exists. Computing the $n$-AFC probability under Gaussian noise requires evaluating an $(n-1)$-dimensional multivariate normal integral, which is not a native Stan operation. Per-iteration numerical integration imposes computational costs that render hierarchical MCMC estimation prohibitive for the sample sizes and response set sizes typical in working memory research.
+
+There is also empirical evidence bearing on the choice between Gumbel and Gaussian noise. @robinsonHowPeopleBuild2023 showed that the softmax scaling parameter $\beta$ — which governs the sharpness of the softmax function and is fixed at 1 in the standard implementation — varies systematically with the number of response alternatives, whereas the analogous signal detection parameter $d'$ is stable across alternative set sizes. This is meaningful evidence that the Gumbel distribution is not the correct mechanistic description of choice noise. @meyer-grantExtremeValueSignalDetection2025 has proposed an extreme-value signal detection framework for recognition memory that shows strong empirical support for Gumbel noise. The empirical picture, in short, is not settled.
+
+However, these findings do not imply that the softmax choice rule produces systematically wrong parameter estimates for the activation parameters in $M^3$. Whether the specific form of the noise distribution materially affects substantive conclusions about item activation $a$, context binding $c$, and distractor filtering $f$ is an open empirical question. The softmax choice rule is used in $M^3$ because it is computationally tractable and theoretically grounded, not as a commitment to Gumbel noise as the correct mechanistic account of human choice.
+
+## The Two-Alternative Case
+
+When $M^3$ is applied to two-alternative tasks — for example, a recognition memory task where a participant chooses between a studied item and a foil — the softmax formula simplifies to the logistic function. With two categories $k \in \{1, 2\}$,
+
+$$
+P(\text{Response} = 1 \mid u_1, u_2) = \frac{\exp(u_1)}{\exp(u_1) + \exp(u_2)} = \frac{1}{1 + \exp(u_2 - u_1)} = \sigma(u_1 - u_2)
+$$
+
+where $\sigma(\cdot)$ denotes the standard logistic function and $u_1 - u_2$ is the difference in log-activations between the two alternatives. The logistic and the probit — the cumulative Gaussian that underlies classical signal detection theory — are close approximations to each other: the maximum absolute difference between the logistic CDF and the probit CDF is less than 0.01 across the full range of discriminability values encountered in psychological research [@decarlo1998signal]. In the two-alternative case, therefore, the distinction between Gumbel and Gaussian noise is practically negligible, and the softmax choice rule serves as a well-grounded and computationally convenient default.
+
+# Validating Custom $M^3$ Specifications
+
+The companion supplement demonstrates parameter recovery for a custom $M^3$ applied to a memory updating task. Parameter recovery is the starting point for validation, not the end point. This section describes the additional steps required to establish that a custom $M^3$ specification measures the cognitive processes it is theorized to measure.
+
+## Parameter Recovery as a Computational Check
+
+Parameter recovery establishes that the fitting algorithm can recover known values from data simulated under the specification's own assumptions. It answers the question: if the specification were true and the data were generated exactly by it, could we recover the generating parameters? A specification that fails parameter recovery is not ready for empirical use — the sampler cannot identify the parameters from data of the quality and quantity the researcher is working with.
+
+However, good parameter recovery says nothing about whether the parameters mean what they are theorized to mean in real data. A specification can recover its parameters perfectly from simulated data while measuring something entirely different from the intended cognitive process when applied to real participants. This is not a failure of the software but a fundamental limitation of the recovery exercise: the mathematical mapping from parameters to response probabilities can be well-determined without the parameters having the intended psychological referents. Establishing psychological validity requires the additional steps described below.
+
+## Theoretical Grounding of Activation Formulas
+
+The activation formulas in an $M^3$ specification are theoretical claims, not curve-fitting devices. Each formula asserts that a specific cognitive process — item activation, context binding, distractor filtering — contributes a specific function of the experimental design variables to the activation of a response category. These formulas should be derived from a theoretical account of how the task engages memory, not reverse-engineered from empirical fit.
+
+The established $M^3$ configurations — the simple span ($ss$) and complex span ($cs$) versions, and the filtering extension introduced in Tutorial 3 — have this theoretical grounding in @oberauer2019simple's analysis of working memory maintenance and retrieval. A custom configuration does not inherit this grounding simply by being implemented in bmm. Researchers proposing a new activation formula should be able to answer three questions before fitting any data: What cognitive mechanism does this activation component represent? What would it mean for this component to be absent — that is, for its activation to be zero? What experimental manipulations should selectively affect this component without affecting the others?
+
+If these questions cannot be answered before fitting, the parameter estimates cannot be interpreted as measures of specific cognitive processes. Observing that a custom specification fits data well, or that its parameters take numerically reasonable values, is not evidence of psychological validity — it is evidence that the specification is flexible enough to describe the data.
+
+## Identifiability
+
+A parameter is identified if distinct parameter values imply distinct probability distributions over the observable responses. Non-identified parameters produce posteriors that closely resemble their priors — the data contain no information to update them. Three complementary checks should be applied to any custom $M^3$ specification.
+
+**Conceptual check.** For each parameter, ask: is there a pattern of responses — across response categories, across conditions, or across both — that would change if this parameter changed while no other parameter changed? If two parameters always produce proportionally similar changes in the response distribution regardless of the data, they are not jointly identified. This check should be performed before collecting data; if the specification fails it on paper, no amount of data will identify the parameters.
+
+**Empirical check.** After fitting the specification to real data, compare each parameter's posterior distribution to its prior. A posterior that is meaningfully narrower than the prior — covering a substantially smaller range and placing more mass away from the prior boundaries — indicates that the data have updated beliefs about the parameter. A posterior that closely resembles the prior, regardless of the data, indicates non-identification.
+
+**Multimodality check.** Examine the joint posterior distribution of all estimated parameters using `mcmc_pairs()` from the `bayesplot` package. Multimodal joint posteriors — regions of high posterior probability separated by regions of low probability — indicate label switching or structural non-identification. Critically, univariate marginal posteriors can appear unimodal and well-behaved even when the joint posterior is multimodal, because the marginals integrate over the second mode. The pairs plot is therefore essential for any specification with three or more freely estimated parameters.
+
+## Selective Influence
+
+Selective influence is the central validity criterion for measurement specifications: a parameter is a valid measure of a cognitive process if experimental manipulations theorized to affect that process selectively change that parameter while leaving other parameters unaffected [@oberauer2019simple]. In the established $M^3$ configurations, selective influence has been demonstrated empirically: manipulations of list length affect item activation and context binding as predicted by the theoretical framework, and manipulations of distractor properties affect the filtering parameters in Tutorial 3 without corresponding changes in item or context binding.
+
+For a custom $M^3$ specification, selective influence must be established, not assumed. This requires designing studies in which: (a) a manipulation is predicted to affect a target parameter based on the theoretical account, (b) the same manipulation is predicted not to affect the other parameters, and (c) these predictions are tested using Bayesian hypothesis tests via `hypothesis()`. A new parameter representing, for example, the activation of temporally adjacent items should respond selectively to manipulations of temporal spacing without affecting item activation or context binding. Both the manipulation logic and the hypothesis tests should be prespecified before data collection to be interpretable as confirmatory evidence.
+
+## Convergent Validity
+
+Even when selective influence is established within a single paradigm, individual differences in $M^3$ parameters should covary with theoretically related measures across paradigms and tasks. A parameter measuring context binding in a simple span task should correlate with context binding estimates from a complex span task; it should also covary with individual differences in proactive interference susceptibility and with performance on tasks that specifically recruit selective retrieval from memory. Convergent validity evidence of this kind is available for the established $M^3$ parameters [@oberauer2023measurement]; a custom specification requires the same evidence.
+
+Establishing convergent validity typically requires large samples — at minimum $N > 100$ for individual-difference research, and larger when the measurements themselves are noisy — and multi-task designs that go substantially beyond any single study. Researchers proposing a new $M^3$ configuration should treat the initial application as a proof of concept and plan a validation program accordingly.
+
+## A Validation Checklist
+
+The five criteria above can be organized into a structured checklist. Each criterion should be addressed before treating parameter estimates as psychologically valid measures, and each subsequent criterion presupposes the preceding ones.
+
+| Criterion | Guiding question | Method |
+|-----------|-----------------|--------|
+| Parameter recovery | Can the fitting algorithm recover known parameters from data simulated under the specification? | Simulate with `rm3()`; compare recovered to generating values |
+| Theoretical grounding | Does each activation component represent a specific, theoretically motivated cognitive process with a predictable empirical signature? | Derive from theoretical account before fitting any data |
+| Identifiability | Does each parameter have a unique empirical signature no other parameter can reproduce? | Conceptual check; compare posterior to prior; `mcmc_pairs()` for joint multimodality |
+| Selective influence | Does a manipulation theorized to affect parameter $\theta$ change $\theta$ but leave other parameters unchanged? | Preregistered Bayesian hypothesis tests across conditions |
+| Convergent validity | Do individual differences in $\theta$ correlate with theoretically related measures across tasks and paradigms? | Multi-task study with $N > 100$ |
+
+: Validation checklist for custom $M^3$ specifications. {#tbl-validation}
+
+\newpage
+
+# References {.unnumbered}
+
+::: {#refs}
+:::
