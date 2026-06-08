@@ -21,6 +21,9 @@ manuscript/*.ttt
 # Local files (working docs)
 /local
 
+# Reviewer response (not part of manuscript repo)
+/response
+
 # OS
 .DS_Store
 /.luarc.json

@@ -16,15 +16,25 @@ author:
         department: Department of Psychology
       - name: University of Chicago
         department: Institution for Mind and Biology
+author-note:
+  disclosures:
+    study-registration: "This study was not preregistered."
+    data-sharing: "Data, analysis code, and companion R scripts for all four tutorials are available on [OSF](https://osf.io/yb7wm/) and [GitHub](https://github.com/GidonFrischkorn/tutorial-m3-bmm)."
+    conflict-of-interest: "The authors declare no conflicts of interest."
+    financial-support: "This research was supported by a grant from the Swiss National Science Foundation (SNSF) awarded to Gidon T. Frischkorn (Grant No. 208828)."
+    gratitude: "We thank Isabel Courage for valuable feedback during the development of the M3 implementation in the bmm R package."
+    authorship-agreements:
+      "Gidon T. Frischkorn: Conceptualization, Methodology, Software, Formal Analysis, Visualization, Writing -- Original Draft.
+      Chenyu Li: Software, Data Curation, Writing -- Review & Editing."
 format:
+  apaquarto-docx: default
   apaquarto-pdf:
     keep-tex: true
-  apaquarto-docx: default
 floatsintext: true
 output-dir: "."
 bibliography: references.bib
-abstract: |
-  This supplement accompanies the tutorial on fitting the Memory Measurement Model ($M^3$) with the bmm R package. It provides methodological background on four topics that arise naturally in the tutorial but extend beyond its practical scope: (1) how different choice rules translate parameter-space priors into prior predictions on the scale of observable responses, and what conditions are required to achieve equal prior predictives across choice rules; (2) when bridge sampling versus the Savage--Dickey density ratio is the appropriate tool for Bayes factor estimation, and what cell-means coding implies for priors on condition differences; (3) the theoretical derivation of the softmax choice rule as a signal detection framework with Gumbel-distributed noise, and what this implies for applied practice; and (4) a structured checklist for validating custom $M^3$ specifications beyond parameter recovery. Each section is self-contained and can be read independently.
+abstract:
+  "This supplement accompanies the tutorial on fitting the Memory Measurement Model ($M^3$) with the bmm R package. It provides methodological background on four topics that arise naturally in the tutorial but extend beyond its practical scope: (1) how different choice rules translate parameter-space priors into prior predictions on the scale of observable responses, and what conditions are required to achieve equal prior predictives across choice rules; (2) when bridge sampling versus the Savage--Dickey density ratio is the appropriate tool for Bayes factor estimation, and what cell-means coding implies for priors on condition differences; (3) the theoretical derivation of the softmax choice rule as a signal detection framework with Gumbel-distributed noise, and what this implies for applied practice; and (4) a structured checklist for validating custom $M^3$ specifications beyond parameter recovery. Each section is self-contained and can be read independently."
 keywords:
   - working memory
   - measurement model
