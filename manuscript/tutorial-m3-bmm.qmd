@@ -34,7 +34,7 @@ floatsintext: true
 output-dir: "."
 bibliography: references.bib
 abstract:
-  "The memory measurement model ($M^3$) decomposes categorical response data from memory tasks into latent activation parameters, separating item memory from context-specific binding via competitive retrieval. This tutorial introduces the $M^3$ framework and demonstrates how to apply it to empirical data using the bmm R package, which provides a standardized interface for fitting Bayesian hierarchical measurement models. Four tutorial examples build progressively: In Tutorials 1 and 2, we fit $M^3$ to two common working memory paradigms — simple span and complex span — demonstrating how different choice rules can be applied and how distractor categories extend the basic model. In Tutorial 3, we use the complex span data to illustrate how to build a custom specification based on different theoretical assumptions. Tutorial 4 provides a simulation-based workflow for validating custom specifications through parameter recovery. Complete R scripts accompany each tutorial. After completing the tutorials, readers will be able to apply standard and custom $M^3$ to their own data and validate new model specifications through simulation."
+  "The memory measurement model ($M^3$) decomposes categorical response data from working memory tasks into latent activation parameters, separating item memory from context-specific binding via competitive retrieval. This tutorial introduces the $M^3$ framework and demonstrates how to apply it to empirical data using the bmm R package, which provides a standardized interface for fitting Bayesian hierarchical measurement models. Four tutorial examples build progressively: In Tutorials 1 and 2, we fit $M^3$ to two common working memory paradigms — simple span and complex span — demonstrating how different choice rules can be applied and how distractor categories extend the basic model. In Tutorial 3, we use the complex span data to illustrate how to build a custom specification based on different theoretical assumptions. Tutorial 4 provides a simulation-based workflow for validating custom specifications through parameter recovery. Complete R scripts accompany each tutorial. After completing the tutorials, readers will be able to apply standard and custom $M^3$ to their own data and validate new model specifications through simulation."
 keywords:
   - working memory
   - measurement model
@@ -59,8 +59,14 @@ source(here("functions", "clean_plot.R"))
 fit_m3_ss_softmax <- readRDS(here("output", "fit_m3_ss_softmax.rds"))
 fit_m3_ss_simple  <- readRDS(here("output", "fit_m3_ss_simple.rds"))
 fit_m3_cs         <- readRDS(here("output", "fit_m3_cs.rds"))
-bridge_softmax    <- readRDS(here("output", "bridge_m3_ss_softmax.rds"))
-bridge_simple     <- readRDS(here("output", "bridge_m3_ss_simple.rds"))
+bridge_softmax      <- readRDS(here("output", "bridge_m3_ss_softmax.rds"))
+bridge_simple       <- readRDS(here("output", "bridge_m3_ss_simple.rds"))
+bridge_softmax_long <- readRDS(here("output", "bridge_m3_ss_softmax_longrun.rds"))
+bridge_simple_long  <- readRDS(here("output", "bridge_m3_ss_simple_longrun.rds"))
+# Prior-matched choice-rule comparisons (see Supplement Section 1):
+# both rules calibrated to the same data-plausible prior predictive (~85% correct)
+bridge_softmax_match <- readRDS(here("output", "bridge_m3_ss_softmax_matchedhi_longrun.rds"))
+bridge_simple_match  <- readRDS(here("output", "bridge_m3_ss_simple_matchedhi_longrun.rds"))
 
 # ---- Convergence diagnostics across all models ----
 get_diagnostics <- function(fit) {
@@ -84,18 +90,31 @@ val_ess_all  <- format(round(min(diag_sm$ess, diag_si$ess, diag_cs$ess)),
 val_rhat_t2  <- sprintf("%.3f", diag_cs$rhat)
 val_ess_t2   <- format(round(diag_cs$ess), big.mark = ",")
 
-# ---- Bayes factor: softmax vs simple ----
-bf_result   <- bridgesampling::bf(bridge_softmax, bridge_simple)
-bf10_choice <- bf_result$bf
-
-bf10_med <- median(bf10_choice)
-bf10_fmt <- if (bf10_med >= 10000) {
-  ev <- floor(log10(bf10_med))
-  cv <- bf10_med / 10^ev
-  sprintf("$%.1f \\times 10^{%d}$", cv, ev)
-} else {
-  sprintf("%.1f", bf10_med)
+# ---- Bayes factor formatting helpers ----
+fmt_bf <- function(x) {
+  if (x >= 10000) {
+    ev <- floor(log10(x)); cv <- x / 10^ev
+    sprintf("$%.1f \\times 10^{%d}$", cv, ev)
+  } else if (x >= 10) {
+    sprintf("%.1f", x)
+  } else {
+    sprintf("%.2f", x)
+  }
 }
+fmt_bf_range <- function(v) sprintf("%s–%s", fmt_bf(min(v)), fmt_bf(max(v)))
+
+# ---- Bayes factor: softmax vs simple (default 4k vs long-run 80k samples) ----
+bf10_def  <- bridgesampling::bf(bridge_softmax,      bridge_simple)$bf
+bf10_long <- bridgesampling::bf(bridge_softmax_long, bridge_simple_long)$bf
+bf10_def_fmt    <- fmt_bf(median(bf10_def))
+bf10_def_range  <- fmt_bf_range(bf10_def)
+bf10_long_fmt   <- fmt_bf(median(bf10_long))
+bf10_long_range <- fmt_bf_range(bf10_long)
+
+# Prior-matched BF: both rules at ~85% prior-predictive correct (fair comparison)
+bf10_match       <- bridgesampling::bf(bridge_softmax_match, bridge_simple_match)$bf
+bf10_match_fmt   <- sprintf("%.0f", median(bf10_match))
+bf10_match_range <- sprintf("%.0f–%.0f", min(bf10_match), max(bf10_match))
 
 # ---- Evidence ratios ----
 fmt_er <- function(x) {
@@ -164,21 +183,18 @@ if (file.exists(t3_file)) {
 val_rhat_t3 <- sprintf("%.3f", diag_t3$rhat)
 val_ess_t3  <- format(round(diag_t3$ess), big.mark = ",")
 
-# ---- Tutorial 3: Bridge sampling BF (custom vs cs) ----
-bridge_cs_t3     <- readRDS(here("output", "bridge_m3_cs.rds"))
-bridge_custom_t3 <- readRDS(here("output", "bridge_m3_custom_filtering.rds"))
-bf_custom_cs     <- bridgesampling::bf(bridge_custom_t3, bridge_cs_t3)
+# ---- Tutorial 3: Bridge sampling BF (custom vs cs; default 4k vs long-run 80k) ----
+bridge_cs_t3          <- readRDS(here("output", "bridge_m3_cs.rds"))
+bridge_custom_t3      <- readRDS(here("output", "bridge_m3_custom_filtering.rds"))
+bridge_cs_t3_long     <- readRDS(here("output", "bridge_m3_cs_longrun.rds"))
+bridge_custom_t3_long <- readRDS(here("output", "bridge_m3_custom_filtering_longrun.rds"))
 
-bf_custom_med <- median(bf_custom_cs$bf)
-bf_custom_fmt <- if (bf_custom_med >= 10000) {
-  ev <- floor(log10(bf_custom_med))
-  cv <- bf_custom_med / 10^ev
-  sprintf("$%.1f \\times 10^{%d}$", cv, ev)
-} else if (bf_custom_med >= 10) {
-  sprintf("%.1f", bf_custom_med)
-} else {
-  sprintf("%.2f", bf_custom_med)
-}
+bf_custom_def  <- bridgesampling::bf(bridge_custom_t3,      bridge_cs_t3)$bf
+bf_custom_long <- bridgesampling::bf(bridge_custom_t3_long, bridge_cs_t3_long)$bf
+bf_custom_def_fmt    <- fmt_bf(median(bf_custom_def))
+bf_custom_def_range  <- fmt_bf_range(bf_custom_def)
+bf_custom_long_fmt   <- fmt_bf(median(bf_custom_long))
+bf_custom_long_range <- fmt_bf_range(bf_custom_long)
 
 # ---- Tutorial 3: ra/rc on probability scale ----
 draws_custom <- as_draws_df(fit_m3_custom) |> as_tibble()
@@ -336,7 +352,7 @@ knitr::include_graphics(here("figures", "task_example.pdf"))
 
 ## Activation Formulas and Model Parameters
 
-Each response category's activation formula specifies which latent sources contribute to its selection probability. Because the $M^3$ framework is not committed to any particular memory theory, different assumptions about the processes limiting memory performance can be accommodated through different activation formulas.
+Each response category's activation formula specifies which latent sources contribute to its selection probability. Because the $M^3$ framework is not committed to any particular theory of working memory, different assumptions about the processes limiting working memory performance can be accommodated through different activation formulas.
 
 For the cued recall task introduced above, three activation sources are theoretically relevant:
 
@@ -383,13 +399,13 @@ The softmax rule is formally equivalent to an $n$-alternative forced-choice sign
 
 ## Model Versions
 
-@oberauer2019simple proposed two concrete $M^3$ specifications for canonical memory paradigms, which differ in their response categories and estimated parameters. Beyond these, custom specifications can be defined for novel task designs. We briefly introduce each; the tutorials provide details.
+@oberauer2019simple proposed two concrete $M^3$ specifications for canonical working memory paradigms, which differ in their response categories and estimated parameters. Beyond these, custom specifications can be defined for novel task designs. We briefly introduce each; the tutorials provide details.
 
 The **simple span** (`ss`) version implements $M^3$ for cued recall tasks separating three response categories (correct response, other, lures) with two free parameters ($a$, $c$). It implements the additive activation formula proposed by @oberauer2019simple.
 
 The **complex span** (`cs`) version extends the simple span to tasks that interleave distractor processing with memorization. It requires that memoranda and distractors are drawn from the same material so that distractors can plausibly intrude during retrieval [@li2026filtering; for examples, see @oberauer2019simple]. The `cs` version separates five response categories (correct, paired distractor, other memorandum, other distractor, and NPL) with three free parameters ($a$, $c$, $f$). The additional parameter $f$ captures distractor filtering efficiency on a scale from 0 to 1: $f = 0$ indicates perfect filtering (distractors receive only baseline activation), while $f = 1$ indicates no filtering (distractors are activated as strongly as memoranda).
 
-The **custom** version allows user-defined response categories, activation formulas, and parameters. Researchers can specify $M^3$ of arbitrary complexity for novel task designs, as long as the model remains identified. The only requirement is that all activation formulas include the baseline activation $b$, which reflects random guessing if no other activations were included. Tutorial 3 demonstrates how to define and fit a custom version, and Tutorial 4 shows how to validate custom specifications through parameter recovery simulations (see @callout-validation for what recovery does and does not establish about a specification's validity).
+The **custom** version allows user-defined response categories, activation formulas, and parameters. Researchers can specify $M^3$ of arbitrary complexity for novel task designs, as long as the model remains identified. The only requirement is that all activation formulas include the baseline activation $b$, which reflects random guessing if no other activations were included. Tutorial 3 demonstrates how to define and fit a custom version, and Tutorial 4 shows how to validate custom specifications through parameter recovery simulations.
 
 ## The bmm Workflow
 
@@ -477,7 +493,7 @@ The simple span version estimates two parameters: $a$ (item activation) and $c$ 
 
 With this information, we know that we can specify predictor formulas for the two activation parameters $a$ and $c$. Because the two experiments in @oberauer2019bindings are between-subjects, we use cell means coding (`0 + exp`) so that each experiment receives its own intercept rather than a difference from a reference level or grand mean. Similar to the original study by @oberauer2019bindings, we entered set size as a linear predictor (`exp:ss_lin`), and random effects allowed both intercepts and slopes to vary across participants, with separate variance components per experiment (`gr(id, by = exp)`)[^5].
 
-[^5]: For details on the specification of the `bmmformula`, see the `bmm` package documentation and the documentation of the `brmsformula` function on which it builds. Note that cell means coding (`0 + condition`) does not place a prior directly on condition differences; the implied prior on any difference is the convolution of the two condition-specific intercept priors — approximately $\mathcal{N}(0, 0.5)$ on the activation scale with default priors. See Supplement Section 2 for the full arithmetic and its implications for Bayes factors.
+[^5]: For details on the specification of the `bmmformula`, see the `bmm` package documentation and the documentation of the `brmsformula` function on which it builds. Note that cell means coding (`0 + condition`) does not place a prior directly on condition differences; the implied prior on any difference is the convolution of the two condition-specific intercept priors — a zero-centered normal with standard deviation $\sqrt{0.5} \approx 0.71$ on the activation scale with default priors. See Supplement Section 2 for the full arithmetic and its implications for Bayes factors.
 
 ```{r}
 #| label: t1-formula
@@ -597,9 +613,11 @@ bridge_simple  <- bridge_sampler(fit_m3_ss_simple,  repetitions = 10)
 bf(bridge_softmax, bridge_simple)
 ```
 
-The Bayes factor strongly favored the softmax rule (median *BF*~10~ = `r bf10_fmt` across 10 bridge sampling repetitions). This is consistent with recent comparisons by @oberauer2023measurement and @li2026filtering, who found the softmax choice rule to outperform the simple rule across different working memory tasks. We use softmax as the default in the remaining tutorials.
+With the default priors, the Bayes factor overwhelmingly favored softmax (median *BF*~10~ = `r bf10_long_fmt`, 80,000 post-warmup samples). This magnitude is misleading, however, because the two rules do not imply comparable prior predictive distributions: under the default priors the softmax rule expects about 89% correct responses a priori, whereas the simple rule expects about 55% (see the prior predictive check above). A Bayes factor rewards a model for placing prior predictive mass where the data fall, so part of the softmax advantage reflects that its default prior happens to be better calibrated to these high-accuracy data (about 91% correct) rather than a better likelihood.
 
-Bridge sampling for hierarchical models is sensitive to the number of posterior samples: @oberauerReliabilityBiasComputational2026 show that approximately 72,000 post-warmup samples are needed for stable marginal likelihood estimates in models of this complexity, compared to the 4,000 produced by the default settings. We therefore refit both choice rule models with 80,000 post-warmup samples (4 chains × 20,000 iterations) and recomputed the Bayes factor. The long-run median Bayes factor ($6.2 \times 10^7$, range: $5.7 \times 10^7$–$6.4 \times 10^7$) is consistent with the default estimate but substantially more stable (default range: $3.2 \times 10^7$–$7.0 \times 10^7$). See Supplement Section 2 for the full comparison and recommendations on when long-run sampling is warranted.[^bridge-vs-sd]
+To separate prior calibration from likelihood fit, we recalibrated the intercept priors of *both* rules so that each implies the same data-plausible prior predictive (median ≈ 85% correct), placing the comparison on equal footing, and recomputed the Bayes factor. Under these matched, well-calibrated priors the softmax rule remains decisively favored (median *BF*~10~ = `r bf10_match_fmt`, range `r bf10_match_range`). The preference for softmax is therefore robust to a fair comparison, even though the *magnitude* of the Bayes factor is strongly prior-dependent — matching both rules to an implausibly low prior predictive (≈55%) reverses the direction. We therefore report the matched-prior Bayes factor as the meaningful estimate, and treat the default-prior value as an upper bound inflated by prior miscalibration. This direction is consistent with recent comparisons by @oberauer2023measurement and @li2026filtering. Supplement Section 1 reports the full prior-sensitivity analysis; Supplement Section 2 covers bridge sampling sample-size requirements.[^bridge-vs-sd] We use softmax as the default in the remaining tutorials.[^samplesize]
+
+[^samplesize]: Bridge sampling for hierarchical models is sensitive to the number of posterior samples: @oberauerReliabilityBiasComputational2026 show that roughly 72,000 post-warmup samples are needed for stable marginal likelihood estimates in models of this complexity, against the 4,000 from default settings. All Bayes factors reported here use 80,000 post-warmup samples (4 chains × 20,000 iterations); see Supplement Section 2.
 
 [^bridge-vs-sd]: Bridge sampling and the Savage--Dickey density ratio address different comparison problems. The Savage--Dickey ratio, computed via `brms::hypothesis()`, applies to nested comparisons — where the null is obtained by fixing a parameter to a specific value — and is efficient even for complex hierarchical models. Bridge sampling handles non-nested comparisons such as the choice rule comparison here, but requires many more samples for stable estimates. Using bridge sampling where `hypothesis()` would suffice adds unnecessary computational cost without improving accuracy.
 
@@ -770,6 +788,16 @@ The previous tutorials used the `ss` and `cs` specifications proposed by @oberau
 
 The original analysis by @li2026filtering tested this distinction using a custom specification with two separate ratio parameters, $r_a$ and $r_c$, and found that item memory transfers almost fully to distractors while context binding is more attenuated. When a research question requires this kind of flexibility — or when the task design does not map onto the simple or complex span versions — the $M^3$ framework supports fully custom specifications with user-defined response categories and activation formulas. This tutorial demonstrates how to define, fit, and compare such custom specifications using the same data as Tutorial 2. The companion script is `scripts/tutorial3_custom_filtering.R`.
 
+::: {.callout-important #callout-validation}
+**Custom $M^3$: specifying a model is not validating it**
+
+The `bmm` framework makes it straightforward to add activation sources, parameters, and response categories. Specifying a custom $M^3$ is therefore easy; establishing that its parameters measure the cognitive processes they are intended to measure is not. The pre-built `ss` and `cs` versions inherit their validity from a body of theoretical development and empirical testing [@oberauer2019simple]; a custom specification does not inherit that grounding simply by being implementable in `bmm`.
+
+Establishing the psychological validity of a custom specification requires several kinds of evidence beyond a good fit to the data: (1) theoretical grounding — each activation formula should follow from a mechanistic account of how the task engages memory, not be reverse-engineered from empirical fit; (2) identifiability — each parameter should have a unique empirical signature that no combination of other parameters can reproduce (discussed below); (3) parameter recovery — the fitting algorithm should recover known generating values from data simulated under the model (demonstrated in Tutorial 4), which is a necessary computational check but not on its own a psychological one; (4) selective influence — manipulations expected to target a specific process should affect its parameter while leaving others unchanged; and (5) convergent validity — parameter estimates should correlate with independent measures of the same construct.
+
+The `bmm` package provides the infrastructure for fitting custom $M^3$; the theoretical adequacy and empirical validity of any custom specification are the responsibility of the researchers proposing it and the research community evaluating it. See Supplement Section 4 for a structured validation checklist.
+:::
+
 ## From single $f$ to separate ratio parameters
 
 Replacing $f$ with two ratio parameters - $r_a$ for item memory and $r_c$ for context binding - produces the following activation formulas:
@@ -866,7 +894,7 @@ bridge_custom <- bridge_sampler(fit_m3_custom, repetitions = 10)
 bf(bridge_custom, bridge_cs)
 ```
 
-The Bayes factor strongly favored the custom version (median BF$_{10}$ = `r bf_custom_fmt` across 10 bridge sampling repetitions with 80,000 post-warmup samples; see Supplement Section 2 for the comparison with the default 4,000-sample estimate), indicating that the data warrant separate ratio parameters rather than a single $f$.
+The Bayes factor strongly favored the custom version (long-run median BF$_{10}$ = `r bf_custom_long_fmt`, range `r bf_custom_long_range`, across 10 bridge sampling repetitions with 80,000 post-warmup samples), indicating that the data warrant separate ratio parameters rather than a single $f$. This comparison illustrates the sample-size point from Tutorial 1 even more sharply: with the default 4,000 post-warmup samples the estimate was far more variable (median `r bf_custom_def_fmt`, range `r bf_custom_def_range`, spanning more than three orders of magnitude), so the default-sample Bayes factor would have been misleading about the strength — though not the direction — of the evidence. See Supplement Section 2 for the full comparison.
 
 ## Parameter estimates
 
@@ -888,17 +916,7 @@ As in Tutorial 2, we can test parameter differences formally. Within both the pr
 
 # Tutorial 4: Parameter Recovery
 
-The $M^3$ framework allows researchers to develop custom versions tailored to their research questions. However, before applying a custom $M^3$ to empirical data, it is worth checking whether the planned design provides enough information to recover the parameters of interest. If recovery fails when the generating values are known and the model is correctly specified, the problem lies with the design or the specification, not the data. This tutorial demonstrates the recovery workflow using the custom filtering version from Tutorial 3. The companion script is `scripts/tutorial4_parameter_recovery.R`.
-
-::: {.callout-important #callout-validation}
-**Custom $M^3$: What parameter recovery does — and does not — establish**
-
-Parameter recovery confirms that the fitting algorithm can recover known values from data generated under the model's own assumptions. That is a computational check, not a psychological one. It does not establish that the parameters measure what they are assumed to represent.
-
-Establishing psychological validity requires additional evidence: (1) theoretical grounding — each activation formula should be derived from a mechanistic account of how the task engages memory, not reverse-engineered from empirical fit; (2) identifiability — each parameter should have a unique empirical signature that no combination of other parameters can reproduce (see below); (3) selective influence — experimental manipulations expected to target a specific process should affect its parameter while leaving others unchanged; and (4) convergent validity — parameter estimates should correlate meaningfully with independent measures of the same construct.
-
-The `bmm` package provides the infrastructure for fitting custom $M^3$; the theoretical adequacy of any custom specification is the responsibility of the researchers proposing it and the research community evaluating it. See Supplement Section 4 for a structured five-criterion validation checklist.
-:::
+The $M^3$ framework allows researchers to develop custom versions tailored to their research questions. However, before applying a custom $M^3$ to empirical data, it is worth checking whether the planned design provides enough information to recover the parameters of interest. Parameter recovery is one of the validity checks introduced in the callout box at the start of Tutorial 3: a necessary computational check, though not on its own sufficient to establish that a custom specification is psychologically valid. If recovery fails when the generating values are known and the model is correctly specified, the problem lies with the design or the specification, not the data. This tutorial demonstrates the recovery workflow using the custom filtering version from Tutorial 3. The companion script is `scripts/tutorial4_parameter_recovery.R`.
 
 ## When to assess parameter recovery
 
@@ -917,7 +935,7 @@ We simulate data from the custom filtering version (Tutorial 3) with known param
 
 : Generating parameter values for the recovery simulation. All values are on the link scale. {#tbl-gen-pars}
 
-Individual parameters are drawn from $\mathcal{N}(\mu_\text{link}, \sigma_\text{link})$ independently for each person and parameter. We simulated $N = 50$ participants with 60 trials (i.e., 60 response observations) per participant. The `bmm` package provides `rm3()` as the data-generating counterpart to the fitting workflow:
+Individual parameters are drawn from $\mathcal{N}(\mu_\text{link}, \sigma_\text{link})$ independently for each person and parameter. We simulated $N = 50$ participants with 60 trials (i.e., 60 response observations) per participant. The `bmm` package provides `rm3()` as the data-generating counterpart to the fitting workflow. Note that `rm3()` takes parameters on the native (response) scale, whereas @tbl-gen-pars reports them on the link scale: the logit-scale means of 0.85 for $r_a$ and 0.25 for $r_c$ correspond to native values of 0.70 and 0.56, which are the values passed to `rm3()` below ($a$ and $c$ use the identity link, so their values are identical on both scales).
 
 ```{r}
 #| label: t4-rm3-demo
@@ -964,7 +982,7 @@ knitr::include_graphics(here("figures", "tutorial4_indiv_scatter.pdf"))
 
 As a rule of thumb, if individual-level correlations fall below .7 for a parameter, the design likely needs more trials or a larger sample before that parameter can support individual-differences analyses.[^r-threshold] The present simulation uses a single replication; a full simulation study should vary sample size and trial count systematically [for a systematic approach, see @goettmann2025recovery; for implementation tools, see @chalmers2020simdesign; for a complementary calibration-based approach, see @talts2018validating].
 
-[^r-threshold]: The .7 threshold has two converging sources. @goettmann2025recovery found that $r \approx .69$–$.73$ marked the lower boundary of satisfactory individual-level recovery for basic $M^3$ parameters in their simulation study. @cicchetti1994guidelines classified reliability estimates below .40 as poor, .40–.59 as fair, .60–.74 as good, and $\geq .75$ as excellent — a framework directly applicable here because a parameter recovery correlation (true vs. recovered individual parameters across participants) is formally equivalent to a split-half reliability estimate. Recovery near .7 warrants caution; systematic bias that the correlation does not detect is best diagnosed from scatter plots.
+[^r-threshold]: The .7 threshold has two converging sources. @goettmann2025recovery found that $r \approx .69$–$.73$ marked the lower boundary of satisfactory individual-level recovery for basic $M^3$ parameters in their simulation study. @cicchetti1994guidelines classified reliability estimates below .40 as poor, .40–.59 as fair, .60–.74 as good, and $\geq .75$ as excellent. We invoke this framework by analogy rather than identity: a parameter recovery correlation (true vs. recovered individual parameters across participants) quantifies how consistently the design and model pin down a person's parameter, which is closely analogous to — though not the same quantity as — a split-half reliability estimate computed from two halves of empirical data. Cicchetti's thresholds were developed for clinical inter-rater reliability, so the .7 cut should be read as a rough guide rather than a hard criterion. Recovery near .7 warrants caution; systematic bias that the correlation does not detect is best diagnosed from scatter plots.
 
 When parameters serve interchangeable roles in the activation formula — for example, if two parameters could be swapped without changing the likelihood — label switching can occur: MCMC chains assign parameter labels inconsistently, producing multimodal joint posteriors while marginal posteriors may appear normal. This is distinct from simple non-identification (which produces wide marginals). Check for label switching with `mcmc_pairs()` on the relevant parameter combinations. Multimodal joint posteriors indicate that the model specification should be revised before use.
 
@@ -1052,6 +1070,6 @@ m3_act_funs_updating <- bmf(
 )
 ```
 
-Note that `te` and `tr` appear in the formulas but are not estimated parameters — they are data columns whose values vary across conditions. When `bmm` encounters variables in activation formulas that are not listed as model parameters, it treats them as data columns. This allows custom specifications to incorporate experimentally manipulated design variables directly into the activation equations.
+Note that `te` and `tr` appear in the formulas but are not estimated parameters — they are data columns whose values vary across conditions. When `bmm` encounters variables in activation formulas that are not listed as model parameters, it treats them as data columns. This allows custom specifications to incorporate experimentally manipulated design variables directly into the activation equations. This design variation is what makes the additional parameters identifiable: $e$ and $r$ are pinned down by the variation in $t_e$ and $t_r$, and $d$ is separable from $a$ and $c$ only because the old-item categories combine $d$ with the decay term $\exp(-r \cdot t_r)$ across the manipulated removal times. Without experimental variation in $t_r$, $d$ and the $(a+c)$ activations would be confounded. We present this example to illustrate the specification mechanics rather than as a fully worked analysis; the companion recovery scripts are the appropriate place to verify that a given design renders all five parameters identifiable.
 
 Complete parameter recovery simulations for this model — varying sample size ($N \in \{25, 50, 100\}$) and trials per condition ($\{5, 10, 25\}$) — are available in the companion scripts (`scripts/tutorial5_parameter_recovery_updating_simple.R` for a single cell walkthrough, `scripts/tutorial5_parameter_recovery_updating.R` for the full design grid) and in the online supplement. These scripts demonstrate how recovery quality depends on both the number of participants and the amount of data per participant, and can serve as templates for validating other custom specifications.
