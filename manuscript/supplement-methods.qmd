@@ -1,6 +1,6 @@
 ---
-title: "Supplement: Methodological Background for Applying $M^3$"
-shorttitle: "Supplement: $M^3$ Methodological Background"
+title: "Supplement 1: Methodological Background for Applying $M^3$"
+shorttitle: "Supplement 1: $M^3$ Methodological Background"
 author:
   - name: Gidon T. Frischkorn
     orcid: 0000-0002-5055-9764
@@ -66,7 +66,7 @@ Section 2 addresses Bayes factor estimation. We distinguish the Savage--Dickey d
 
 Section 3 provides the theoretical derivation of the softmax choice rule as an $n$-alternative forced-choice signal detection framework with Gumbel-distributed noise. This derivation explains why softmax yields closed-form likelihoods for any number of response alternatives — a computational advantage that does not depend on settling the empirical question of whether Gumbel or Gaussian noise better describes human choice behavior.
 
-Section 4 proposes a structured checklist for validating custom $M^3$ specifications. Parameter recovery — covered in the companion supplement — establishes that the fitting algorithm can recover known parameters from simulated data. That is a computational check. Psychological validity requires additional evidence: theoretical grounding of the activation formulas, identifiability, selective influence demonstrations, and convergent validity across task variants and samples.
+Section 4 proposes a structured checklist for validating custom $M^3$ specifications. Parameter recovery — covered in Supplement 2 — establishes that the fitting algorithm can recover known parameters from simulated data. That is a computational check. Psychological validity requires additional evidence: theoretical grounding of the activation formulas, identifiability, selective influence demonstrations, and convergent validity across task variants and samples.
 
 # Prior Predictive Calibration Across Choice Rules
 
@@ -84,7 +84,7 @@ P_k^{\text{simple}} = \frac{A_k}{\displaystyle\sum_j n_j \cdot A_j}
 P_k^{\text{softmax}} = \frac{n_k \cdot \exp(u_k)}{\displaystyle\sum_j n_j \cdot \exp(u_j)}
 $$
 
-where $A_k$ denotes the raw activation of response category $k$, $u_k$ denotes its log-activation, and $n_k$ is the count of available options in category $k$. The simple span $M^3$ has three response categories with the activation formulas $A_\text{corr} = b + a + c$, $A_\text{other} = b + a$, and $A_\text{npl} = b$ — the correct category receives both item activation $a$ and context binding $c$, the other-list category receives item activation alone, and lures receive only the baseline. Under the simple rule (log link, $b = 0.1$), the parameters enter as $a = \exp(\beta_a)$ and $c = \exp(\beta_c)$, so $A_\text{corr} = 0.1 + \exp(\beta_a) + \exp(\beta_c)$. Under softmax (identity link, $b = 0$), the entire activation is exponentiated, so the correct category contributes $\exp(b + a + c) = \exp(a + c)$, the other-list category $\exp(a)$, and lures $\exp(0) = 1$. A note on terminology: the main text follows the $M^3$ convention and calls the estimated parameters $a$ and $c$ "activations," because under the softmax rule they are estimated directly on the identity link (no exponentiation needed to interpret a posterior draw). In the discrete-choice and signal-detection framing used in this supplement, those same parameters play the role of *utilities* (or log-activations $u_k$), and their exponentials $\exp(u_k)$ are the *raw activations* $A_k$ entering the normalization. The two vocabularies describe the same quantities; we use the discrete-choice terms here because they make the link to signal detection theory (Section 3) transparent.
+where $A_k$ denotes the raw activation of response category $k$, $u_k$ denotes its log-activation, and $n_k$ is the count of available options in category $k$. The simple span $M^3$ has three response categories with the activation formulas $A_\text{corr} = b + a + c$, $A_\text{other} = b + a$, and $A_\text{npl} = b$ — the correct category receives both item activation $a$ and context binding $c$, the other-list category receives item activation alone, and lures receive only the baseline. Under the simple rule (log link, $b = 0.1$), the parameters enter as $a = \exp(\beta_a)$ and $c = \exp(\beta_c)$, so $A_\text{corr} = 0.1 + \exp(\beta_a) + \exp(\beta_c)$. Under softmax (identity link, $b = 0$), the entire activation is exponentiated, so the correct category contributes $\exp(b + a + c) = \exp(a + c)$, the other-list category $\exp(a)$, and lures $\exp(0) = 1$. A note on terminology: the main text calls the estimated parameters $a$ and $c$ "activations," following the $M^3$ convention; in the discrete-choice framing used here, they play the role of *utilities* $u_k$, and their exponentials $\exp(u_k)$ are the *raw activations* $A_k$ entering the normalization. We use the discrete-choice terms because they make the link to signal detection theory (Section 3) transparent.
 
 Concretely, placing the same $\mathcal{N}(1,\, 0.5^2)$ prior on the context-binding parameter gives:
 
@@ -113,6 +113,8 @@ Because the two rules translate the same parameter priors into different respons
 
 The empirical correct-response proportion in these data is high (median ≈ 91%), so the data-plausible comparison is the matched-high row: with both rules carrying a fair, well-calibrated prior, softmax remains decisively favored ($BF_{10} \approx 576$). The simple rule is favored only when both rules are forced to an implausibly low prior predictive (≈ 55%). The default-prior Bayes factor ($6.1 \times 10^{7}$) overstates the evidence because the softmax default prior is well-calibrated to these high-accuracy data while the simple default is not. We therefore report the matched-prior Bayes factor as the meaningful quantity and treat the default value as an upper bound inflated by prior miscalibration. The qualitative conclusion — softmax over simple — is robust to a fair comparison; the *magnitude* of the Bayes factor is not, and should not be reported without the corresponding prior predictive. The recalibrated priors and the full procedure are in `scripts/supplement_prior_matched_bf.R` and `scripts/supplement_prior_matched_high_bf.R`.
 
+Two caveats qualify this analysis. First, the matched-high target (≈ 85%) was chosen as plausible *given the observed accuracy* (≈ 91%); the matched comparison is therefore a prior sensitivity analysis rather than a strictly pre-data comparison. Specifying genuinely fair priors for non-nested models without reference to the data is a non-trivial problem with no general solution — what counts as a "plausible" prior predictive depends on expectations that are rarely independent of the paradigm and sample at hand, and for a paradigm with substantially lower accuracy the same calibration logic would point to a different target. Second, precisely because of this, Bayes factor comparisons of non-nested specifications should be complemented by posterior predictive comparisons, which condition on the observed data and are not driven by prior calibration; in Tutorial 1, both lines of evidence converge on the softmax rule.
+
 ## The Hierarchical Complication
 
 A subtler issue arises in hierarchical specifications, even when individual-level prior predictives are matched. In hierarchical $M^3$, individual parameters $\theta_i$ are drawn from a population distribution with hyperparameters governing the mean and spread. When this population distribution is normal — as is standard with bmm's log-link parameterization — the implied distribution of the raw activations $\exp(\theta_i)$ across participants is log-normal, not normal.
@@ -123,7 +125,7 @@ $$
 \mathbb{E}\!\left[\exp(\theta_i)\right] = \exp\!\left(\mu + \frac{\sigma^2}{2}\right)
 $$
 
-The term $\exp(\sigma^2 / 2)$ is always greater than one, and it grows with the variance of individual differences. For typical variability in working memory research — individual-difference standard deviations between 0.3 and 0.7 on the log scale — this correction ranges from $\exp(0.045) \approx 1.05$ to $\exp(0.245) \approx 1.28$, a 5--28% upward shift in the implied average activation.
+The term $\exp(\sigma^2 / 2)$ is always greater than one, and it grows with the variance of individual differences. For typical variability in working memory research — individual-difference standard deviations between 0.3 and 0.7 on the log scale — this correction ranges from $\exp(0.045) \approx 1.05$ to $\exp(0.245) \approx 1.28$, a 5--28% upward shift in the implied average activation. For example, with $\mu = 1$ and $\sigma = 0.5$, the average raw activation across participants is $\exp(1 + 0.125) \approx 3.08$ rather than $\exp(1) \approx 2.72$ — the value a researcher might wrongly have in mind when setting the hyperprior.
 
 This matters for the hierarchical prior predictive because the hyperprior on $\mu$ encodes expectations about the population mean log-activation, not the population mean activation. Two specifications with the same hyperprior on $\mu$ but different hyperpriors on $\sigma$ will imply different average behavior across participants, even if their individual-level prior predictives look similar. An individual-level prior predictive check — which integrates over only one simulated participant at a time — cannot detect this hierarchical discrepancy.
 
@@ -163,7 +165,16 @@ The tutorial uses `hypothesis()` for within-specification hypothesis tests: whet
 
 Bridge sampling is considerably more sample-intensive than the Savage--Dickey ratio, and the required sample size scales with model complexity — in particular with the dimensionality of the random-effects structure, since the marginal likelihood integrates over all person-level parameters. @oberauerReliabilityBiasComputational2026 report that hierarchical GLMs comparable to those used here require on the order of 72,000 posterior samples to produce stable marginal likelihood estimates; the exact figure depends on the number of random effects and should be treated as an order-of-magnitude guide rather than a fixed threshold. The default bmm settings produce 4,000 post-warmup samples (4 chains $\times$ 1,000 iterations) — roughly an order of magnitude fewer than needed for reliable estimation. The stability comparison below corroborates this directly for the two models in this tutorial.
 
-The tutorial illustrates this directly by refitting the choice rule comparison (Tutorial 1) and the custom versus standard specification comparison (Tutorial 3) with 80,000 post-warmup samples (4 chains $\times$ 20,000 post-warmup iterations). The results, summarized in Table 1, show the practical consequences of the sample size difference.
+The tutorial illustrates this directly by refitting the choice rule comparison (Tutorial 1) and the custom versus standard specification comparison (Tutorial 3) with 80,000 post-warmup samples (4 chains $\times$ 20,000 post-warmup iterations). The results, summarized in @tbl-bridge-stability, show the practical consequences of the sample size difference.
+
+| Tutorial | Comparison | Samples | Median $BF_{10}$ | Range across 10 repetitions |
+|----------|------------|---------|------------------|------------------------------|
+| 1 | Softmax vs. simple | 4,000 | $4.8 \times 10^{7}$ | $[3.2 \times 10^{7},\ 7.0 \times 10^{7}]$ |
+| 1 | Softmax vs. simple | 80,000 | $6.1 \times 10^{7}$ | $[5.8 \times 10^{7},\ 6.6 \times 10^{7}]$ |
+| 3 | Custom vs. standard `cs` | 4,000 | $6.4 \times 10^{17}$ | $[2.1 \times 10^{16},\ 7.0 \times 10^{19}]$ |
+| 3 | Custom vs. standard `cs` | 80,000 | $5.2 \times 10^{14}$ | $[4.7 \times 10^{14},\ 5.7 \times 10^{14}]$ |
+
+: Bridge sampling stability across posterior sample sizes. Median Bayes factor and min--max range across 10 bridge sampling repetitions for the default (4,000) and long-run (80,000) post-warmup sampling regimes. {#tbl-bridge-stability}
 
 For the Tutorial 1 choice rule comparison, the short-run median Bayes factor (4,000 samples, 10 repetitions) was $\text{BF}_{10} = 4.8 \times 10^7$, with a range of $[3.2 \times 10^7,\, 7.0 \times 10^7]$ — a factor of approximately 2.2 between the minimum and maximum. The long-run median (80,000 samples) was $\text{BF}_{10} = 6.1 \times 10^7$, with a range of $[5.8 \times 10^7,\, 6.6 \times 10^7]$. The qualitative conclusion is unchanged across both regimes, but the estimate is far more stable with the larger sample.
 
@@ -239,7 +250,7 @@ where $\sigma(\cdot)$ denotes the standard logistic function and $u_1 - u_2$ is 
 
 # Validating Custom $M^3$ Specifications
 
-The companion supplement demonstrates parameter recovery for a custom $M^3$ applied to a memory updating task. Parameter recovery is the starting point for validation, not the end point. This section describes the additional steps required to establish that a custom $M^3$ specification measures the cognitive processes it is theorized to measure.
+Supplement 2 demonstrates parameter recovery for a custom $M^3$ applied to a memory updating task. Parameter recovery is the starting point for validation, not the end point. This section describes the additional steps required to establish that a custom $M^3$ specification measures the cognitive processes it is theorized to measure.
 
 ## Parameter Recovery as a Computational Check
 
@@ -267,7 +278,7 @@ A parameter is identified if distinct parameter values imply distinct probabilit
 
 ## Selective Influence
 
-Selective influence is the central validity criterion for measurement specifications: a parameter is a valid measure of a cognitive process if experimental manipulations theorized to affect that process selectively change that parameter while leaving other parameters unaffected [@oberauer2019simple]. In the established $M^3$ configurations, selective influence has been demonstrated empirically: manipulations of list length affect item activation and context binding as predicted by the theoretical framework, and manipulations of distractor properties affect the filtering parameters in Tutorial 3 without corresponding changes in item or context binding.
+Selective influence is the central validity criterion for measurement specifications: a parameter is a valid measure of a cognitive process if experimental manipulations theorized to affect that process selectively change that parameter while leaving other parameters unaffected [@oberauer2019simple]. Selective influence can be tested at two levels: within a study, through condition contrasts predicted to move one parameter and not others (the hypothesis tests in Tutorials 2 and 3 are of this kind), and across paradigms, through dedicated manipulations designed a priori to dissociate processes. The established $M^3$ configurations rest on evidence of the second, stronger kind [@oberauer2019simple]: manipulations of list length affect item activation and context binding as predicted by the theoretical framework, and manipulations of distractor properties affect the filtering parameters without corresponding changes in item or context binding. The within-study contrasts demonstrated in the tutorials are the weaker, first level and do not substitute for a dedicated validation design.
 
 For a custom $M^3$ specification, selective influence must be established, not assumed. This requires designing studies in which: (a) a manipulation is predicted to affect a target parameter based on the theoretical account, (b) the same manipulation is predicted not to affect the other parameters, and (c) these predictions are tested using Bayesian hypothesis tests via `hypothesis()`. A new parameter representing, for example, the activation of temporally adjacent items should respond selectively to manipulations of temporal spacing without affecting item activation or context binding. Both the manipulation logic and the hypothesis tests should be prespecified before data collection to be interpretable as confirmatory evidence.
 

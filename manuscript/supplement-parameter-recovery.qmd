@@ -1,6 +1,6 @@
 ---
-title: "Supplement: Parameter Recovery for a Custom $M^3$ — Memory Updating Example"
-shorttitle: "Supplement: $M^3$ Parameter Recovery"
+title: "Supplement 2: Parameter Recovery for a Custom $M^3$ — Memory Updating Example"
+shorttitle: "Supplement 2: $M^3$ Parameter Recovery"
 author:
   - name: Gidon T. Frischkorn
     orcid: 0000-0002-5055-9764
@@ -24,7 +24,7 @@ floatsintext: true
 output-dir: "."
 bibliography: references.bib
 abstract:
-  "This supplement accompanies the tutorial on fitting the memory measurement model ($M^3$) with the bmm R package. It presents a complete parameter recovery simulation for a custom $M^3$ applied to a memory updating task with five response categories, five estimated parameters, and experimentally manipulated design variables. The walkthrough covers model definition, data simulation with `rm3()`, model fitting, and recovery evaluation at both the group and individual level. Results across a design grid varying sample size and trial count illustrate how data quantity affects recovery quality. Complete R scripts are available in the companion repository."
+  "This supplement accompanies the tutorial on fitting the memory measurement model ($M^3$) with the bmm R package. It presents a complete parameter recovery simulation for a custom $M^3$ applied to a working memory updating task with five response categories, five estimated parameters, and experimentally manipulated design variables. The walkthrough covers model definition, data simulation with `rm3()`, model fitting, and recovery evaluation at both the group and individual level. Results across a design grid varying sample size and trial count illustrate how data quantity affects recovery quality. Complete R scripts are available in the companion repository."
 keywords:
   - working memory
   - measurement model
@@ -47,7 +47,7 @@ source(here("functions", "clean_plot.R"))
 
 # Overview
 
-This supplement demonstrates a complete parameter recovery simulation for a custom $M^3$ using a memory updating task as a worked example. The walkthrough follows the simplified companion script (`scripts/tutorial5_parameter_recovery_updating_simple.R`); design-grid results from multiple sample sizes and trial counts come from `scripts/tutorial5_parameter_recovery_updating.R`.
+This supplement demonstrates a complete parameter recovery simulation for a custom $M^3$ using a working memory updating task as a worked example, expanding the example introduced in the Appendix of the main text. The walkthrough follows the simplified companion script (`scripts/tutorial5_parameter_recovery_updating_simple.R`); design-grid results from multiple sample sizes and trial counts come from `scripts/tutorial5_parameter_recovery_updating.R`.
 
 The parameter recovery simulation workflow consists of four steps:
 
