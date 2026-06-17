@@ -407,7 +407,7 @@ Rather than ad hoc alternatives, these two rules are exemplars of the two famili
 
 ## Model Versions
 
-@oberauer2019simple proposed two concrete $M^3$ specifications for canonical working memory paradigms, which differ in their response categories and estimated parameters. Beyond these, custom specifications can be defined for novel task designs. We briefly introduce each; the tutorials provide details.
+@oberauer2019simple proposed two concrete $M^3$ specifications for canonical working memory paradigms, which differ in their response categories and estimated parameters. Beyond these, custom specifications can be defined for novel working memory task designs. We briefly introduce each; the tutorials provide details.
 
 The **simple span** (`ss`) version implements $M^3$ for cued recall tasks separating three response categories (correct response, other, lures) with two free parameters ($a$, $c$). It implements the additive activation formula proposed by @oberauer2019simple.
 

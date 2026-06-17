@@ -114,7 +114,7 @@ Note that `te` and `tr` appear in the formulas but are not estimated parameters 
 
 # Choosing Generating Parameter Values
 
-For the recovery simulation, we need group-level means and between-person standard deviations for each parameter. These are specified on the link scale (the scale on which the sampler operates), not the native scale, to respect the required bounds. The values were chosen to approximate empirical estimates from @li2025updating and to produce realistic individual differences. @tbl-gen-pars lists the generating values. The native range column shows the approximate span of individual differences ($\pm 2$ SD around the mean, transformed to native scale via the inverse link function).
+For the recovery simulation, we need group-level means and between-person standard deviations for each parameter. These are specified on the link scale (the scale on which the sampler operates), not the native scale, to respect the required bounds. The values were chosen to approximate empirical estimates from @li2025updating and to produce realistic individual differences. @tbl-gen-pars-updating lists the generating values. The native range column shows the approximate span of individual differences ($\pm 2$ SD around the mean, transformed to native scale via the inverse link function).
 
 | Parameter | Link     | Mean (link) | SD (link) | Native range ($\pm 2$ SD) |
 |-----------|----------|-------------|-----------|---------------------------|
@@ -124,7 +124,7 @@ For the recovery simulation, we need group-level means and between-person standa
 | $e$       | log      | 0.00        | 0.35      | 0.50 -- 2.01             |
 | $r$       | log      | $-$0.69     | 0.38      | 0.24 -- 1.04             |
 
-: Generating parameter values for the recovery simulation. Parameters are defined on the link scale; the native range is the approximate $\pm 2$ SD interval after applying the inverse link function. {#tbl-gen-pars}
+: Generating parameter values for the recovery simulation. Parameters are defined on the link scale; the native range is the approximate $\pm 2$ SD interval after applying the inverse link function. {#tbl-gen-pars-updating}
 
 Individual parameters are drawn from $\mathcal{N}(\mu_{\text{link}}, \sigma_{\text{link}})$ independently for each person and parameter. We simulated $N = 50$ participants with 25 observations per condition (225 observations total across the $3 \times 3$ design). Because the task uses set size 5 and we assume that all positions within each trial are tested, each trial yields 5 responses, so 25 observations correspond to 5 trials per condition. With 9 conditions this amounts to 45 trials in total per participant, corresponding to roughly one hour of testing.
 
