@@ -207,10 +207,20 @@ m3_model_fit <- m3(
 
 ## 3.2) Fit the model ----------------------------------------------------------
 
+# bmm recalibrated M3 softmax activation priors (venpopov/bmm#366): for the
+# identity-link activations a and c the softmax "main" prior is now normal(3, 1).
+# The fitting formula uses treatment coding (~ 1), so the single fixed coefficient
+# per parameter is the Intercept. ra/rc use logit links and keep bmm's defaults.
+priors_recovery <- c(
+  prior(normal(3, 1), class = "b", nlpar = "a", coef = "Intercept"),
+  prior(normal(3, 1), class = "b", nlpar = "c", coef = "Intercept")
+)
+
 fit <- bmm(
   formula = m3_formula_fit,
   model   = m3_model_fit,
   data    = sim_data,
+  prior   = priors_recovery,
   chains  = chains,
   cores   = cores,
   warmup  = warmup,

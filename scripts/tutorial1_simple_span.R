@@ -175,8 +175,42 @@ m3_formula <- bmf(
   a ~ 0 + exp + exp:ss_lin + (1 + ss_lin | gr(id, by = exp))
 )
 
-## 1.3) Check default priors ---------------------------------------------------
-default_prior(m3_formula, m3_model_softmax, data = data_agg)
+## 1.3) Set priors (bmm recalibrated M3 defaults, PR #366) ---------------------
+
+# bmm's recalibrated M3 activation priors (venpopov/bmm#366) place equal,
+# broad priors on general (a) and context (c) activation for the softmax rule
+# (a, c ~ normal(3, 1)), centering the implied c - a prior at zero for fair
+# comparison; effect priors are the shared normal(0, 0.5). The simple rule keeps
+# asymmetric defaults (a ~ normal(0, 1), c ~ normal(3, 1)) because it needs
+# c > a to predict accurate recall. We specify them explicitly here so the
+# tutorial reproduces these priors on any bmm version. With cell-means coding
+# (0 + exp) each coefficient must be named: the experiment intercepts receive
+# the "main" prior and the ss_lin slopes the "effects" prior.
+priors_softmax <- c(
+  prior(normal(3, 1),   class = "b", nlpar = "a", coef = "expopenset"),
+  prior(normal(3, 1),   class = "b", nlpar = "a", coef = "expclosedset"),
+  prior(normal(0, 0.5), class = "b", nlpar = "a", coef = "expopenset:ss_lin"),
+  prior(normal(0, 0.5), class = "b", nlpar = "a", coef = "expclosedset:ss_lin"),
+  prior(normal(3, 1),   class = "b", nlpar = "c", coef = "expopenset"),
+  prior(normal(3, 1),   class = "b", nlpar = "c", coef = "expclosedset"),
+  prior(normal(0, 0.5), class = "b", nlpar = "c", coef = "expopenset:ss_lin"),
+  prior(normal(0, 0.5), class = "b", nlpar = "c", coef = "expclosedset:ss_lin")
+)
+
+priors_simple <- c(
+  prior(normal(0, 1),   class = "b", nlpar = "a", coef = "expopenset"),
+  prior(normal(0, 1),   class = "b", nlpar = "a", coef = "expclosedset"),
+  prior(normal(0, 0.5), class = "b", nlpar = "a", coef = "expopenset:ss_lin"),
+  prior(normal(0, 0.5), class = "b", nlpar = "a", coef = "expclosedset:ss_lin"),
+  prior(normal(3, 1),   class = "b", nlpar = "c", coef = "expopenset"),
+  prior(normal(3, 1),   class = "b", nlpar = "c", coef = "expclosedset"),
+  prior(normal(0, 0.5), class = "b", nlpar = "c", coef = "expopenset:ss_lin"),
+  prior(normal(0, 0.5), class = "b", nlpar = "c", coef = "expclosedset:ss_lin")
+)
+
+# Verify the recalibrated priors land on every coefficient
+default_prior(m3_formula, m3_model_softmax, data = data_agg, prior = priors_softmax)
+default_prior(m3_formula, m3_model_simple,  data = data_agg, prior = priors_simple)
 
 ###############################################################################!
 # 2) Model Fitting -------------------------------------------------------------
@@ -191,6 +225,7 @@ fit_m3_ss_softmax <- bmm(
   formula      = m3_formula,
   model        = m3_model_softmax,
   data         = data_agg,
+  prior        = priors_softmax,
   chains       = chains,
   cores        = cores,
   warmup       = warmup,
@@ -206,6 +241,7 @@ fit_m3_ss_simple <- bmm(
   formula      = m3_formula,
   model        = m3_model_simple,
   data         = data_agg,
+  prior        = priors_simple,
   chains       = chains,
   cores        = cores,
   warmup       = warmup,
@@ -226,6 +262,7 @@ fit_m3_ss_softmax_longrun <- bmm(
   formula      = m3_formula,
   model        = m3_model_softmax,
   data         = data_agg,
+  prior        = priors_softmax,
   chains       = chains,
   cores        = cores,
   warmup       = warmup,
@@ -240,6 +277,7 @@ fit_m3_ss_simple_longrun <- bmm(
   formula      = m3_formula,
   model        = m3_model_simple,
   data         = data_agg,
+  prior        = priors_simple,
   chains       = chains,
   cores        = cores,
   warmup       = warmup,

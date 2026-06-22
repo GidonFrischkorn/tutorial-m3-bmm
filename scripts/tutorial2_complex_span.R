@@ -85,7 +85,17 @@ default_prior(m3_formula_cs, m3_model_cs, data = data_agg)
 priors_cs <- c(
   prior(constant(-10), nlpar = "f", coef = "conditioncontrol"),
   prior(constant(0), class = "sd", nlpar = "f",
-        coef = "conditioncontrol", group = "participant")
+        coef = "conditioncontrol", group = "participant"),
+  # bmm recalibrated M3 softmax activation priors (venpopov/bmm#366): equal,
+  # broad priors on general (a) and context (c) activation. Named per cell-means
+  # coefficient (0 + condition). The cs softmax "main" defaults were already
+  # normal(3, 1); we set them explicitly so the priors are version-independent.
+  prior(normal(3, 1), class = "b", nlpar = "a", coef = "conditioncontrol"),
+  prior(normal(3, 1), class = "b", nlpar = "a", coef = "conditionpre"),
+  prior(normal(3, 1), class = "b", nlpar = "a", coef = "conditionretro"),
+  prior(normal(3, 1), class = "b", nlpar = "c", coef = "conditioncontrol"),
+  prior(normal(3, 1), class = "b", nlpar = "c", coef = "conditionpre"),
+  prior(normal(3, 1), class = "b", nlpar = "c", coef = "conditionretro")
 )
 
 # Verify that custom priors are correctly applied

@@ -1,3 +1,10 @@
+#' >>> RETIRED (2026-06-20): superseded by the recalibrated bmm M3 default priors
+#' >>> (venpopov/bmm#366). This analytic prior-predictive simulation isolated the
+#' >>> pooling effect behind the OLD default-prior mismatch (softmax ~89% vs simple
+#' >>> ~55% correct). Under the recalibrated defaults both rules imply ~90%, so the
+#' >>> mismatch this script dissected no longer arises. Supplement 1, Section 1 now
+#' >>> keeps only the qualitative pooling mechanism. Kept for archival reference.
+#'
 #' Supplement 1, Section 1: Isolating the pooling effect from the prior magnitude
 #'
 #' The simple and softmax choice rules carry DIFFERENT bmm default priors, so the

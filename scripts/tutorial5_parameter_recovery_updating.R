@@ -273,9 +273,19 @@ m3_model_custom_fit <- m3(
 
 ## 3.1) Check default priors ---------------------------------------------------
 
-# Inspect the default priors bmm assigns to the custom model.
-# These may need adjustment if they are too wide or misspecified.
-default_prior(m3_formula_fit, m3_model_custom_fit, data = example_data)
+# bmm recalibrated M3 softmax activation priors (venpopov/bmm#366): for the
+# identity-link activations a and c the softmax "main" prior is now normal(3, 1).
+# The fitting formula uses treatment coding (~ 1), so the single fixed
+# coefficient per parameter is the Intercept. d (logit), e and r (log) keep
+# bmm's defaults.
+priors_recovery <- c(
+  prior(normal(3, 1), class = "b", nlpar = "a", coef = "Intercept"),
+  prior(normal(3, 1), class = "b", nlpar = "c", coef = "Intercept")
+)
+
+# Inspect the priors that will be used for fitting.
+default_prior(m3_formula_fit, m3_model_custom_fit, data = example_data,
+              prior = priors_recovery)
 
 ## 3.2) Fit all 9 cells -------------------------------------------------------
 
@@ -296,6 +306,7 @@ fit_results <- sim_data |>
         formula = m3_formula_fit,
         model   = m3_model_custom_fit,
         data    = d,
+        prior   = priors_recovery,
         chains  = chains,
         cores   = cores,
         warmup  = warmup,

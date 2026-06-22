@@ -1,3 +1,11 @@
+#' >>> RETIRED (2026-06-20): superseded by the recalibrated bmm M3 default priors
+#' >>> (venpopov/bmm#366). This script documented the OLD default-prior mismatch
+#' >>> (softmax ~89% vs simple ~55% prior-predictive correct). Under the
+#' >>> recalibrated defaults both rules imply ~90% and the choice-rule Bayes factor
+#' >>> (~0.37) agrees with LOO that the rules are indistinguishable, so the
+#' >>> prior-sensitivity / matched-prior analysis is no longer reported in
+#' >>> Supplement 1. Kept for archival reference only; not sourced by any document.
+#'
 #' Supplement: Prior-matched Bayes factor for the choice-rule comparison
 #'
 #' Reviewer 1 asked whether softmax is favored over the simple rule because it
@@ -66,13 +74,23 @@ m3_softmax <- m3(
   choice_rule = "softmax"
 )
 
-# Prior-matched intercept priors (calibrated so softmax P(correct) prior
-# predictive matches the simple rule). Applied to both experiment intercepts.
-priors_matched <-
-  prior(normal(2.10, 0.64), class = "b", coef = "expclosedset", nlpar = "a") +
-  prior(normal(2.10, 0.64), class = "b", coef = "expopenset",   nlpar = "a") +
-  prior(normal(1.17, 0.38), class = "b", coef = "expclosedset", nlpar = "c") +
-  prior(normal(1.17, 0.38), class = "b", coef = "expopenset",   nlpar = "c")
+# NOTE (bmm#366): the recalibrated bmm M3 defaults now place equal, broad priors
+# on softmax a and c (normal(3, 1)) so the two choice rules already imply a
+# comparable, broad prior-predictive range. We therefore use the recalibrated
+# DEFAULT softmax priors here rather than the previous hand-calibrated
+# low-accuracy match. Under these defaults this script reproduces the default
+# choice-rule comparison from Tutorial 1 (i.e., the separate prior-matching step
+# is no longer needed). Effect priors are the shared normal(0, 0.5).
+priors_matched <- c(
+  prior(normal(3, 1),   class = "b", nlpar = "a", coef = "expopenset"),
+  prior(normal(3, 1),   class = "b", nlpar = "a", coef = "expclosedset"),
+  prior(normal(0, 0.5), class = "b", nlpar = "a", coef = "expopenset:ss_lin"),
+  prior(normal(0, 0.5), class = "b", nlpar = "a", coef = "expclosedset:ss_lin"),
+  prior(normal(3, 1),   class = "b", nlpar = "c", coef = "expopenset"),
+  prior(normal(3, 1),   class = "b", nlpar = "c", coef = "expclosedset"),
+  prior(normal(0, 0.5), class = "b", nlpar = "c", coef = "expopenset:ss_lin"),
+  prior(normal(0, 0.5), class = "b", nlpar = "c", coef = "expclosedset:ss_lin")
+)
 
 ###############################################################################!
 # 2) Model Fitting ------------------------------------------------------------

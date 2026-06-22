@@ -92,7 +92,18 @@ priors_custom <- c(
         coef = "conditioncontrol", group = "participant"),
   prior(constant(-10), nlpar = "rc", coef = "conditioncontrol"),
   prior(constant(0),   class = "sd", nlpar = "rc",
-        coef = "conditioncontrol", group = "participant")
+        coef = "conditioncontrol", group = "participant"),
+  # bmm recalibrated M3 softmax activation priors (venpopov/bmm#366): for the
+  # identity-link activations a and c the softmax "main" prior is now
+  # normal(3, 1) (previously normal(1, 1)). Named per cell-means coefficient so
+  # the priors are reproduced on any bmm version. ra/rc use logit links and keep
+  # bmm's defaults.
+  prior(normal(3, 1), class = "b", nlpar = "a", coef = "conditioncontrol"),
+  prior(normal(3, 1), class = "b", nlpar = "a", coef = "conditionpre"),
+  prior(normal(3, 1), class = "b", nlpar = "a", coef = "conditionretro"),
+  prior(normal(3, 1), class = "b", nlpar = "c", coef = "conditioncontrol"),
+  prior(normal(3, 1), class = "b", nlpar = "c", coef = "conditionpre"),
+  prior(normal(3, 1), class = "b", nlpar = "c", coef = "conditionretro")
 )
 
 # Verify priors
@@ -141,7 +152,15 @@ m3_formula_cs <- bmf(
 priors_cs <- c(
   prior(constant(-10), nlpar = "f", coef = "conditioncontrol"),
   prior(constant(0), class = "sd", nlpar = "f",
-        coef = "conditioncontrol", group = "participant")
+        coef = "conditioncontrol", group = "participant"),
+  # bmm recalibrated M3 softmax activation priors (venpopov/bmm#366), as in
+  # Tutorial 2.
+  prior(normal(3, 1), class = "b", nlpar = "a", coef = "conditioncontrol"),
+  prior(normal(3, 1), class = "b", nlpar = "a", coef = "conditionpre"),
+  prior(normal(3, 1), class = "b", nlpar = "a", coef = "conditionretro"),
+  prior(normal(3, 1), class = "b", nlpar = "c", coef = "conditioncontrol"),
+  prior(normal(3, 1), class = "b", nlpar = "c", coef = "conditionpre"),
+  prior(normal(3, 1), class = "b", nlpar = "c", coef = "conditionretro")
 )
 
 fit_m3_cs_longrun <- bmm(
