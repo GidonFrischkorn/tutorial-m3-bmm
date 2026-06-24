@@ -341,9 +341,9 @@ Each response category's activation formula specifies which latent sources contr
 
 For the cued recall task introduced above, three activation sources are theoretically relevant:
 
--   $b$: **baseline activation**, the tendency to select any response option in the absence of memory-based evidence. This could reflect guessing, response bias, or other non-mnemonic factors that contribute to selection probabilities across all categories.
--   $a$: **item activation**, or general memory strength for studied items. An item that was encountered during study receives this activation regardless of its position or context.
--   $c$: **context binding**, the strength of the association between an item and its specific study context (e.g., serial position, paired associate).
+-   $b$: *baseline activation*, the tendency to select any response option in the absence of memory-based evidence. This could reflect guessing, response bias, or other non-mnemonic factors that contribute to selection probabilities across all categories.
+-   $a$: *item activation*, or general memory strength for studied items. An item that was encountered during study receives this activation regardless of its position or context.
+-   $c$: *context binding*, the strength of the association between an item and its specific study context (e.g., serial position, paired associate).
 
 These activation sources are specified as free parameters and estimated from data. Using them, we can write down how they combine to produce total activations for each response category. The simple span model proposed by @oberauer2019simple assumes additive combination: the correct target accumulates all three sources, other studied items receive item activation but lack context binding, and lures receive only baseline activation:
 
@@ -388,11 +388,11 @@ These two rules are exemplars of the two families of decision rules that @oberau
 
 @oberauer2019simple proposed two concrete $M^3$ specifications for canonical working memory paradigms, which differ in their response categories and estimated parameters. Beyond these, custom specifications can be defined for novel working memory task designs. We briefly introduce each; the tutorials provide details.
 
-The **simple span** (`ss`) version implements $M^3$ for cued recall tasks separating three response categories (correct response, other, lures) with two free parameters ($a$, $c$). It implements the additive activation formula proposed by @oberauer2019simple.
+The *simple span* (`ss`) version implements $M^3$ for cued recall tasks separating three response categories (correct response, other, lures) with two free parameters ($a$, $c$). It implements the additive activation formula proposed by @oberauer2019simple.
 
-The **complex span** (`cs`) version extends the simple span to tasks that interleave distractor processing with memorization. It requires that memoranda and distractors are drawn from the same material so that distractors can plausibly intrude during retrieval [@li2026filtering; for examples, see @oberauer2019simple]. The `cs` version separates five response categories (correct, paired distractor, other memorandum, other distractor, and NPL) with three free parameters ($a$, $c$, $f$). The additional parameter $f$ captures distractor filtering efficiency on a scale from 0 to 1: $f = 0$ indicates perfect filtering (distractors receive only baseline activation), while $f = 1$ indicates no filtering (distractors are activated as strongly as memoranda).
+The *complex span* (`cs`) version extends the simple span to tasks that interleave distractor processing with memorization. It requires that memoranda and distractors are drawn from the same material so that distractors can plausibly intrude during retrieval [@li2026filtering; for examples, see @oberauer2019simple]. The `cs` version separates five response categories (correct, paired distractor, other memorandum, other distractor, and NPL) with three free parameters ($a$, $c$, $f$). The additional parameter $f$ captures distractor filtering efficiency on a scale from 0 to 1: $f = 0$ indicates perfect filtering (distractors receive only baseline activation), while $f = 1$ indicates no filtering (distractors are activated as strongly as memoranda).
 
-The **custom** version allows user-defined response categories, activation formulas, and parameters. Researchers can specify $M^3$ of arbitrary complexity for novel working memory task designs, as long as the model remains identified. The only requirement is that all activation formulas include the baseline activation $b$, which reflects random guessing if no other activations were included. Tutorial 3 demonstrates how to define and fit a custom version, and Tutorial 4 shows how to validate custom specifications through parameter recovery simulations.
+The *custom* version allows user-defined response categories, activation formulas, and parameters. Researchers can specify $M^3$ of arbitrary complexity for novel working memory task designs, as long as the model remains identified. The only requirement is that all activation formulas include the baseline activation $b$, which reflects random guessing if no other activations were included. Tutorial 3 demonstrates how to define and fit a custom version, and Tutorial 4 shows how to validate custom specifications through parameter recovery simulations.
 
 ## Comparing $M^3$ Specifications
 
@@ -402,9 +402,9 @@ Comparisons between $M^3$ specifications fall into two kinds, and the kind deter
 
 Fitting $M^3$ with the `bmm` R package [@bmm2025] follows a three-step workflow that is consistent for all measurement models implemented in the package:
 
-1.  **Define the model**: The package includes a constructor function `m3()` that generates a model object with all relevant information for model specification. This entails the variable names of response categories in the data, the number of response options per category, the model version, and the choice rule.
-2.  **Specify predictor formulas**: The `bmm` package provides a `bmmformula()` or shorthand `bmf()` function to specify the linear prediction formulas that define how experimental conditions and individual differences predict each activation parameter. The `bmmformula` syntax uses the same formula syntax as `brms` [@burkner2017brms] and also includes random effects and non-linear formulas.[^3]
-3.  **Fit the model**: The model object and prediction formula are passed to `bmm()` together with the data. This function translates the specification into a `brms` model and passes it to Stan [@carpenter2017stan] for Bayesian estimation.
+1.  *Define the model*: The package includes a constructor function `m3()` that generates a model object with all relevant information for model specification. This entails the variable names of response categories in the data, the number of response options per category, the model version, and the choice rule.
+2.  *Specify predictor formulas*: The `bmm` package provides a `bmmformula()` or shorthand `bmf()` function to specify the linear prediction formulas that define how experimental conditions and individual differences predict each activation parameter. The `bmmformula` syntax uses the same formula syntax as `brms` [@burkner2017brms] and also includes random effects and non-linear formulas.[^3]
+3.  *Fit the model*: The model object and prediction formula are passed to `bmm()` together with the data. This function translates the specification into a `brms` model and passes it to Stan [@carpenter2017stan] for Bayesian estimation.
 
 [^3]: For details on the `bmmformula` syntax, see <https://venpopov.com/bmm/articles/bmm_bmmformula.html>.
 
@@ -773,9 +773,7 @@ The previous tutorials used the `ss` and `cs` specifications proposed by @oberau
 
 The original analysis by @li2026filtering tested this distinction using a custom specification with two separate ratio parameters, $r_a$ and $r_c$, and found that item memory transfers almost fully to distractors while context binding is more attenuated. When a research question requires this kind of flexibility — or when the task design does not map onto the simple or complex span versions — the $M^3$ framework supports fully custom specifications with user-defined response categories and activation formulas. This tutorial demonstrates how to define, fit, and compare such custom specifications using the same data as Tutorial 2. The companion script is `scripts/tutorial3_custom_filtering.R`. Grounding the formulas in a mechanistic account of the task, rather than reverse-engineering them to fit, is the first thing any custom version must establish — and as the box below stresses, the ease of building one in `bmm` does nothing to establish it.
 
-::: {.callout-important #callout-validation}
-**Custom $M^3$: specifying a model is not validating it**
-
+::: {.callout-important #callout-validation title="Custom $M^3$: specifying a model is not validating it"}
 `bmm` makes it easy to add activation sources, parameters, and response categories. Establishing that the resulting parameters measure the intended cognitive processes is the hard part. The pre-built `ss` and `cs` versions inherit their validity from a body of theoretical development and empirical testing [@oberauer2019simple]; a custom specification does not inherit that grounding by being implementable in `bmm`.
 
 Psychological validity rests on five kinds of evidence — theoretical grounding, identifiability, parameter recovery, selective influence, and convergent validity. This tutorial touches the first four as it proceeds: theoretical grounding in the motivation above, identifiability when we set up the custom model, a within-experiment form of selective influence in the hypothesis tests, and parameter recovery in Tutorial 4. Convergent validity, and stronger selective-influence evidence, require dedicated validation studies. Supplement 1, Section 4, develops each criterion into a structured checklist.
