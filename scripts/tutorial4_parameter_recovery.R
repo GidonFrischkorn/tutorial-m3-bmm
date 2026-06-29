@@ -99,7 +99,7 @@ sd_rc <- 0.40
 ## 2.2) Simulation settings ----------------------------------------------------
 
 n_participants  <- 50    # number of participants
-trials_per_cond <- 60    # trials in the single condition
+trials_per_cond <- 60    # responses per participant (total multinomial observations; passed as `size`)
 
 ## 2.3) Draw true individual parameters ----------------------------------------
 
@@ -134,7 +134,7 @@ true_pars |>
 
 ## 2.4) Simulate the full dataset ----------------------------------------------
 
-# Single condition: all participants receive the same number of trials.
+# Single condition: all participants receive the same number of responses.
 # Option counts match the Li et al. design:
 #   1 correct, 1 paired distractor, 4 other, 4 other distractor, 5 NPL
 data_list <- list()

@@ -16,8 +16,8 @@ source(here("functions", "clean_plot.R"))
 # -- Fitting settings ----------------------------------------------------------
 chains <- 4
 cores  <- 4
-warmup <- 1000
-iter   <- 2000
+warmup <- 2000   # raised from 1000: more adaptation for the sparse design cells
+iter   <- 3000   # 2000 warmup + 1000 post-warmup draws per chain
 
 # -- Reproducibility -----------------------------------------------------------
 set.seed(2025)
@@ -329,6 +329,8 @@ fit <- bmm(
   cores   = cores,
   warmup  = warmup,
   iter    = iter,
+  control = list(adapt_delta = 0.95, max_treedepth = 12),
+  seed    = 2025,
   backend = "cmdstanr",
   file    = here("output", "fit_m3_custom_simple_N50_T25")
 )
@@ -475,6 +477,9 @@ indiv_summary <- indiv_recovery |>
   )
 
 print(indiv_summary)
+
+# Persist recovery summary so the supplement can read exact values inline
+saveRDS(indiv_summary, here("output", "tutorial5_simple_indiv_summary.rds"))
 
 ## 4.5) Individual-level scatter plots -----------------------------------------
 
