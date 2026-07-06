@@ -74,7 +74,7 @@ $$
 \end{aligned}
 $$ {#eq-act-updating}
 
-Beyond the familiar $a$ (item memory) and $c$ (context binding) parameters, three new parameters appear: $d$ captures the residual activation of replaced (outdated) items that represents instant *deletion* of outdated items independent of the time manipulations, $e$ scales the benefit of extended encoding time $t_e$, and $r$ governs how old-item activation is removed with removal time $t_r$. To understand the composite terms: $(1 + e \cdot t_e)$ scales all memory activations as a function of encoding time --- when encoding is brief the boost is minimal, when it is long activations are amplified. The term $\exp(-r \cdot t_r) \cdot d$ governs how much activation old items retain: $d$ sets the residual activation at the moment of replacement, and $r$ controls how quickly this residual is removed over time. Note that $t_e$ and $t_r$ are experimentally manipulated design variables (in our simulation each at 0.25, 0.5, and 1.0 s), not estimated parameters, producing a $3 \times 3$ within-subjects design with 9 conditions.
+Beyond the familiar $a$ (item memory) and $c$ (context binding) parameters, three new parameters appear: $d$ captures the residual activation of replaced (outdated) items that represents instant *deletion* of outdated items independent of the time manipulations, $e$ scales the benefit of extended encoding time $t_e$, and $r$ governs how old-item activation is removed with removal time $t_r$. To understand the composite terms: $(1 + e \cdot t_e)$ scales all memory activations as a function of encoding time: when encoding is brief the boost is minimal; when it is long, activations are amplified. The term $\exp(-r \cdot t_r) \cdot d$ governs how much activation old items retain: $d$ sets the residual activation at the moment of replacement, and $r$ controls how quickly this residual is removed over time. Note that $t_e$ and $t_r$ are experimentally manipulated design variables (in our simulation each at 0.25, 0.5, and 1.0 s), not estimated parameters, producing a $3 \times 3$ within-subjects design with 9 conditions.
 
 ## Model specification in bmm
 
@@ -110,7 +110,7 @@ m3_act_funs <- bmf(
 )
 ```
 
-Note that `te` and `tr` appear in the formulas but are not estimated parameters --- they are data columns whose values vary across conditions. When `bmm` encounters variables in the activation formulas that are not listed as model parameters, it treats them as data columns and requires them to be present in the dataset. This allows custom models to incorporate any number of experimentally manipulated design variables directly into the activation equations.
+Note that `te` and `tr` appear in the formulas but are not estimated parameters; they are data columns whose values vary across conditions. When `bmm` encounters variables in the activation formulas that are not listed as model parameters, it treats them as data columns and requires them to be present in the dataset. This allows custom models to incorporate any number of experimentally manipulated design variables directly into the activation equations.
 
 # Choosing Generating Parameter Values
 
@@ -177,11 +177,11 @@ fit <- bmm(
 
 # Recovery Evaluation
 
-Recovery can be evaluated at two levels. Group-level recovery asks whether the model recovers the true population means and between-person variability (i.e., standard deviation of the random intercepts). Individual-level recovery asks whether each participant's true parameter value is correctly estimated --- this is critical for researchers who plan to use $M^3$ parameter estimates as individual-difference measures, for example when correlating $a$ or $c$ with external variables.
+Recovery can be evaluated at two levels. Group-level recovery asks whether the model recovers the true population means and between-person variability (i.e., standard deviation of the random intercepts). Individual-level recovery asks whether each participant's true parameter value is correctly estimated. This is critical for researchers who plan to use $M^3$ parameter estimates as individual-difference measures, for example when correlating $a$ or $c$ with external variables.
 
 ## Group-level recovery
 
-We compare the recovered fixed effects to the true generating means. For each parameter, we extract the posterior median and 95% credible interval from `fixef()` and check two things: (1) bias --- is the posterior median close to the true value? --- and (2) coverage --- does the 95% credible interval contain the true value? We also extract the between-person SDs from `brms::VarCorr()` and compare them to the generating SDs.
+We compare the recovered fixed effects to the true generating means. For each parameter, we extract the posterior median and 95% credible interval from `fixef()` and check two things: (1) bias, whether the posterior median is close to the true value, and (2) coverage, whether the 95% credible interval contains the true value. We also extract the between-person SDs from `brms::VarCorr()` and compare them to the generating SDs.
 
 ## Individual-level recovery
 
