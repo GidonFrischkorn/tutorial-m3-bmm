@@ -56,6 +56,14 @@ execute:
 pacman::p_load(here, bmm, brms, tidyverse, tidybayes, patchwork)
 source(here("functions", "clean_plot.R"))
 
+# Figures are stored as vector PDFs for the typeset PDF output. Word cannot
+# embed PDF images, so swap to a PNG copy for any non-LaTeX output (DOCX/HTML).
+fig <- function(file) {
+  path <- here("figures", file)
+  if (!knitr::is_latex_output()) path <- sub("\\.pdf$", ".png", path)
+  path
+}
+
 # ---- Load fitted models for inline reporting ----
 fit_m3_ss_softmax <- readRDS(here("output", "fit_m3_ss_softmax.rds"))
 fit_m3_ss_simple  <- readRDS(here("output", "fit_m3_ss_simple.rds"))
@@ -339,7 +347,7 @@ Consider a cued recall task in which a participant studies a sequence of items (
 #| echo: false
 #| fig-cap: "Simple span cued recall task. During encoding (A), participants study a sequence of letters at serial positions. At retrieval (B), a position is probed and the participant selects a response. Each response falls into one of three categories: correct (the target at the probed position), intrusion (a studied item from another position), or not-presented lure (NPL)."
 #| fig-alt: "Two-panel diagram. Panel A shows six letters (K, L, D, S, B, Y) in boxes at serial positions 1 through 6. Panel B shows a question mark at position 3 with arrows pointing to three response options: D (correct), K (intrusion), and F (NPL)."
-knitr::include_graphics(here("figures", "task_example.pdf"))
+knitr::include_graphics(fig("task_example.pdf"))
 ```
 
 ## Activation Formulas and Model Parameters
@@ -370,7 +378,7 @@ $$
 #| echo: false
 #| fig-cap: "Activation decomposition for each response option in the simple span example from @fig-task-example. Bars show the total activation for each option, decomposed into baseline ($b$, grey), item memory ($a$, blue), and context binding ($c$, orange). The correct target (D) receives all three sources ($b + a + c$), other studied items receive item memory and baseline ($b + a$), and not-presented lures receive only baseline ($b$). A choice rule converts these activations into response probabilities."
 #| fig-alt: "Stacked bar chart with 11 bars grouped into three categories. The correct item D has the tallest bar (baseline plus item memory plus context binding). Five other studied items (K, L, S, B, Y) each have medium bars (baseline plus item memory). Five not-presented lures (F, G, H, J, M) each have short bars (baseline only). Formula annotations label each group."
-knitr::include_graphics(here("figures", "m3_activations.pdf"))
+knitr::include_graphics(fig("m3_activations.pdf"))
 ```
 
 [^2]: The activation formulas can encode different theoretical perspectives. For example, an alternative assumption is that context binding multiplicatively boosts item activation rather than adding to it: $\text{A}_{\text{correct}} = b + a \cdot (1 + c)$, while $\text{A}_{\text{other}} = b + a$ and $\text{A}_{\text{lures}} = b$ remain unchanged. More broadly, similarity between list positions could be captured by other items receiving a partial context boost scaled by their distance from the probed position. $M^3$ thus sits at the intersection of measurement and process models: it can accommodate theoretically motivated assumptions about how processes combine without committing to a specific account of why parameter values differ across conditions.
@@ -562,7 +570,7 @@ prior_draws |>
 #| echo: false
 #| fig-cap: "Prior predictive check for the simple span $M^3$. Violin plots show the distribution of implied response proportions by category under the default priors for the softmax (left) and simple (right) choice rules. A representative recognition condition (two other-list items, three lures) is shown. Boxplots inside each violin indicate the median and interquartile range."
 #| fig-alt: "Violin plots comparing prior predictive distributions of correct, other, and NPL response proportions under softmax and simple choice rules. Softmax implies higher correct-response proportions than simple."
-knitr::include_graphics(here("figures", "tutorial1_prior_predictive.pdf"))
+knitr::include_graphics(fig("tutorial1_prior_predictive.pdf"))
 ```
 
 ### Posterior predictive check
@@ -575,7 +583,7 @@ A posterior predictive check compares observed response proportions to model-pre
 #| echo: false
 #| fig-cap: "Posterior predictive check for the simple span $M^3$ (softmax choice rule). Points and lines show mean response proportions by set size and experiment; error bars show $\\pm 1$ SE across participants. Color distinguishes observed from predicted values."
 #| fig-alt: "Line plot comparing observed and predicted response proportions across set sizes 2, 4, 6, and 8 for three response categories (correct, other, NPL) in open-set and closed-set experiments. Predicted proportions closely track observed values in all conditions."
-knitr::include_graphics(here("figures", "tutorial1_pp_check_softmax.pdf"))
+knitr::include_graphics(fig("tutorial1_pp_check_softmax.pdf"))
 ```
 
 ## Parameter Estimates
@@ -590,7 +598,7 @@ With the model validated, we can examine how item memory ($a$) and context bindi
 #| echo: false
 #| fig-cap: "Posterior estimates of item memory ($a$) and context binding ($c$) across set sizes for the open-set and closed-set experiments (softmax choice rule). Points show posterior means; error bars show 95\\% HDIs."
 #| fig-alt: "Point-range plot showing posterior means and 95% HDIs for item memory (a) and context binding (c) across set sizes 2, 4, 6, and 8, separately for open-set and closed-set experiments. Both parameters decrease with set size, with c consistently higher than a."
-knitr::include_graphics(here("figures", "tutorial1_param_estimates_softmax.pdf"))
+knitr::include_graphics(fig("tutorial1_param_estimates_softmax.pdf"))
 ```
 
 ## Choice Rule Comparison
@@ -724,7 +732,7 @@ Fitting follows the same `bmm()` call as in Tutorial 1, now additionally passing
 #| echo: false
 #| fig-cap: "Posterior predictive check for the complex span $M^3$. Points show mean response proportions per category and condition; error bars show $\\pm 1$ SE across participants."
 #| fig-alt: "Bar or point plot comparing observed and predicted response proportions for five categories (correct, paired distractor, other, other distractor, NPL) across control, pre-cue, and retro-cue conditions. Predicted values closely match observed proportions."
-knitr::include_graphics(here("figures", "tutorial2_pp_check.pdf"))
+knitr::include_graphics(fig("tutorial2_pp_check.pdf"))
 ```
 
 ## Parameter estimates and interpreting f
@@ -745,7 +753,7 @@ f_retro <- plogis(draws$b_f_conditionretro)
 #| echo: false
 #| fig-cap: "Posterior parameter estimates for the complex span $M^3$. Left panels show item memory ($a$) and context binding ($c$) across conditions. Right panel shows distractor filtering ($f$) for pre-cue and retro-cue conditions, transformed to the probability scale. The control condition is omitted from the $f$ panel because it was fixed (no distractors present)."
 #| fig-alt: "Multi-panel figure. Left panels show point-range plots of item memory (a) and context binding (c) across control, pre-cue, and retro-cue conditions. Right panel shows filtering parameter (f) on the probability scale for pre-cue and retro-cue, both around 0.65."
-knitr::include_graphics(here("figures", "tutorial2_param_estimates.pdf"))
+knitr::include_graphics(fig("tutorial2_param_estimates.pdf"))
 ```
 
 On the probability scale, $f$ is around 0.65 in both conditions (pre-cue: $M$ = `r val_f_pre_m`, 95% HDI [`r val_f_pre_lo`, `r val_f_pre_hi`]; retro-cue: $M$ = `r val_f_retro_m`, 95% HDI [`r val_f_retro_lo`, `r val_f_retro_hi`]), indicating some filtering (see @fig-t2-param-estimates). This matches the conclusion of @li2026filtering: once distractors are processed, they are encoded into working memory regardless of whether participants knew in advance which items were distractors.
@@ -867,7 +875,7 @@ Fitting follows the same `bmm()` call as in the previous tutorials. The model co
 #| echo: false
 #| fig-cap: "Posterior predictive check for the custom filtering $M^3$. Points show mean response proportions per category and condition; error bars show $\\pm 1$ SE across participants."
 #| fig-alt: "Point plot comparing observed and predicted response proportions for five categories across control, pre-cue, and retro-cue conditions. Predicted values closely match observed proportions."
-knitr::include_graphics(here("figures", "tutorial3_pp_check.pdf"))
+knitr::include_graphics(fig("tutorial3_pp_check.pdf"))
 ```
 
 ## Model comparison
@@ -896,7 +904,7 @@ We do not report leave-one-out cross-validation for this comparison. Its diagnos
 #| echo: false
 #| fig-cap: "Posterior parameter estimates for the custom filtering $M^3$. Left panels show item memory ($a$) and context binding ($c$) across conditions. Right panels show the ratio parameters $r_a$ (item) and $r_c$ (binding) for pre-cue and retro-cue conditions, transformed to the probability scale."
 #| fig-alt: "Multi-panel figure. Left panels show point-range plots of item memory (a) and context binding (c) across control, pre-cue, and retro-cue conditions. Right panels show ratio parameters ra and rc on the probability scale, with ra near 1 and rc lower."
-knitr::include_graphics(here("figures", "tutorial3_param_estimates.pdf"))
+knitr::include_graphics(fig("tutorial3_param_estimates.pdf"))
 ```
 
 ## Hypothesis tests
@@ -952,7 +960,7 @@ This returns a one-row data frame with response counts across the five categorie
 #| echo: false
 #| fig-cap: "Group-level parameter recovery. Points show recovered posterior medians; error bars show 95\\% credible intervals. The dashed line indicates perfect recovery."
 #| fig-alt: "Point-range plot showing true versus recovered population means for four parameters (a, c, ra, rc). All points fall near the diagonal with credible intervals covering the true values."
-knitr::include_graphics(here("figures", "tutorial4_group_recovery.pdf"))
+knitr::include_graphics(fig("tutorial4_group_recovery.pdf"))
 ```
 
 ### Individual-level recovery
@@ -965,7 +973,7 @@ knitr::include_graphics(here("figures", "tutorial4_group_recovery.pdf"))
 #| echo: false
 #| fig-cap: "Individual-level parameter recovery ($N = 50$, 60 responses per participant). Each point is one participant; the dashed line indicates perfect recovery. Pearson correlations are shown per parameter."
 #| fig-alt: "Four scatter plots, one per parameter (a, c, ra, rc), showing true generating values on the x-axis and recovered posterior medians on the y-axis."
-knitr::include_graphics(here("figures", "tutorial4_indiv_scatter.pdf"))
+knitr::include_graphics(fig("tutorial4_indiv_scatter.pdf"))
 ```
 
 ## Practical guidance
