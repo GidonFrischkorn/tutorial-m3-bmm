@@ -31,7 +31,7 @@ format:
   apaquarto-pdf:
     keep-tex: true
 floatsintext: true
-numbered-lines: true
+numbered-lines: false
 output-dir: "."
 bibliography: references.bib
 abstract:
