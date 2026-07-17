@@ -318,12 +318,17 @@ ggsave(here("figures", "tutorial2_param_estimates.pdf"),
 # f is on the logit scale in the model parameterization.
 
 # H1: Does f differ between pre-cue and retro-cue conditions?
-h_f_pre_retro <- hypothesis(fit_m3_cs, "f_conditionpre - f_conditionretro = 0")
+# The seed makes the tests reproducible: hypothesis() re-permutes the stored
+# prior draws to build the implied prior on the tested difference.
+h_f_pre_retro <- hypothesis(fit_m3_cs, "f_conditionpre - f_conditionretro = 0",
+                            seed = 2026)
 h_f_pre_retro
 
 # H2–H3: Do a and c differ between pre-cue and retro-cue?
-h_a_pre_retro <- hypothesis(fit_m3_cs, "a_conditionpre - a_conditionretro = 0")
-h_c_pre_retro <- hypothesis(fit_m3_cs, "c_conditionpre - c_conditionretro = 0")
+h_a_pre_retro <- hypothesis(fit_m3_cs, "a_conditionpre - a_conditionretro = 0",
+                            seed = 2026)
+h_c_pre_retro <- hypothesis(fit_m3_cs, "c_conditionpre - c_conditionretro = 0",
+                            seed = 2026)
 
 h_a_pre_retro
 h_c_pre_retro
@@ -332,11 +337,11 @@ h_c_pre_retro
 # Average of pre and retro vs. control.
 h_a_ctrl_dist <- hypothesis(
   fit_m3_cs,
-  "a_conditioncontrol - (a_conditionpre + a_conditionretro) / 2 = 0"
+  "a_conditioncontrol - (a_conditionpre + a_conditionretro) / 2 = 0", seed = 2026
 )
 h_c_ctrl_dist <- hypothesis(
   fit_m3_cs,
-  "c_conditioncontrol - (c_conditionpre + c_conditionretro) / 2 = 0"
+  "c_conditioncontrol - (c_conditionpre + c_conditionretro) / 2 = 0", seed = 2026
 )
 
 h_a_ctrl_dist

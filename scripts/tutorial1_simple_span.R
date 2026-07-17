@@ -135,8 +135,10 @@ data_agg |>
 
 # Simple span M3 activations: correct = b + a + c, other = b + a, npl = b.
 # Choice rules convert activations to probabilities:
-#   "simple":  P(i) = act(i) / sum(act)       — b fixed at 0.1
-#   "softmax": P(i) = exp(act(i)) / sum(exp)   — b fixed at 0 (exp(0) = 1)
+#   "simple":  P(i) = act(i) / sum(act)       — b fixed at 0.1 (needs act > 0)
+#   "softmax": P(i) = exp(act(i)) / sum(exp)  — b is not identified, because a
+#              common exp(b) cancels from numerator and denominator, so it is
+#              fixed at 0 rather than estimated
 # We create both model objects to compare choice rules.
 m3_model_softmax <- m3(
   resp_cats   = c("corr", "other", "npl"),
@@ -381,45 +383,41 @@ ggsave(here("figures", "tutorial1_prior_predictive.pdf"),
 
 # posterior_epred() returns expected counts per category per observation.
 # We average across draws, then aggregate to participant × setsize × experiment.
-pp_pred <- posterior_epred(fit_m3_ss_softmax)
+# Both choice rules are fitted to the same data, so the observed proportions are
+# computed once and each rule contributes one predicted series. Plotting all
+# three series in one figure lets readers compare the rules directly.
+pred_softmax <- apply(posterior_epred(fit_m3_ss_softmax), c(2, 3), mean)
+pred_simple  <- apply(posterior_epred(fit_m3_ss_simple),  c(2, 3), mean)
+colnames(pred_softmax) <- c("corr", "other", "npl")
+colnames(pred_simple)  <- c("corr", "other", "npl")
 
-pred_means <- apply(pp_pred, c(2, 3), mean)
-colnames(pred_means) <- c("pred_corr", "pred_other", "pred_npl")
+# Stack observed and both predicted sets, then aggregate counts per participant
+pp_counts <- bind_rows(
+  Observed = data_agg |> select(id, exp, setsize, corr, other, npl),
+  Softmax  = bind_cols(data_agg |> select(id, exp, setsize),
+                       as_tibble(pred_softmax)),
+  Simple   = bind_cols(data_agg |> select(id, exp, setsize),
+                       as_tibble(pred_simple)),
+  .id = "source"
+) |>
+  group_by(source, id, exp, setsize) |>
+  summarise(across(c(corr, other, npl), sum), .groups = "drop") |>
+  mutate(total = corr + other + npl)
 
-pp_data <- bind_cols(data_agg, as_tibble(pred_means)) |>
-  group_by(id, exp, setsize) |>
-  summarise(
-    obs_corr   = sum(corr),
-    obs_other  = sum(other),
-    obs_npl    = sum(npl),
-    pred_corr  = sum(pred_corr),
-    pred_other = sum(pred_other),
-    pred_npl   = sum(pred_npl),
-    .groups = "drop"
-  ) |>
-  mutate(
-    obs_total  = obs_corr + obs_other + obs_npl,
-    pred_total = pred_corr + pred_other + pred_npl
-  )
-
-pp_long <- pp_data |>
+pp_long <- pp_counts |>
   transmute(
-    id, exp, setsize,
-    Observed_Correct  = obs_corr  / obs_total,
-    Observed_Other    = obs_other / obs_total,
-    Observed_NPL      = obs_npl   / obs_total,
-    Predicted_Correct = pred_corr  / pred_total,
-    Predicted_Other   = pred_other / pred_total,
-    Predicted_NPL     = pred_npl   / pred_total
+    source, id, exp, setsize,
+    Correct = corr  / total,
+    Other   = other / total,
+    NPL     = npl   / total
   ) |>
   pivot_longer(
-    cols      = Observed_Correct:Predicted_NPL,
-    names_to  = c("source", "category"),
-    names_sep = "_",
+    cols      = c(Correct, Other, NPL),
+    names_to  = "category",
     values_to = "proportion"
   ) |>
   mutate(
-    source   = factor(source, levels = c("Observed", "Predicted")),
+    source   = factor(source, levels = c("Observed", "Softmax", "Simple")),
     category = factor(category, levels = c("Correct", "Other", "NPL")),
     exp      = factor(exp, levels = c("openset", "closedset"),
                       labels = c("Open Set", "Closed Set"))
@@ -448,78 +446,12 @@ pp_plot <- ggplot(pp_summary,
 
 pp_plot
 
-ggsave(here("figures", "tutorial1_pp_check_softmax.pdf"),
+# Save as PDF for the typeset manuscript and PNG for the Word/HTML output,
+# which cannot embed PDF images (see the fig() helper in the .qmd files).
+ggsave(here("figures", "tutorial1_pp_check.pdf"),
        pp_plot, width = 6.5, height = 6)
-
-# PP check for the simple choice rule model
-pp_pred_simple <- posterior_epred(fit_m3_ss_simple)
-pred_means_simple <- apply(pp_pred_simple, c(2, 3), mean)
-colnames(pred_means_simple) <- c("pred_corr", "pred_other", "pred_npl")
-
-pp_data_simple <- bind_cols(data_agg, as_tibble(pred_means_simple)) |>
-  group_by(id, exp, setsize) |>
-  summarise(
-    obs_corr   = sum(corr),
-    obs_other  = sum(other),
-    obs_npl    = sum(npl),
-    pred_corr  = sum(pred_corr),
-    pred_other = sum(pred_other),
-    pred_npl   = sum(pred_npl),
-    .groups = "drop"
-  ) |>
-  mutate(
-    obs_total  = obs_corr + obs_other + obs_npl,
-    pred_total = pred_corr + pred_other + pred_npl
-  )
-
-pp_long_simple <- pp_data_simple |>
-  transmute(
-    id, exp, setsize,
-    Observed_Correct  = obs_corr  / obs_total,
-    Observed_Other    = obs_other / obs_total,
-    Observed_NPL      = obs_npl   / obs_total,
-    Predicted_Correct = pred_corr  / pred_total,
-    Predicted_Other   = pred_other / pred_total,
-    Predicted_NPL     = pred_npl   / pred_total
-  ) |>
-  pivot_longer(
-    cols      = Observed_Correct:Predicted_NPL,
-    names_to  = c("source", "category"),
-    names_sep = "_",
-    values_to = "proportion"
-  ) |>
-  mutate(
-    source   = factor(source, levels = c("Observed", "Predicted")),
-    category = factor(category, levels = c("Correct", "Other", "NPL")),
-    exp      = factor(exp, levels = c("openset", "closedset"),
-                      labels = c("Open Set", "Closed Set"))
-  )
-
-pp_summary_simple <- pp_long_simple |>
-  group_by(exp, setsize, source, category) |>
-  summarise(
-    mean = mean(proportion),
-    se   = sd(proportion) / sqrt(n()),
-    .groups = "drop"
-  )
-
-pp_plot_simple <- ggplot(pp_summary_simple,
-                         aes(x = factor(setsize), y = mean,
-                             color = source, shape = source, group = source)) +
-  geom_point(size = 2.5, position = position_dodge(0.3)) +
-  geom_line(position = position_dodge(0.3)) +
-  geom_errorbar(aes(ymin = mean - se, ymax = mean + se),
-                width = 0.15, position = position_dodge(0.3)) +
-  facet_grid(category ~ exp, scales = "free_y") +
-  scale_color_m3() +
-  labs(x = "Set Size", y = "Response Proportion",
-       color = NULL, shape = NULL) +
-  clean_plot()
-
-pp_plot_simple
-
-ggsave(here("figures", "tutorial1_pp_check_simple.pdf"),
-       pp_plot_simple, width = 6.5, height = 6)
+ggsave(here("figures", "tutorial1_pp_check.png"),
+       pp_plot, width = 6.5, height = 6, dpi = 300)
 
 ## 3.2) Parameter Estimates ----------------------------------------------------
 
@@ -641,15 +573,21 @@ ggsave(here("figures", "tutorial1_param_estimates_simple.pdf"),
 
 ## 3.3) Hypothesis Tests -------------------------------------------------------
 
-# hypothesis() with sample_prior = "yes" provides Evidence Ratios
-# (Bayes Factors).
+# hypothesis() with sample_prior = "yes" provides Evidence Ratios.
+# All tests below are point hypotheses ("... = 0"), so Evid.Ratio is the
+# Savage-Dickey density ratio: posterior density / prior density at the point
+# null. That is BF01, the evidence FOR equality — values > 1 mean the data
+# moved belief toward equality. To report evidence for a difference (BF10),
+# take the reciprocal: 1 / Evid.Ratio.
 # Softmax parameters are on native activation scale (identity link).
 
 # H1–H2: Does c differ from a within each experiment?
+# The seed makes the tests reproducible: hypothesis() re-permutes the stored
+# prior draws to build the implied prior on the tested difference.
 h_ca_openset <- hypothesis(fit_m3_ss_softmax,
-                           "c_expopenset - a_expopenset = 0")
+                           "c_expopenset - a_expopenset = 0", seed = 2026)
 h_ca_closedset <- hypothesis(fit_m3_ss_softmax,
-                             "c_expclosedset - a_expclosedset = 0")
+                             "c_expclosedset - a_expclosedset = 0", seed = 2026)
 
 h_ca_openset
 h_ca_closedset
@@ -657,11 +595,11 @@ h_ca_closedset
 # H3–H4: Overall set size effects on c and a (averaged across experiments)
 h_c_ss <- hypothesis(
   fit_m3_ss_softmax,
-  "(c_expopenset:ss_lin + c_expclosedset:ss_lin) / 2 = 0"
+  "(c_expopenset:ss_lin + c_expclosedset:ss_lin) / 2 = 0", seed = 2026
 )
 h_a_ss <- hypothesis(
   fit_m3_ss_softmax,
-  "(a_expopenset:ss_lin + a_expclosedset:ss_lin) / 2 = 0"
+  "(a_expopenset:ss_lin + a_expclosedset:ss_lin) / 2 = 0", seed = 2026
 )
 
 h_c_ss
@@ -670,11 +608,11 @@ h_a_ss
 # H5–H6: Do set size effects on c and a differ between experiments?
 h_c_ss_exp <- hypothesis(
   fit_m3_ss_softmax,
-  "c_expopenset:ss_lin - c_expclosedset:ss_lin = 0"
+  "c_expopenset:ss_lin - c_expclosedset:ss_lin = 0", seed = 2026
 )
 h_a_ss_exp <- hypothesis(
   fit_m3_ss_softmax,
-  "a_expopenset:ss_lin - a_expclosedset:ss_lin = 0"
+  "a_expopenset:ss_lin - a_expclosedset:ss_lin = 0", seed = 2026
 )
 
 h_c_ss_exp

@@ -125,33 +125,28 @@ fmt_er <- function(x) {
   sprintf("%.2f", x)
 }
 
-h_ca      <- hypothesis(fit_m3_ss_softmax, "c_expopenset = a_expopenset")
-er_ca_fmt <- fmt_er(1/h_ca$hypothesis$Evid.Ratio)
-
-h_ca_closed      <- hypothesis(fit_m3_ss_softmax, "c_expclosedset = a_expclosedset")
-er_ca_closed_fmt <- fmt_er(1/h_ca_closed$hypothesis$Evid.Ratio)
-
 h_ss_c      <- hypothesis(fit_m3_ss_softmax,
-  "(c_expopenset:ss_lin + c_expclosedset:ss_lin) / 2 = 0")
+  "(c_expopenset:ss_lin + c_expclosedset:ss_lin) / 2 = 0", seed = 2026)
 er_ss_c_fmt <- fmt_er(1/h_ss_c$hypothesis$Evid.Ratio)
 
 h_ss_a      <- hypothesis(fit_m3_ss_softmax,
-  "(a_expopenset:ss_lin + a_expclosedset:ss_lin) / 2 = 0")
+  "(a_expopenset:ss_lin + a_expclosedset:ss_lin) / 2 = 0", seed = 2026)
 er_ss_a_fmt <- fmt_er(1/h_ss_a$hypothesis$Evid.Ratio)
 
 h_exp_ss_c      <- hypothesis(fit_m3_ss_softmax,
-  "c_expopenset:ss_lin = c_expclosedset:ss_lin")
+  "c_expopenset:ss_lin = c_expclosedset:ss_lin", seed = 2026)
 er_exp_ss_c_fmt <- fmt_er(h_exp_ss_c$hypothesis$Evid.Ratio)
 
-h_f      <- hypothesis(fit_m3_cs, "f_conditionpre - f_conditionretro = 0")
+h_f      <- hypothesis(fit_m3_cs, "f_conditionpre - f_conditionretro = 0",
+  seed = 2026)
 er_f_fmt <- fmt_er(h_f$hypothesis$Evid.Ratio)
 
 h_a_dist      <- hypothesis(fit_m3_cs,
-  "a_conditioncontrol - (a_conditionpre + a_conditionretro) / 2 = 0")
+  "a_conditioncontrol - (a_conditionpre + a_conditionretro) / 2 = 0", seed = 2026)
 er_a_dist_fmt <- fmt_er(1/h_a_dist$hypothesis$Evid.Ratio)
 
 h_c_dist      <- hypothesis(fit_m3_cs,
-  "c_conditioncontrol - (c_conditionpre + c_conditionretro) / 2 = 0")
+  "c_conditioncontrol - (c_conditionpre + c_conditionretro) / 2 = 0", seed = 2026)
 er_c_dist_fmt <- fmt_er(1/h_c_dist$hypothesis$Evid.Ratio)
 
 # ---- Tutorial 2: f on probability scale ----
@@ -223,13 +218,13 @@ val_rc_retro_hi <- sprintf("%.2f", rc_retro_hdci$.upper)
 
 # ---- Tutorial 3: Hypothesis tests ----
 h_ra_rc_pre   <- hypothesis(fit_m3_custom,
-  "ra_conditionpre - rc_conditionpre = 0")
+  "ra_conditionpre - rc_conditionpre = 0", seed = 2026)
 h_ra_rc_retro <- hypothesis(fit_m3_custom,
-  "ra_conditionretro - rc_conditionretro = 0")
+  "ra_conditionretro - rc_conditionretro = 0", seed = 2026)
 h_ra_pre_retro <- hypothesis(fit_m3_custom,
-  "ra_conditionpre - ra_conditionretro = 0")
+  "ra_conditionpre - ra_conditionretro = 0", seed = 2026)
 h_rc_pre_retro <- hypothesis(fit_m3_custom,
-  "rc_conditionpre - rc_conditionretro = 0")
+  "rc_conditionpre - rc_conditionretro = 0", seed = 2026)
 
 er_ra_rc_pre_fmt   <- fmt_er(1/h_ra_rc_pre$hypothesis$Evid.Ratio)
 er_ra_rc_retro_fmt <- fmt_er(1/h_ra_rc_retro$hypothesis$Evid.Ratio)
@@ -331,15 +326,15 @@ Observed performance in working memory and other cognitive tasks is often summar
 
 Working memory research frequently relies on tasks that inherently yield response frequencies across discrete outcome categories, such as correct responses, feature confusions, location errors, or intrusions [@oberauer2018benchmarks]. For discrete feature spaces (e.g., words, numbers, letters), these data are naturally multinomial: each retrieval produces one of several mutually exclusive response types. Thus, theoretical claims can often be evaluated by how experimental manipulations and individual differences redistribute probability mass across these categories.
 
-The recently proposed memory measurement model $M^3$ [@oberauer2019simple] provides one such decomposition. Its core assumptions are that (a) multiple activation sources contribute to each response category and that (b) selection among categories follows a competitive retrieval rule [@luce1959individual]. $M^3$ was developed and validated for working memory tasks, and this tutorial covers working memory applications exclusively. The underlying architecture — continuous activation formulas feeding into competitive selection — is not inherently specific to working memory, but applying it in other memory domains would require developing theoretically grounded activation formulas for those domains and establishing their validity through selective influence and convergent validity tests.[^1]
+The recently proposed memory measurement model $M^3$ [@oberauer2019simple] provides one such decomposition. Its core assumptions are that (a) multiple activation sources contribute to each response category and that (b) selection among categories follows a competitive retrieval rule [@luce1959individual]. $M^3$ was developed and validated for working memory tasks, and this tutorial covers working memory applications exclusively. The underlying architecture (continuous activation formulas feeding into competitive selection) is not inherently specific to working memory, but applying it in other memory domains would require developing theoretically grounded activation formulas for those domains and establishing their validity through selective influence and convergent validity tests.[^1]
 
-[^1]: Readers familiar with multinomial processing tree (MPT) models will note similarities: both frameworks decompose categorical response distributions into latent process parameters. However, whereas MPT models use discrete processing trees with binary branching probabilities [@batchelder1999theoretical; e.g., @heck2018treebugs for Bayesian hierarchical implementations], $M^3$ uses continuous activation values with competitive selection, making it particularly suited for theories emphasizing graded memory strength [for a detailed comparison, see @oberauer2019simple]. All validated applications of $M^3$ to date are in working memory; extensions to other domains would require analogous theoretical and empirical groundwork.
+[^1]: Readers familiar with multinomial processing tree (MPT) models will note similarities: both frameworks decompose categorical response distributions into latent process parameters. However, whereas MPT models use discrete processing trees with binary branching probabilities [@batchelder1999theoretical; e.g., @heck2018treebugs for Bayesian hierarchical implementations], $M^3$ uses continuous activation values with competitive selection, making it particularly suited for theories emphasizing graded memory strength [for a detailed comparison, see @oberauer2019simple].
 
 Because the $M^3$ framework can be applied to different paradigms — including simple span [e.g., @oberauer2019bindings; @loaiza2024active], complex span [@schubert2023working; @li2026filtering], and memory updating tasks [@li2025updating; @li2025benefit] — and can incorporate varied processes such as distractor filtering or removal of outdated information, the activation formulas that drive response selection typically vary across tasks and response categories. Beyond these existing applications, researchers can develop their own model specifications tailored to their paradigm and theoretical questions. Each new application, however, has so far required translating the model into custom JAGS, Stan, or `brms` code using advanced non-linear formula syntax, making implementations error-prone and hard to reuse. The `bmm` R package [@bmm2025] addresses this limitation by providing a standardized, low-code workflow for specifying, fitting, and evaluating Bayesian hierarchical $M^3$, so that researchers can focus on model development and interpretation rather than implementation. In this tutorial, we illustrate this approach with four worked examples covering the standard simple span (ss) and complex span (cs) tasks, a custom extension, and parameter recovery as model validation.
 
 # The $M^3$ Framework
 
-Consider a cued recall task in which a participant studies a sequence of items (e.g., letters at serial positions or icons at spatial locations) and later sees a retrieval cue and selects a response from a set of alternatives. @fig-task-example illustrates this task structure for a simple span paradigm. As shown in the figure, each response falls into one of three categories: *correct* — the item associated with the probed position, *other-list intrusion* — a studied item from a different position, or *not-presented lure* (NPL) — an item not presented during the trial. The $M^3$ framework explains each category's selection frequency by specifying activation formulas: different activation sources feed into each category, and response probabilities arise as the result of applying choice rules that implement competitive selection among all options.
+Consider a cued recall task in which a participant studies a sequence of items (e.g., letters at serial positions or icons at spatial locations) and later sees a retrieval cue and selects a response from a set of alternatives. @fig-task-example illustrates this task structure for a simple span paradigm. As shown in the figure, each response falls into one of three categories: *correct* (the item associated with the probed position), *other-list intrusion* (a studied item from a different position), or *not-presented lure* (NPL; an item not presented during the trial). The $M^3$ framework explains each category's selection frequency by specifying activation formulas: different activation sources feed into each category, and response probabilities arise as the result of applying choice rules that implement competitive selection among all options.
 
 ```{r}
 #| label: fig-task-example
@@ -395,9 +390,9 @@ The *softmax* (or exponential) choice rule (`choice_rule = "softmax"`) applies a
 
 $$P(k) = \frac{n_k \cdot \exp(\text{A}_k)}{\sum_{j=1}^{K} n_j \cdot \exp(\text{A}_j)}$$
 
-The softmax rule also has a principled signal detection interpretation: it is formally equivalent to an $n$-alternative forced-choice signal detection model in which independent (Gumbel-distributed) noise perturbs each alternative's activation and the highest perturbed value is selected [@thurstone1927law; @yellott1977relationship]. For two-alternative tasks, the softmax formula reduces to the logistic function, a close approximation to the familiar Gaussian (probit) SDT model [@decarlo1998signal].
+The softmax rule has a principled signal detection interpretation: it is formally equivalent to an $n$-alternative forced-choice signal detection model in which independent (Gumbel-distributed) noise perturbs each alternative's activation and the highest perturbed value is selected [@thurstone1927law; @yellott1977relationship]. For two-alternative tasks, the softmax formula reduces to the logistic function, a close approximation to the familiar Gaussian (probit) SDT model [@decarlo1998signal].
 
-These two rules are exemplars of the two families of decision rules that @oberauer2019simple identified (see their Appendix A). The simple rule places activation on a ratio scale with a meaningful zero — a candidate with zero activation carries no memory evidence and is ruled out with certainty. The softmax rule instead places activation on an interval scale, on which only differences between activations matter, the same family as signal detection accounts. The two rules therefore require different model specifications — different link functions and prior structures (Tutorial 1) — and the choice rule is an auxiliary rather than a core assumption of $M^3$ [@oberauer2026snr]. Beyond this scale interpretation, the rules are the least flexible part of the specification: whereas activation formulas can be freely customized (Tutorial 3), `bmm` currently implements only the simple and softmax rules. We use softmax as the default in Tutorials 2–4 for practical reasons set out in Tutorial 1; the fuller theoretical comparison of the two families is given in Supplement 1, Section 3. Tutorial 1 shows how differently the two rules must be specified and demonstrates that both describe the data well.
+These two rules are exemplars of the two families of decision rules that @oberauer2019simple identified (see their Appendix A). The simple rule places activation on a ratio scale with a meaningful zero: a candidate with zero activation carries no memory evidence and is ruled out with certainty. The softmax rule instead places activation on an interval scale, on which only differences between activations matter, the same family as signal detection accounts. The two rules therefore require different model specifications — different link functions and prior structures (Tutorial 1) — and the choice rule is an auxiliary rather than a core assumption of $M^3$ [@oberauer2026snr]. Beyond this scale interpretation, the rules are the least flexible part of the specification: whereas activation formulas can be freely customized (Tutorial 3), `bmm` currently implements only the simple and softmax rules. We use softmax as the default in Tutorials 2–4 for practical reasons set out in Tutorial 1; the fuller theoretical comparison of the two families is given in Supplement 1, Section 3.
 
 ## Model Versions
 
@@ -411,7 +406,7 @@ The *custom* version allows user-defined response categories, activation formula
 
 ## Comparing $M^3$ Specifications
 
-Comparisons between $M^3$ specifications fall into two kinds, and the kind determines the right tool. *Non-nested* specifications differ in their likelihood without one being a constrained special case of the other — for example, two different activation formulas, or the simple versus softmax choice rules. *Nested* specifications stand in a special-case relationship: the `cs` version is the custom filtering model under $r_a = r_c$ (Tutorials 2 and 3). For non-nested comparisons we lead with a posterior-predictive criterion (leave-one-out cross-validation, LOO, or WAIC), which conditions on the observed data and is less prior-sensitive than a Bayes factor. A marginal-likelihood Bayes factor estimated by bridge sampling remains informative, but its magnitude depends on priors with no general fair specification, so we read it against the prior predictive rather than at face value. For nested comparisons a Bayes factor is the natural tool, and the Savage--Dickey density ratio is the most convenient route because the prior question localizes to the constrained parameters — avoiding the marginal-likelihood estimation that bridge sampling requires. Tutorial 1 illustrates a non-nested comparison and Tutorial 3 a nested one; Supplement 1, Section 2, gives the full treatment, including when to prefer bridge sampling over the Savage--Dickey ratio.
+Comparisons between $M^3$ specifications fall into two kinds, and the kind determines the right tool. *Non-nested* specifications differ in their likelihood without one being a constrained special case of the other — for example, two different activation formulas, or the simple versus softmax choice rules. *Nested* specifications stand in a special-case relationship: the `cs` version is the custom filtering model under $r_a = r_c$ (Tutorials 2 and 3). For non-nested comparisons we lead with a posterior-predictive criterion (leave-one-out cross-validation, LOO, or WAIC), which conditions on the observed data and is less prior-sensitive than a Bayes factor. A marginal-likelihood Bayes factor estimated by bridge sampling remains informative, but its magnitude depends on priors with no general fair specification, so we read it against the prior predictive rather than at face value. For nested comparisons a Bayes factor is the natural tool, and the Savage--Dickey density ratio is the most convenient route because the prior question localizes to the constrained parameters. Tutorial 1 illustrates a non-nested comparison and Tutorial 3 a nested one; Supplement 1, Sections 1 and 2, give more detailed background information, including the prior predictive check behind this reasoning and when to prefer bridge sampling over the Savage--Dickey ratio.
 
 ## The bmm Workflow
 
@@ -509,7 +504,7 @@ m3_formula <- bmf(
 )
 ```
 
-Under the softmax rule, $a$ and $c$ are estimated on the identity link, so posterior draws are directly interpretable as activation values. The `bmm` package sets weakly informative default priors based on known parameter ranges. These defaults are parameter-, choice-rule-, and version-specific rather than a single value: for the softmax `ss` version used here, each condition intercept of $a$ and of $c$ receives the same $\mathcal{N}(3,\, 1^2)$ prior, with set-size slopes of $\mathcal{N}(0,\, 0.5^2)$ on both. Giving $a$ and $c$ equal prior means centers the implied prior on their difference at zero, so the softmax rule does not build in an a-priori ordering of the two activation sources. The simple rule instead uses an asymmetric pair ($\mathcal{N}(0,\, 1^2)$ on $a$, $\mathcal{N}(3,\, 1^2)$ on $c$), because its linear normalization requires $c > a$ to predict accurate recall; the two rules are nonetheless calibrated to imply a comparably broad range of average performance (Supplement 1, Section 1). We use these defaults throughout Tutorial 1; Tutorial 2 shows how to set custom priors when needed.[^priors]
+Under the softmax rule, $a$ and $c$ are estimated on the identity link, so posterior draws are directly interpretable as activation values. The `bmm` package sets weakly informative default priors based on known parameter ranges. These defaults are parameter-, choice-rule-, and version-specific rather than a single value: for the softmax `ss` version used here, each condition intercept of $a$ and of $c$ receives the same $\mathcal{N}(3,\, 1^2)$ prior, with set-size slopes of $\mathcal{N}(0,\, 0.5^2)$ on both. Giving $a$ and $c$ equal prior means centers the implied prior on their difference at zero, so the softmax rule does not build in an a-priori ordering of the two activation sources. The simple rule instead uses an asymmetric pair ($\mathcal{N}(0,\, 1^2)$ on $a$, $\mathcal{N}(3,\, 1^2)$ on $c$), because its linear normalization requires $c > a$ to predict accurate recall; the two rules are nonetheless calibrated to imply a comparably broad range of average performance, as a prior predictive check confirms (Supplement 1, Section 1). We use these defaults throughout Tutorial 1; Tutorial 2 shows how to set custom priors when needed.[^priors]
 
 [^priors]: Default priors can be inspected with `default_prior(m3_formula, m3_model_ss, data = data_agg)` and overridden as in any `brms` model.
 
@@ -540,55 +535,22 @@ After model fitting, convergence should be verified via $\hat{R}$ [@gelman1992in
 
 ## Model Evaluation
 
-### Prior predictive check
-
-A prior predictive check shows what response proportions the model implies before seeing any data. This is especially informative when comparing non-nested specifications — as we will do in the Choice Rule Comparison below — because two specifications can imply very different response distributions before any data are seen. The simple and softmax rules use different link functions (log for simple, identity for softmax) and asymmetric versus symmetric activation priors, so a comparable prior predictive is not guaranteed. @fig-t1-prior-pred shows the implied response proportions for a representative recognition condition (two other-list items, three lures). Here the recalibrated default priors are tuned so that both rules imply a comparably broad, high range of average performance: the median correct-response proportion is near 90% under the softmax rule (90% CI: 63–98%) and 89% under the simple rule (90% CI: 59–98%). Both specifications therefore imply reasonable behavior before seeing data, and because they are matched on this prior-predictive scale, the comparison below reflects how the two rules fit the data rather than divergent prior commitments (Supplement 1, Section 1).
-
-```{r}
-#| label: t1-prior-predictive-code
-#| eval: false
-# Extract prior draws (saved via sample_prior = "yes") for a representative condition
-prior_draws <- as_draws_df(fit_m3_ss_softmax) |>
-  as_tibble() |>
-  select(prior_b_a_expopenset, prior_b_c_expopenset) |>
-  rename(a = prior_b_a_expopenset, c = prior_b_c_expopenset)
-
-# Compute implied correct-response proportion under softmax
-prior_draws |>
-  mutate(
-    denom  = exp(a + c) + 2 * exp(a) + 3,   # n_other = 2, n_npl = 3
-    p_corr = exp(a + c) / denom
-  ) |>
-  summarise(median = median(p_corr),
-            q05    = quantile(p_corr, 0.05),
-            q95    = quantile(p_corr, 0.95))
-```
-
-```{r}
-#| label: fig-t1-prior-pred
-#| eval: true
-#| echo: false
-#| fig-cap: "Prior predictive check for the simple span $M^3$. Violin plots show the distribution of implied response proportions by category under the default priors for the softmax (left) and simple (right) choice rules. A representative recognition condition (two other-list items, three lures) is shown. Boxplots inside each violin indicate the median and interquartile range."
-#| fig-alt: "Violin plots comparing prior predictive distributions of correct, other, and NPL response proportions under softmax and simple choice rules. Softmax implies higher correct-response proportions than simple."
-knitr::include_graphics(fig("tutorial1_prior_predictive.pdf"))
-```
-
 ### Posterior predictive check
 
-A posterior predictive check compares observed response proportions to model-predicted proportions; systematic discrepancies indicate that the activation formulas or choice rule fail to capture the data-generating process. Together, prior and posterior predictive checks provide a more complete basis for model evaluation: the prior predictive check shows whether each model's predictions before seeing data are reasonable; the posterior predictive check shows whether the model accounts for the observed data. We computed expected counts per category from the posterior predictive distribution, averaged across draws, and aggregated to participant-level proportions by set size and experiment (see the companion script `scripts/tutorial1_simple_span.R` for the full code). @fig-t1-pp-check shows the result. Across all conditions and response categories, predicted proportions fall within one standard error of the observed means, indicating that the simple span $M^3$ with softmax choice rule adequately captures the response distributions. The simple choice rule produces a closely comparable fit (see the Choice Rule Comparison below; the corresponding figures are in the companion materials).
+A posterior predictive check compares observed response proportions to model-predicted proportions; systematic discrepancies indicate that the activation formulas or choice rule fail to capture the data-generating process. We computed expected counts per category from the posterior predictive distribution, averaged across draws, and aggregated to participant-level proportions by set size and experiment (see the companion script `scripts/tutorial1_simple_span.R` for the full code). Because both choice rules are fitted to the same data, we plot the observed proportions once and add one predicted series per rule, so the two can be compared directly. @fig-t1-pp-check shows the result. Both rules track the observed means closely across conditions and response categories. The clearest discrepancy is at set size 4, where both rules slightly over-predict errors in both experiments, by about two standard errors but under two percentage points on the proportion scale. The simple span $M^3$ therefore captures the response distributions adequately under either rule.
 
 ```{r}
 #| label: fig-t1-pp-check
 #| eval: true
 #| echo: false
-#| fig-cap: "Posterior predictive check for the simple span $M^3$ (softmax choice rule). Points and lines show mean response proportions by set size and experiment; error bars show $\\pm 1$ SE across participants. Color distinguishes observed from predicted values."
-#| fig-alt: "Line plot comparing observed and predicted response proportions across set sizes 2, 4, 6, and 8 for three response categories (correct, other, NPL) in open-set and closed-set experiments. Predicted proportions closely track observed values in all conditions."
-knitr::include_graphics(fig("tutorial1_pp_check_softmax.pdf"))
+#| fig-cap: "Posterior predictive check for the simple span $M^3$. Points and lines show mean response proportions by set size and experiment; error bars show $\\pm 1$ SE across participants. Color distinguishes the observed proportions from those predicted under the softmax and the simple choice rule."
+#| fig-alt: "Line plot comparing observed response proportions with those predicted under the softmax and simple choice rules, across set sizes 2, 4, 6, and 8 for three response categories (correct, other, NPL) in open-set and closed-set experiments. Both rules track the observed values closely and are nearly indistinguishable from each other."
+knitr::include_graphics(fig("tutorial1_pp_check.pdf"))
 ```
 
 ## Parameter Estimates
 
-With the model validated, we can examine how item memory ($a$) and context binding ($c$) varied across set sizes and experiments. Under the softmax choice rule, both parameters are on the identity link, so the posterior draws are directly interpretable as activation values. To compute condition-specific estimates, we reconstructed the linear predictor from the fixed effects: for each set size $s$, $\hat{a}_{\text{exp}} = \beta_{a,\text{exp}} + \beta_{a,\text{exp:ss\_lin}} \cdot (s - \bar{s})$, and analogously for $c$. The companion script extracts draws using  `tidybayes::as_draws_df()` and computes 95% highest-density intervals [HDIs; @mcelreath2020statistical] via `tidybayes::mean_hdci()`.
+With the model fit established, we can examine how item memory ($a$) and context binding ($c$) varied across set sizes and experiments. Under the softmax choice rule, both parameters are on the identity link, so the posterior draws are directly interpretable as activation values. To compute condition-specific estimates, we reconstructed the linear predictor from the fixed effects: for each set size $s$, $\hat{a}_{\text{exp}} = \beta_{a,\text{exp}} + \beta_{a,\text{exp:ss\_lin}} \cdot (s - \bar{s})$, and analogously for $c$. The companion script extracts draws using  `tidybayes::as_draws_df()` and computes 95% highest-density intervals [HDIs; @mcelreath2020statistical] via `tidybayes::mean_hdci()`.
 
 @fig-t1-param-estimates shows the resulting estimates. Context binding ($c$) is descriptively higher than item memory ($a$) across all set sizes in both experiments, with the gap being especially pronounced in the closed-set experiment. Both parameters decrease with set size, but the decline is substantially steeper for $c$ than for $a$, consistent with binding being more sensitive to memory load. The two experiments differ markedly in item activation: $a$ is notably higher in the open-set experiment than in the closed-set experiment. These results are consistent with the original findings by @oberauer2019bindings [see their discussion for theoretical interpretation of the experiment differences].
 
@@ -605,9 +567,7 @@ knitr::include_graphics(fig("tutorial1_param_estimates_softmax.pdf"))
 
 As introduced in the $M^3$ framework section, the choice rule determines how activations are converted to response probabilities. The two rules require *different model specifications*: under the simple rule, $a$ and $c$ are estimated on the log link (so the raw coefficients must be exponentiated to obtain activation values) with the asymmetric default priors its linear normalization requires, whereas softmax uses the identity link with symmetric priors. To see whether these different specifications lead to different conclusions, we fit a second model with `choice_rule = "simple"` using the same formula and data and compare the two.
 
-The posterior predictive checks for the two rules are very similar (see the posterior predictive plot in the companion materials on OSF: `figures/tutorial1_pp_check_simple.pdf`). The two figures are generated from separately fitted models — `fit_m3_ss_softmax` and `fit_m3_ss_simple` — and look nearly identical precisely because both rules reproduce the observed proportions about equally well; the slight visual differences, for example in the NPL category at larger set sizes, do not amount to a detectable predictive difference between the rules.[^pp_simple]
-
-[^pp_simple]: The companion script (`scripts/tutorial1_simple_span.R`) generates posterior predictive figures for both models; readers can inspect these in the companion materials to compare the fit of both choice rules across all conditions.
+The posterior predictive checks for the two rules are shown side by side in @fig-t1-pp-check: both reproduce the observed proportions about equally well, so a visual check does not separate them.
 
 For a formal comparison, we use leave-one-out cross-validation (LOO), which asks which rule better predicts new observations. As outlined in the "Comparing $M^3$ Specifications" section, the softmax and simple rules are non-nested—neither follows from the other by a constraint—and for non-nested comparisons we lead with this posterior-predictive criterion because it conditions on the observed data:
 
@@ -623,28 +583,30 @@ By this criterion the two rules are indistinguishable: the difference in expecte
 
 ## Hypothesis Testing
 
-Because we fitted the model with `sample_prior = "yes"`, the prior distributions for the parameters were stored in the fitted model object, allowing us to use `brms::hypothesis()` to test directed hypotheses and obtain evidence ratios (Savage-Dickey density ratios comparing posterior to prior density at the hypothesis boundary). For example, to test whether set size reduces context binding (averaged across experiments):
+Because we fitted the model with `sample_prior = "yes"`, the prior distributions for the parameters were stored in the fitted model object, allowing us to use `brms::hypothesis()` to test point hypotheses about the activation parameters and obtain evidence ratios (Savage-Dickey density ratios comparing posterior to prior density at the point null). For example, to test whether set size reduces context binding (averaged across experiments):
 
 ```{r}
 #| label: t1-hypothesis
 #| eval: false
 # Set size effect on context binding (averaged across experiments)
+# The seed makes the test reproducible: hypothesis() re-permutes the stored
+# prior draws to build the implied prior on the tested difference.
 hypothesis(fit_m3_ss_softmax,
-  "(c_expopenset:ss_lin + c_expclosedset:ss_lin) / 2 = 0")
+  "(c_expopenset:ss_lin + c_expclosedset:ss_lin) / 2 = 0", seed = 2026)
 ```
 
-This returns a Savage-Dickey density ratio: the ratio of prior to posterior density at the point null. Values substantially greater than 1 indicate that the data have shifted belief away from equality; values near 1 indicate inconclusive evidence. One caveat applies to all such tests in this tutorial: with cell means coding, no prior is placed directly on the tested differences — the prior at the test boundary is implied by the priors on the parameters entering the comparison. For the set-size effect on $c$ tested here (an average of two $\mathcal{N}(0,\, 0.5^2)$ slopes), the implied prior is a zero-centered normal with SD $\approx 0.35$; the exact value depends on which parameter's priors enter. Under the recalibrated softmax defaults $a$ and $c$ share the same intercept prior, so a comparison across these parameters (such as $c$ versus $a$) is centered at zero as well (see the note on cell means coding in Model Specification). Researchers who want direct control over this prior should code condition differences explicitly as predictors (Supplement 1, Section 2). With this in mind: there is strong evidence for $c$ decreasing with larger set size (BF$_{10}$ = `r er_ss_c_fmt`). We can similarly test whether set size reduces item memory and whether the set size effects differ between experiments:
+The `Evid.Ratio` column returns the Savage-Dickey density ratio: the posterior density at the point null divided by the prior density at that point. This ratio is $BF_{01}$, the evidence for equality, so values substantially greater than 1 indicate that the data have shifted belief toward equality, values below 1 that they have shifted it away, and values near 1 inconclusive evidence. Because most tests in this tutorial ask whether a difference exists, we report the reciprocal, $BF_{10} = 1 / \text{Evid.Ratio}$, and label it as such; where the question is instead whether two conditions are equivalent, we report $BF_{01}$ directly. One caveat applies to all such tests in this tutorial: with cell means coding, no prior is placed directly on the tested differences — the prior at the test boundary is implied by the priors on the parameters entering the comparison. For the set-size effect on $c$ tested here (an average of two $\mathcal{N}(0,\, 0.5^2)$ slopes), the implied prior is a zero-centered normal with SD $\approx 0.35$; the exact value depends on which parameter's priors enter. Under the recalibrated softmax defaults $a$ and $c$ share the same intercept prior, so a comparison across these parameters (such as $c$ versus $a$) is centered at zero as well (see the note on cell means coding in Model Specification). Researchers who want direct control over this prior should code condition differences explicitly as predictors (see Supplement 1, Section 2). With this in mind: there is strong evidence for $c$ decreasing with larger set size (BF$_{10}$ = `r er_ss_c_fmt`). We can similarly test whether set size reduces item memory and whether the set size effects differ between experiments:
 
 ```{r}
 #| label: t1-hypothesis-setsize
 #| eval: false
 # Set size effect on item memory (averaged across experiments)
 hypothesis(fit_m3_ss_softmax,
-  "(a_expopenset:ss_lin + a_expclosedset:ss_lin) / 2 = 0")
+  "(a_expopenset:ss_lin + a_expclosedset:ss_lin) / 2 = 0", seed = 2026)
 
 # Experiment difference in set size effect on c
 hypothesis(fit_m3_ss_softmax,
-  "c_expopenset:ss_lin = c_expclosedset:ss_lin")
+  "c_expopenset:ss_lin = c_expclosedset:ss_lin", seed = 2026)
 ```
 
 There is also moderate evidence that set size reduces $a$ (BF$_{10}$ = `r er_ss_a_fmt`). The set size effect on $c$ is comparable across experiments (BF$_{01}$ = `r er_exp_ss_c_fmt`). The companion script contains the full set of hypothesis tests.
@@ -766,18 +728,18 @@ Again, we can test condition differences for the different parameters formally u
 #| label: t2-hypothesis
 #| eval: false
 # Does f differ between pre-cue and retro-cue?
-hypothesis(fit_m3_cs, "f_conditionpre - f_conditionretro = 0")
+hypothesis(fit_m3_cs, "f_conditionpre - f_conditionretro = 0", seed = 2026)
 
 # Do a and c differ between control and distractor conditions?
 hypothesis(fit_m3_cs,
-  "a_conditioncontrol - (a_conditionpre + a_conditionretro) / 2 = 0")
+  "a_conditioncontrol - (a_conditionpre + a_conditionretro) / 2 = 0", seed = 2026)
 ```
 
 ```{r}
 #| label: t2-hypothesis-c
 #| eval: false
 hypothesis(fit_m3_cs,
-  "c_conditioncontrol - (c_conditionpre + c_conditionretro) / 2 = 0")
+  "c_conditioncontrol - (c_conditionpre + c_conditionretro) / 2 = 0", seed = 2026)
 ```
 
 The evidence ratio for the $f$ comparison indicated that filtering is equivalent between cue conditions ($BF_{01} = `r er_f_fmt`$). There is inconclusive evidence for item memory $a$ comparing the distractor conditions to the control ($BF_{10} = `r er_a_dist_fmt`$); however, context activation $c$ is lower in the distractor conditions ($BF_{10} = `r er_c_dist_fmt`$). As in Tutorial 1, these evidence ratios are computed against the priors implied for condition differences by cell means coding (Supplement 1, Section 2).
@@ -791,7 +753,7 @@ The original analysis by @li2026filtering tested this distinction using a custom
 ::: {.callout-important #callout-validation title="Custom $M^3$: specifying a model is not validating it"}
 `bmm` makes it easy to add activation sources, parameters, and response categories. Establishing that the resulting parameters measure the intended cognitive processes is the hard part. The pre-built `ss` and `cs` versions inherit their validity from a body of theoretical development and empirical testing [@oberauer2019simple]; a custom specification does not inherit that grounding by being implementable in `bmm`.
 
-Psychological validity rests on five kinds of evidence — theoretical grounding, identifiability, parameter recovery, selective influence, and convergent validity. This tutorial touches the first four as it proceeds: theoretical grounding in the motivation above, identifiability when we set up the custom model, a within-experiment form of selective influence in the hypothesis tests, and parameter recovery in Tutorial 4. Convergent validity, and stronger selective-influence evidence, require dedicated validation studies. Supplement 1, Section 4, develops each criterion into a structured checklist.
+Psychological validity rests on five kinds of evidence: theoretical grounding, identifiability, parameter recovery, selective influence, and convergent validity. This tutorial touches the first four as it proceeds: theoretical grounding in the motivation above, identifiability when we set up the custom model, a within-experiment form of selective influence in the hypothesis tests, and parameter recovery in Tutorial 4. Convergent validity, and stronger selective-influence evidence, require dedicated validation studies. Supplement 1, Section 4, develops each criterion into a structured checklist.
 :::
 
 ## From single $f$ to separate ratio parameters
@@ -890,9 +852,7 @@ bridge_custom <- bridge_sampler(fit_m3_custom, repetitions = 10)
 bf(bridge_custom, bridge_cs)
 ```
 
-The Bayes factor strongly favored the custom version (long-run median BF$_{10}$ = `r bf_custom_long_fmt`, range `r bf_custom_long_range`, across 10 bridge sampling repetitions with 80,000 post-warmup samples), indicating that the data warrant separate ratio parameters rather than a single $f$. With the default 4,000 post-warmup samples, the same estimate was far less stable across the 10 repetitions (median `r bf_custom_def_fmt`, range `r bf_custom_def_range`) — an illustration of the bridge-sampling sample-size requirements (Supplement 1, Section 2). We use bridge sampling rather than a single Savage--Dickey ratio here because the constraint spans both ratio parameters across conditions and the two specifications differ in their random-effects structure, which a per-parameter density ratio cannot capture; the marginal-likelihood comparison therefore complements the parameter tests rather than replacing them.
-
-We do not report leave-one-out cross-validation for this comparison. Its diagnostics are unreliable on the aggregated complex-span data — the estimated effective number of parameters exceeds the number of observations, and most Pareto-$k$ values exceed 0.7 — unlike the clean LOO for the larger Tutorial 1 design. LOO reliability is data-dependent and must be checked before use (Supplement 1, Section 2).
+The Bayes factor strongly favored the custom version (long-run median BF$_{10}$ = `r bf_custom_long_fmt`, range `r bf_custom_long_range`, across 10 bridge sampling repetitions with 80,000 post-warmup samples), indicating that the data warrant separate ratio parameters rather than a single $f$. With the default 4,000 post-warmup samples, the same estimate was far less stable across the 10 repetitions (median `r bf_custom_def_fmt`, range `r bf_custom_def_range`), an illustration of the bridge-sampling sample-size requirements (see Supplement 1, Section 2 for details). We use bridge sampling rather than a single Savage--Dickey ratio here because the constraint spans both ratio parameters across conditions and the two specifications differ in their random-effects structure, which a per-parameter density ratio cannot capture; the marginal-likelihood comparison therefore complements the parameter tests rather than replacing them.
 
 ## Parameter estimates
 
@@ -978,7 +938,7 @@ knitr::include_graphics(fig("tutorial4_indiv_scatter.pdf"))
 
 ## Practical guidance
 
-As a rule of thumb, if individual-level correlations fall below .7 for a parameter, the design likely needs more trials or a larger sample before that parameter can support individual-differences analyses.[^r-threshold] The present simulation uses a single replication, so the recovery correlations themselves carry Monte Carlo error — a value just above or below the threshold should not be over-interpreted. A full simulation study should replicate each design cell and vary sample size and trial count systematically [for a systematic approach, see @goettmann2025recovery; for implementation tools, see @chalmers2020simdesign; for a complementary calibration-based approach, see @talts2018validating].
+As a rule of thumb, if individual-level correlations fall below .7 for a parameter, the design likely needs more trials per participant before that parameter can support individual-differences analyses [@li2026individual].[^r-threshold] Adding participants does not help here: once the population-level parameters are recovered well, individual-level recovery is limited by the data available per person rather than by the size of the sample. The present simulation uses a single replication, so the recovery correlations themselves carry Monte Carlo error — a value just above or below the threshold should not be over-interpreted. A full simulation study should replicate each design cell and vary sample size and trial count systematically [for a systematic approach, see @goettmann2025recovery; for implementation tools, see @chalmers2020simdesign; for a complementary calibration-based approach, see @talts2018validating].
 
 [^r-threshold]: The .7 threshold follows @goettmann2025recovery, who used $r \geq .70$ as the criterion for acceptable individual-level recovery of $M^3$ parameters in their simulations, and it aligns with conventional reliability benchmarks [@cicchetti1994guidelines]. It should be read as a rough guide rather than a hard criterion; systematic bias that a correlation cannot detect is best diagnosed from the scatter plots.
 
@@ -994,7 +954,7 @@ The Appendix presents a more complex example — a memory updating task from @ob
 
 This tutorial covered four progressively complex applications of the $M^3$ framework using the `bmm` R package. The simple span example (Tutorial 1) introduced the full workflow — specification, fitting, evaluation, and hypothesis testing — and showed how the two choice rules are specified and that both describe the data well. The complex span example (Tutorial 2) added distractor categories, the filtering parameter $f$, and the handling of non-identified parameters. The custom specification example (Tutorial 3) showed how to relax assumptions of a pre-built version by defining separate ratio parameters for item memory and context binding, and compared the custom version against the standard `cs` version. The parameter recovery tutorial (Tutorial 4) demonstrated how to validate a custom specification through simulation before applying it to empirical data.
 
-A few practical recommendations. If the task produces three response categories (correct, other-list intrusion, NPL), the simple span version (`ss`) is the natural starting point. Tasks with distractors that are the same material type as memoranda can fit the complex span version (`cs`). For other designs, the custom version gives full control over activation formulas, parameters, and link functions. In all cases, we use softmax as the default choice rule, for the practical reasons given in Tutorial 1: it requires no positivity constraint and places parameters on the identity link, where coefficients are directly interpretable as activations. Both rules fit the example data about equally well (Tutorial 1), so the choice can rest on these practical considerations or on theoretical commitments — the simple rule's ratio-scale interpretation versus the softmax rule's interval-scale, signal-detection family (Supplement 1, Section 3). When defining a custom specification, running a parameter recovery simulation before data collection is good practice: it reveals whether the planned design can distinguish the parameters of interest and whether the specification is identified.
+A few practical recommendations. If the task produces three response categories (correct, other-list intrusion, NPL), the simple span version (`ss`) is the natural starting point. Tasks with distractors that are the same material type as memoranda can fit the complex span version (`cs`). For other designs, the custom version gives full control over activation formulas, parameters, and link functions. In all cases, we use softmax as the default choice rule, for the practical reasons given in Tutorial 1: it requires no positivity constraint and places parameters on the identity link, where coefficients are directly interpretable as activations. Both rules fit the example data about equally well (Tutorial 1), so the choice can rest on these practical considerations or on theoretical commitments. For example, the simple rule's ratio-scale interpretation versus the softmax rule's interval-scale, signal-detection family (Supplement 1, Section 3). When defining a custom specification, running a parameter recovery simulation before data collection is good practice: it reveals whether the planned design can distinguish the parameters of interest and whether the specification is identified.
 
 The tutorials and validated $M^3$ specifications covered here are specific to working memory research. Applying $M^3$ to other memory domains — episodic, semantic, or autobiographical memory — would require developing theoretically grounded activation formulas for those domains and validating them independently.
 

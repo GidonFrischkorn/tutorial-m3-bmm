@@ -11,7 +11,8 @@ This GitHub repository contains the source code and data needed to reproduce all
 ```text
 ├── manuscript/          Quarto manuscript source (.qmd) and references
 │   ├── tutorial-m3-bmm.qmd
-│   ├── supplement-parameter-recovery.qmd
+│   ├── supplement1-methods.qmd
+│   ├── supplement2-parameter-recovery.qmd
 │   └── references.bib
 │
 ├── scripts/             Standalone R scripts for each tutorial

@@ -422,21 +422,23 @@ print(bf_longrun)
 
 # Does ra differ from rc within each condition?
 # If filtering is symmetric, ra = rc (equivalent to the cs assumption).
+# The seed makes the tests reproducible: hypothesis() re-permutes the stored
+# prior draws to build the implied prior on the tested difference.
 h_ra_rc_pre   <- hypothesis(fit_m3_custom,
-                            "ra_conditionpre - rc_conditionpre = 0")
+                            "ra_conditionpre - rc_conditionpre = 0", seed = 2026)
 h_ra_rc_retro <- hypothesis(fit_m3_custom,
-                            "ra_conditionretro - rc_conditionretro = 0")
+                            "ra_conditionretro - rc_conditionretro = 0", seed = 2026)
 
 h_ra_rc_pre
 h_ra_rc_retro
 
 # Does ra differ between pre-cue and retro-cue?
 h_ra_pre_retro <- hypothesis(fit_m3_custom,
-                             "ra_conditionpre - ra_conditionretro = 0")
+                             "ra_conditionpre - ra_conditionretro = 0", seed = 2026)
 
 # Does rc differ between pre-cue and retro-cue?
 h_rc_pre_retro <- hypothesis(fit_m3_custom,
-                             "rc_conditionpre - rc_conditionretro = 0")
+                             "rc_conditionpre - rc_conditionretro = 0", seed = 2026)
 
 h_ra_pre_retro
 h_rc_pre_retro
