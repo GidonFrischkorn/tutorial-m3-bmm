@@ -28,3 +28,4 @@ manuscript/*.ttt
 .DS_Store
 /.luarc.json
 .positai
+.posit/assistant
