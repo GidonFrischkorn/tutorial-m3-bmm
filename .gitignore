@@ -1,0 +1,22 @@
+# R
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+Rplots.pdf
+
+# Rendered Quarto outputs (regenerable from .qmd source)
+manuscript/*.html
+manuscript/*.pdf
+manuscript/*.docx
+manuscript/*_files/
+manuscript/*.tex
+manuscript/*.fff
+manuscript/*.ttt
+
+# Fitted models and figures (archived on OSF)
+/output
+/figures
+
+# OS
+.DS_Store
