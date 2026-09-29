@@ -85,7 +85,7 @@ Please cite the original articles when reusing these data.
 
 ## License
 
-The code (`scripts/`, `functions/`) is released under the MIT License (see `LICENSE`). The manuscript text and the data from Li et al. (2026) are released under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The Oberauer (2019) data are redistributed from their original OSF repository; please refer to it for terms of reuse.
+The code (`scripts/`, `functions/`) is released under the MIT License (see `LICENSE`). The manuscript text and the data from Li et al. (2026) are released under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/). The Oberauer (2019) data are redistributed from their original OSF repository; please refer to it for terms of reuse.
 
 ## References
 

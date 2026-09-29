@@ -506,7 +506,7 @@ m3_formula <- bmf(
 
 Under the softmax rule, $a$ and $c$ are estimated on the identity link, so posterior draws are directly interpretable as activation values. The `bmm` package sets weakly informative default priors based on known parameter ranges. These defaults are parameter-, choice-rule-, and version-specific rather than a single value: for the softmax `ss` version used here, each condition intercept of $a$ and of $c$ receives the same $\mathcal{N}(3,\, 1^2)$ prior, with set-size slopes of $\mathcal{N}(0,\, 0.5^2)$ on both. Giving $a$ and $c$ equal prior means centers the implied prior on their difference at zero, so the softmax rule does not build in an a-priori ordering of the two activation sources. The simple rule instead uses an asymmetric pair ($\mathcal{N}(0,\, 1^2)$ on $a$, $\mathcal{N}(3,\, 1^2)$ on $c$), because its linear normalization requires $c > a$ to predict accurate recall; the two rules are nonetheless calibrated to imply a comparably broad range of average performance, as a prior predictive check confirms (Supplement 1, Section 1). We use these defaults throughout Tutorial 1; Tutorial 2 shows how to set custom priors when needed.[^priors]
 
-[^priors]: Default priors can be inspected with `default_prior(m3_formula, m3_model_ss, data = data_agg)` and overridden as in any `brms` model.
+[^priors]: Default priors can be inspected with `default_prior(m3_formula, m3_model_ss, data = data_agg)` and overridden as in any `brms` model. The defaults described here are those of `bmm` 1.3.2.
 
 ## Model Fitting
 
