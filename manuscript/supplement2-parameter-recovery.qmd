@@ -15,7 +15,7 @@ author:
       - name: University of Chicago
         department: Department of Psychology
       - name: University of Chicago
-        department: Institution for Mind and Biology,
+        department: Institute for Mind and Biology,
 format:
   apaquarto-pdf:
     keep-tex: true

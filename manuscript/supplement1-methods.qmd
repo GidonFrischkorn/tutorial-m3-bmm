@@ -15,7 +15,7 @@ author:
       - name: University of Chicago
         department: Department of Psychology
       - name: University of Chicago
-        department: Institution for Mind and Biology
+        department: Institute for Mind and Biology
 author-note:
   disclosures:
     study-registration: "This study was not preregistered."

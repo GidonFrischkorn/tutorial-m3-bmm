@@ -9,20 +9,23 @@ author:
     affiliations:
       - name: University of Zurich
         department: Department of Psychology
+        address: Binzmühlestrasse 14
+        city: 8050 Zurich
+        country: Switzerland
   - name: Chenyu Li
     orcid: 0000-0001-8815-6189
     affiliations:
       - name: University of Chicago
         department: Department of Psychology
       - name: University of Chicago
-        department: Institution for Mind and Biology
+        department: Institute for Mind and Biology
 author-note:
   disclosures:
     study-registration: "This study was not preregistered."
     data-sharing: "Data, analysis code, and companion R scripts for all four tutorials are available on [OSF](https://osf.io/yb7wm/) and [GitHub](https://github.com/GidonFrischkorn/tutorial-m3-bmm)."
     conflict-of-interest: "The authors declare no conflicts of interest."
     financial-support: "This research was supported by a grant from the Swiss National Science Foundation (SNSF) awarded to Gidon T. Frischkorn (Grant No. 208828)."
-    gratitude: "We thank Isabel Courage for valuable feedback during the development of the M3 implementation in the bmm R package."
+    gratitude: "We thank Isabel Courage for valuable feedback during the development of the M^3^ implementation in the bmm R package."
     authorship-agreements: 
       "Gidon T. Frischkorn: Conceptualization, Methodology, Software, Formal Analysis, Visualization, Writing -- Original Draft.
       Chenyu Li: Software, Data Curation, Writing -- Review & Editing."
@@ -124,6 +127,8 @@ fmt_er <- function(x) {
   if (x >= 10) return(sprintf("%.1f", x))
   sprintf("%.2f", x)
 }
+# Inline BF: "= 5.70", but "$\\geq$ 10,000" without a second "="
+bf_eq <- function(x) if (grepl("geq", x)) x else paste("=", x)
 
 h_ss_c      <- hypothesis(fit_m3_ss_softmax,
   "(c_expopenset:ss_lin + c_expclosedset:ss_lin) / 2 = 0", seed = 2026)
@@ -319,8 +324,6 @@ if (file.exists(t4_file)) {
   val_r_a <- "NA"; val_r_c <- "NA"; val_r_ra <- "NA"; val_r_rc <- "NA"
 }
 ```
-
-# Introduction
 
 Observed performance in working memory and other cognitive tasks is often summarized by overall accuracy. Yet, for many tasks accuracy collapses across qualitatively distinct response categories and error types that may arise from different latent processes. In particular, different error types are diagnostically informative because different cognitive processes imply different conditional response probabilities over observable outcomes. Multinomial processing tree (MPT) models formalize this logic by treating categorical responses, including distinct error classes, as consequences of latent states such as successful retrieval, guessing, or source confusion [@batchelder1999theoretical; @erdfelder2009multinomial]. Similarly, process-dissociation approaches demonstrate that patterns of correct and incorrect responses across task constraints can separate the contributions of multiple processes within a single task [@jacoby1991process; @yonelinas2012process]. In sum, the full multinomial response distribution, not accuracy alone, carries more information about latent cognitive mechanisms than a single accuracy score.
 
@@ -550,7 +553,7 @@ knitr::include_graphics(fig("tutorial1_pp_check.pdf"))
 
 ## Parameter Estimates
 
-With the model fit established, we can examine how item memory ($a$) and context binding ($c$) varied across set sizes and experiments. Under the softmax choice rule, both parameters are on the identity link, so the posterior draws are directly interpretable as activation values. To compute condition-specific estimates, we reconstructed the linear predictor from the fixed effects: for each set size $s$, $\hat{a}_{\text{exp}} = \beta_{a,\text{exp}} + \beta_{a,\text{exp:ss\_lin}} \cdot (s - \bar{s})$, and analogously for $c$. The companion script extracts draws using  `tidybayes::as_draws_df()` and computes 95% highest-density intervals [HDIs; @mcelreath2020statistical] via `tidybayes::mean_hdci()`.
+With the model fit established, we can examine how item memory ($a$) and context binding ($c$) varied across set sizes and experiments. Under the softmax choice rule, both parameters are on the identity link, so the posterior draws are directly interpretable as activation values. To compute condition-specific estimates, we reconstructed the linear predictor from the fixed effects: for each set size $s$, $\hat{a}_{\text{exp}} = \beta_{a,\text{exp}} + \beta_{a,\text{exp:ss\_lin}} \cdot (s - \bar{s})$, and analogously for $c$. The companion script extracts draws using  `tidybayes::as_draws_df()` and computes 95% highest-density intervals [HDIs\; @mcelreath2020statistical] via `tidybayes::mean_hdci()`.
 
 @fig-t1-param-estimates shows the resulting estimates. Context binding ($c$) is descriptively higher than item memory ($a$) across all set sizes in both experiments, with the gap being especially pronounced in the closed-set experiment. Both parameters decrease with set size, but the decline is substantially steeper for $c$ than for $a$, consistent with binding being more sensitive to memory load. The two experiments differ markedly in item activation: $a$ is notably higher in the open-set experiment than in the closed-set experiment. These results are consistent with the original findings by @oberauer2019bindings [see their discussion for theoretical interpretation of the experiment differences].
 
@@ -595,7 +598,7 @@ hypothesis(fit_m3_ss_softmax,
   "(c_expopenset:ss_lin + c_expclosedset:ss_lin) / 2 = 0", seed = 2026)
 ```
 
-The `Evid.Ratio` column returns the Savage-Dickey density ratio: the posterior density at the point null divided by the prior density at that point. This ratio is $BF_{01}$, the evidence for equality, so values substantially greater than 1 indicate that the data have shifted belief toward equality, values below 1 that they have shifted it away, and values near 1 inconclusive evidence. Because most tests in this tutorial ask whether a difference exists, we report the reciprocal, $BF_{10} = 1 / \text{Evid.Ratio}$, and label it as such; where the question is instead whether two conditions are equivalent, we report $BF_{01}$ directly. One caveat applies to all such tests in this tutorial: with cell means coding, no prior is placed directly on the tested differences — the prior at the test boundary is implied by the priors on the parameters entering the comparison. For the set-size effect on $c$ tested here (an average of two $\mathcal{N}(0,\, 0.5^2)$ slopes), the implied prior is a zero-centered normal with SD $\approx 0.35$; the exact value depends on which parameter's priors enter. Under the recalibrated softmax defaults $a$ and $c$ share the same intercept prior, so a comparison across these parameters (such as $c$ versus $a$) is centered at zero as well (see the note on cell means coding in Model Specification). Researchers who want direct control over this prior should code condition differences explicitly as predictors (see Supplement 1, Section 2). A second caveat concerns precision: `hypothesis()` estimates the prior and posterior densities from the draws, and with the default 4,000 draws very large ratios are imprecise, so we report them only as BF$_{10} \geq$ 10,000 (Supplement 1, Section 2 shows that the moderate ratios reported here are stable). With this in mind: there is strong evidence for $c$ decreasing with larger set size (BF$_{10}$ = `r er_ss_c_fmt`). We can similarly test whether set size reduces item memory and whether the set size effects differ between experiments:
+The `Evid.Ratio` column returns the Savage-Dickey density ratio: the posterior density at the point null divided by the prior density at that point. This ratio is $BF_{01}$, the evidence for equality, so values substantially greater than 1 indicate that the data have shifted belief toward equality, values below 1 that they have shifted it away, and values near 1 inconclusive evidence. Because most tests in this tutorial ask whether a difference exists, we report the reciprocal, $BF_{10} = 1 / \text{Evid.Ratio}$, and label it as such; where the question is instead whether two conditions are equivalent, we report $BF_{01}$ directly. One caveat applies to all such tests in this tutorial: with cell means coding, no prior is placed directly on the tested differences — the prior at the test boundary is implied by the priors on the parameters entering the comparison. For the set-size effect on $c$ tested here (an average of two $\mathcal{N}(0,\, 0.5^2)$ slopes), the implied prior is a zero-centered normal with SD $\approx 0.35$; the exact value depends on which parameter's priors enter. Under the recalibrated softmax defaults $a$ and $c$ share the same intercept prior, so a comparison across these parameters (such as $c$ versus $a$) is centered at zero as well (see the note on cell means coding in Model Specification). Researchers who want direct control over this prior should code condition differences explicitly as predictors (see Supplement 1, Section 2). A second caveat concerns precision: `hypothesis()` estimates the prior and posterior densities from the draws, and with the default 4,000 draws very large ratios are imprecise, so we report them only as BF$_{10} \geq$ 10,000 (Supplement 1, Section 2 shows that the moderate ratios reported here are stable). With this in mind: there is strong evidence for $c$ decreasing with larger set size (BF$_{10}$ `r bf_eq(er_ss_c_fmt)`). We can similarly test whether set size reduces item memory and whether the set size effects differ between experiments:
 
 ```{r}
 #| label: t1-hypothesis-setsize
@@ -609,7 +612,7 @@ hypothesis(fit_m3_ss_softmax,
   "c_expopenset:ss_lin = c_expclosedset:ss_lin", seed = 2026)
 ```
 
-There is also moderate evidence that set size reduces $a$ (BF$_{10}$ = `r er_ss_a_fmt`). The set size effect on $c$ is comparable across experiments (BF$_{01}$ = `r er_exp_ss_c_fmt`). The companion script contains the full set of hypothesis tests.
+There is also moderate evidence that set size reduces $a$ (BF$_{10}$ `r bf_eq(er_ss_a_fmt)`). The set size effect on $c$ is comparable across experiments (BF$_{01}$ `r bf_eq(er_exp_ss_c_fmt)`). The companion script contains the full set of hypothesis tests.
 
 # Tutorial 2: Complex Span $M^3$
 
@@ -697,7 +700,7 @@ Fitting follows the same `bmm()` call as in Tutorial 1, now additionally passing
 knitr::include_graphics(fig("tutorial2_pp_check.pdf"))
 ```
 
-## Parameter estimates and interpreting f
+## Parameter estimates and interpreting $f$
 
 We now examine the posterior estimates for all three parameters. Item memory ($a$) and context binding ($c$) are on the identity link and can be read directly from the posterior draws. The filtering parameter $f$, however, is estimated on the logit scale. To interpret it as a proportional reduction between 0 and 1, we apply the inverse logit transformation (`plogis()`):
 
@@ -869,7 +872,7 @@ knitr::include_graphics(fig("tutorial3_param_estimates.pdf"))
 
 ## Hypothesis tests
 
-As in Tutorial 2, we can test parameter differences formally. The test of $r_a$ against $r_c$ is also the principled nested evidence for the model comparison above: it asks directly whether the constraint $r_a = r_c$ that defines the `cs` version holds. Within both the pre-cue (BF$_{10}$ = `r er_ra_rc_pre_fmt`) and retro-cue condition (BF$_{10}$ = `r er_ra_rc_retro_fmt`), there is strong evidence that $r_a > r_c$, so it does not. Across conditions, $r_a$ does not differ between pre-cue and retro-cue (BF$_{01}$ = `r er_ra_pre_retro_fmt`), and the same holds for $r_c$ (BF$_{01}$ = `r er_rc_pre_retro_fmt`). Item memory transfers to distractors regardless of cue timing, while context binding is selectively attenuated, consistent with the view that filtering operates on binding rather than item activation. This dissociation — the $r_a$/$r_c$ difference, with both parameters invariant across cue timing — is a within-experiment form of the selective-influence criterion from the validation note above; full selective-influence evidence requires manipulations designed to move each parameter on its own across studies. (The cell-means caveat from Tutorials 1 and 2 applies to these evidence ratios as well.)
+As in Tutorial 2, we can test parameter differences formally. The test of $r_a$ against $r_c$ is also the principled nested evidence for the model comparison above: it asks directly whether the constraint $r_a = r_c$ that defines the `cs` version holds. Within both the pre-cue (BF$_{10}$ `r bf_eq(er_ra_rc_pre_fmt)`) and retro-cue condition (BF$_{10}$ `r bf_eq(er_ra_rc_retro_fmt)`), there is strong evidence that $r_a > r_c$, so it does not. Across conditions, $r_a$ does not differ between pre-cue and retro-cue (BF$_{01}$ `r bf_eq(er_ra_pre_retro_fmt)`), and the same holds for $r_c$ (BF$_{01}$ `r bf_eq(er_rc_pre_retro_fmt)`). Item memory transfers to distractors regardless of cue timing, while context binding is selectively attenuated, consistent with the view that filtering operates on binding rather than item activation. This dissociation — the $r_a$/$r_c$ difference, with both parameters invariant across cue timing — is a within-experiment form of the selective-influence criterion from the validation note above; full selective-influence evidence requires manipulations designed to move each parameter on its own across studies. (The cell-means caveat from Tutorials 1 and 2 applies to these evidence ratios as well.)
 
 
 # Tutorial 4: Parameter Recovery
@@ -965,7 +968,7 @@ With implementation no longer the limiting step, the harder work in applying $M^
 -   $M^3$ framework paper: @oberauer2019simple
 -   Systematic parameter recovery for $M^3$: @goettmann2025recovery
 -   Companion `bmm` tutorial for continuous-response mixture models: @frischkorn2025tutorial
--   `bmm` package documentation and $M^3$ vignette: <https://venpopov.github.io/bmm/articles/bmm_m3.html>
+-   `bmm` package documentation and $M^3$ vignette: <https://venpopov.com/bmm/articles/bmm_m3.html>
 -   OSF repository with data, code, and materials: <https://osf.io/yb7wm/>
 -   Full companion scripts for all four tutorials on [GitHub](https://github.com/GidonFrischkorn/tutorial-m3-bmm)
 
@@ -981,9 +984,7 @@ With implementation no longer the limiting step, the harder work in applying $M^
 ::: {#refs}
 :::
 
-\newpage
-
-# Appendix: Memory Updating — A More Complex Custom $M^3$ {.appendix}
+# Memory Updating — A More Complex Custom $M^3$ {.appendix}
 
 To illustrate how custom specifications can accommodate more complex task designs, we present a memory updating example based on @oberauer2019simple. Unlike the filtering example in Tutorial 3 (which modifies only the distractor categories of the `cs` version), this example introduces entirely new response categories, nonlinear activation formulas with design variables, and three additional parameters beyond $a$ and $c$.
 

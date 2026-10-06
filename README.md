@@ -1,6 +1,6 @@
 # Applying the Memory Measurement Model (M3): A Tutorial Using the bmm R Package
 
-Companion repository for the tutorial on fitting the Memory Measurement Model (M3; Oberauer & Lewandowsky, 2019) with the [bmm](https://venpopov.github.io/bmm/) R package. The tutorial works through four applications: a simple span task, a complex span task, a custom M3 with separate filtering parameters, and a parameter recovery simulation. Supplement 2 adds a parameter recovery study for a custom M3 of a memory updating task.
+Companion repository for the tutorial on fitting the Memory Measurement Model (M3; Oberauer & Lewandowsky, 2019) with the [bmm](https://venpopov.com/bmm/) R package. The tutorial works through four applications: a simple span task, a complex span task, a custom M3 with separate filtering parameters, and a parameter recovery simulation. Supplement 2 adds a parameter recovery study for a custom M3 of a memory updating task.
 
 This repository holds the code, data, and manuscript sources. Fitted models and figures are archived on [OSF](https://osf.io/yb7wm/).
 
@@ -29,6 +29,7 @@ This repository holds the code, data, and manuscript sources. Fitted models and 
 │   └── 00_download_osf.R                       Download fitted models and figures from OSF
 │
 ├── data/
+│   ├── CODEBOOK.md                             Variable key for all data files
 │   ├── Oberauer_2019_SimpleSpan_Exp1.dat       Tutorial 1: trial-level data
 │   ├── Oberauer_2019_SimpleSpan_Exp2.dat       Tutorial 1: trial-level data
 │   ├── Oberauer_2019_SimpleSpan_agg.csv        Tutorial 1: aggregated
@@ -91,4 +92,4 @@ The code (`scripts/`, `functions/`) is released under the MIT License (see `LICE
 
 - Frischkorn, G. T., & Popov, V. (2025). A tutorial for estimating Bayesian hierarchical mixture models for visual working memory tasks: Introducing the Bayesian Measurement Modeling (bmm) package for R. *Behavior Research Methods, 57*(5), 144. <https://doi.org/10.3758/s13428-025-02643-0>
 - Oberauer, K., & Lewandowsky, S. (2019). Simple measurement models for complex working-memory tasks. *Psychological Review, 126*(6), 880–932. <https://doi.org/10.1037/rev0000159>
-- bmm package: <https://venpopov.github.io/bmm/>
+- bmm package: <https://venpopov.com/bmm/>
